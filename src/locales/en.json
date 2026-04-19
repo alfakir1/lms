@@ -1,0 +1,175 @@
+{
+  "nav": {
+    "home": "Home",
+    "courses": "Courses",
+    "about": "About",
+    "login": "Login",
+    "register": "Register"
+  },
+  "theme": {
+    "toggle": "Toggle theme",
+    "light": "Light",
+    "dark": "Dark"
+  },
+  "language": {
+    "label": "Language",
+    "switch": "Switch language"
+  },
+  "home": {
+    "hero": {
+      "title": "Start Your Learning Journey with Four Academy",
+      "subtitle": "A complete e-learning platform offering professional courses led by expert instructors",
+      "browse": "Browse Courses"
+    },
+    "about": {
+      "title": "About Us",
+      "who": "Who We Are",
+      "vision": "Our Vision",
+      "why": "Why Choose Us",
+      "whoText": "Four Academy is a leading e-learning platform dedicated to providing high-quality education through innovative online learning experiences.",
+      "visionText": "To empower learners worldwide with accessible and effective online education, bridging the gap between knowledge and opportunity.",
+      "whyText": "Expert instructors, flexible learning schedules, comprehensive course offerings, and personalized learning paths tailored to your goals."
+    },
+    "featured": {
+      "title": "Featured Courses",
+      "description": "Discover our most popular courses designed to help you advance your career and skills",
+      "viewAll": "View All Courses"
+    },
+    "benefits": {
+      "title": "Why Choose Four Academy",
+      "certificates": "Certified Certificates",
+      "instructors": "Professional Instructors",
+      "tracking": "Progress Tracking",
+      "platform": "Easy-to-use Platform",
+      "certText": "Earn recognized certificates upon course completion",
+      "instructorsText": "Learn from industry experts with years of experience",
+      "trackingText": "Monitor your learning progress with detailed analytics",
+      "platformText": "Intuitive interface accessible on any device"
+    },
+    "cta": {
+      "title": "Ready to Start Learning?",
+      "subtitle": "Join thousands of students who are already advancing their careers with Four Academy",
+      "start": "Get Started Free",
+      "browse": "Browse Courses"
+    }
+  },
+  "auth": {
+    "welcomeBack": "Welcome back",
+    "loginSubtitle": "Sign in to your Four Academy account",
+    "email": "Email address",
+    "password": "Password",
+    "remember": "Remember me",
+    "forgotPassword": "Forgot your password?",
+    "signIn": "Sign in",
+    "signingIn": "Signing in...",
+    "demoTitle": "Demo Accounts",
+    "studentDemo": "Student: student@fouracademy.com / password",
+    "instructorDemo": "Instructor: instructor@fouracademy.com / password",
+    "adminDemo": "Admin: admin@fouracademy.com / password",
+    "noAccount": "Don't have an account?",
+    "signUp": "Sign up for free",
+    "joinTitle": "Join Four Academy",
+    "joinSubtitle": "Start your learning journey today",
+    "fullName": "Full Name",
+    "placeholderName": "Enter your full name",
+    "roleLabel": "I want to join as",
+    "studentRole": "Student - Learn new skills",
+    "instructorRole": "Instructor - Teach and share knowledge",
+    "createPassword": "Password",
+    "placeholderPassword": "Create a password",
+    "confirmPassword": "Confirm Password",
+    "placeholderConfirmPassword": "Confirm your password",
+    "passwordsMismatch": "Passwords do not match",
+    "acceptTerms": "I agree to the Terms and Conditions and Privacy Policy",
+    "createAccount": "Create Account",
+    "creatingAccount": "Creating account...",
+    "alreadyAccount": "Already have an account?",
+    "signInLink": "Sign in"
+  },
+  "courses": {
+    "title": "Our Courses",
+    "subtitle": "Discover professional courses taught by expert instructors. Start your learning journey today.",
+    "search": "Search courses...",
+    "allCategories": "All Categories",
+    "showing": "Showing {{count}} of {{total}} courses",
+    "students": "students",
+    "instructor": "Instructor",
+    "duration": "Duration",
+    "price": "Price",
+    "viewDetails": "View Details"
+  },
+  "courseDetails": {
+    "enrollNow": "Enroll Now",
+    "startLearning": "Start Learning",
+    "whatYouLearn": "What You'll Learn",
+    "courseContent": "Course Content",
+    "requirements": "Requirements",
+    "description": "Description"
+  },
+  "dashboard": {
+    "topbar": {
+      "title": "Dashboard Controls",
+      "subtitle": "Use these tools to change theme and language across the platform"
+    }
+  },
+  "footer": {
+    "title": "Four Academy",
+    "description": "A complete e-learning platform offering professional courses led by expert instructors.",
+    "quickLinks": "Quick Links",
+    "contactInfo": "Contact Info",
+    "stayUpdated": "Stay Updated",
+    "emailPlaceholder": "Enter your email",
+    "subscribe": "Subscribe",
+    "copyright": "© 2024 Four Academy. All rights reserved.",
+    "privacy": "Privacy Policy",
+    "terms": "Terms of Service",
+    "support": "Support"
+  },
+  "student": {
+    "welcome": "Welcome back, John!",
+    "subtitle": "Continue your learning journey with Four Academy",
+    "totalCourses": "Total Courses",
+    "completed": "Completed",
+    "studyHours": "Study Hours",
+    "certificates": "Certificates",
+    "continueLearning": "Continue Learning",
+    "viewAllCourses": "View all courses →",
+    "progress": "Progress",
+    "continue": "Continue",
+    "recentAssignments": "Recent Assignments",
+    "viewAllAssignments": "View all assignments →",
+    "due": "Due"
+  },
+  "instructor": {
+    "dashboardTitle": "Instructor Dashboard",
+    "subtitle": "Manage your courses, students, and assignments",
+    "totalCourses": "Total Courses",
+    "totalStudents": "Total Students",
+    "averageRating": "Average Rating",
+    "totalRevenue": "Total Revenue",
+    "myCourses": "My Courses",
+    "manageAllCourses": "Manage all courses →",
+    "manageLessons": "Manage lessons →"
+  },
+  "admin": {
+    "dashboardTitle": "Admin Dashboard",
+    "subtitle": "Manage your LMS platform and monitor system performance",
+    "totalUsers": "Total Users",
+    "totalCourses": "Total Courses",
+    "totalRevenue": "Total Revenue",
+    "activeUsers": "Active Users",
+    "quickActions": "Quick Actions",
+    "manageUsers": "Manage Users",
+    "manageCourses": "Manage Courses",
+    "payments": "Payments",
+    "reports": "Reports",
+    "settings": "Settings",
+    "security": "Security",
+    "recentActivities": "Recent Activities",
+    "systemHealth": "System Health",
+    "server": "Server",
+    "database": "Database",
+    "storage": "Storage",
+    "uptime": "Uptime"
+  }
+}
