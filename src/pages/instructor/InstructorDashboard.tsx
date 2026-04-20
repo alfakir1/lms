@@ -1,318 +1,154 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { BookOpen, Users, Star, DollarSign } from 'lucide-react';
+import { Users, BookOpen, FileText, TrendingUp, Plus } from 'lucide-react';
+import { useAuth } from '../../contexts/AuthContext';
+import { useTranslation } from 'react-i18next';
+import { getInstructorData, mockSubmissions, mockUsers } from '../../utils/mockData';
 
 const InstructorDashboard: React.FC = () => {
-  // Mock data - in real app, this would come from API
+  const { user } = useAuth();
+  const { t } = useTranslation();
+  const instructorData = user ? getInstructorData(user.id) : null;
+
+  if (!instructorData) {
+    return <div className="p-8 text-center text-red-500 font-bold">{t('common.error', 'Error: Instructor data not found.')}</div>;
+  }
+
+  const courses = instructorData.courses || [];
   const stats = {
-    totalCourses: 5,
-    totalStudents: 1247,
-    totalAssignments: 23,
-    averageRating: 4.8,
-    totalRevenue: 15420,
-    pendingAssignments: 8,
-    completedThisMonth: 45
+    totalCourses: courses.length,
+    totalStudents: courses.reduce((acc, curr) => acc + curr.enrollments.length, 0),
+    pendingAssignments: 5,
+    averageRating: 4.8
   };
 
-  const recentCourses = [
-    {
-      id: 1,
-      title: 'Web Development Fundamentals',
-      students: 234,
-      rating: 4.9,
-      revenue: 4680,
-      status: 'active'
-    },
-    {
-      id: 2,
-      title: 'React for Beginners',
-      students: 189,
-      rating: 4.7,
-      revenue: 3780,
-      status: 'active'
-    },
-    {
-      id: 3,
-      title: 'Python Programming',
-      students: 156,
-      rating: 4.8,
-      revenue: 3120,
-      status: 'draft'
-    }
-  ];
-
-  const recentAssignments = [
-    {
-      id: 1,
-      title: 'Build a Responsive Landing Page',
-      course: 'Web Development Fundamentals',
-      student: 'John Doe',
-      submittedDate: '2024-01-18',
-      status: 'pending'
-    },
-    {
-      id: 2,
-      title: 'React Component Exercise',
-      course: 'React for Beginners',
-      student: 'Jane Smith',
-      submittedDate: '2024-01-17',
-      status: 'graded'
-    },
-    {
-      id: 3,
-      title: 'Database Design Project',
-      course: 'Python Programming',
-      student: 'Mike Johnson',
-      submittedDate: '2024-01-16',
-      status: 'pending'
-    }
-  ];
-
-  const upcomingDeadlines = [
-    {
-      id: 1,
-      title: 'Grade Web Dev Assignments',
-      course: 'Web Development Fundamentals',
-      deadline: '2024-01-22',
-      count: 15
-    },
-    {
-      id: 2,
-      title: 'Review React Projects',
-      course: 'React for Beginners',
-      deadline: '2024-01-25',
-      count: 8
-    }
-  ];
+  const recentSubmissions = mockSubmissions.slice(0, 3).map(s => ({
+    ...s,
+    student: mockUsers.find(u => u.id === s.student_id)
+  }));
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Welcome Section */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-text mb-2">Instructor Dashboard</h1>
-          <p className="text-gray-600">Manage your courses, students, and assignments</p>
+    <div className="min-h-screen bg-background p-4 md:p-8">
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="mb-10 flex flex-col md:flex-row md:items-center justify-between gap-6 rtl:flex-row-reverse">
+          <div className="rtl:text-right">
+            <h1 className="text-4xl font-extrabold dark:text-white tracking-tight mb-2">
+              {t('instructor.dashboardTitle')}
+            </h1>
+            <p className="text-neutral-500 dark:text-neutral-400 text-lg">{t('instructor.subtitle')}</p>
+          </div>
+          <button className="bg-primary-600 text-white px-6 py-3 rounded-2xl font-bold shadow-soft hover:shadow-glow transition-all flex items-center gap-2 rtl:flex-row-reverse">
+            <Plus className="w-5 h-5" />
+            {t('instructor.createNewCourse')}
+          </button>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white rounded-lg shadow-sm p-6">
-            <div className="flex items-center">
-              <div className="p-3 bg-primary rounded-lg">
-                <BookOpen className="h-6 w-6 text-white" />
+        {/* Stats Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+          {[
+            { label: t('instructor.totalCourses'), value: stats.totalCourses, icon: BookOpen, color: 'bg-blue-500' },
+            { label: t('instructor.totalStudents'), value: stats.totalStudents, icon: Users, color: 'bg-indigo-500' },
+            { label: t('instructor.pendingGrading'), value: stats.pendingAssignments, icon: FileText, color: 'bg-orange-500' },
+            { label: t('instructor.averageRating'), value: stats.averageRating, icon: TrendingUp, color: 'bg-green-500' }
+          ].map((stat, i) => (
+            <div
+              key={i}
+              className="bg-white dark:bg-slate-900 p-6 rounded-3xl shadow-soft border border-neutral-100 dark:border-slate-800 flex items-center gap-4 rtl:flex-row-reverse"
+            >
+              <div className={`${stat.color} p-4 rounded-2xl text-white`}>
+                <stat.icon className="w-6 h-6" />
               </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Total Courses</p>
-                <p className="text-2xl font-bold text-text">{stats.totalCourses}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg shadow-sm p-6">
-            <div className="flex items-center">
-              <div className="p-3 bg-secondary rounded-lg">
-                <Users className="h-6 w-6 text-white" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Total Students</p>
-                <p className="text-2xl font-bold text-text">{stats.totalStudents.toLocaleString()}</p>
+              <div className="rtl:text-right">
+                <p className="text-sm font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-wider">
+                  {stat.label}
+                </p>
+                <p className="text-2xl font-black text-neutral-900 dark:text-white">{stat.value}</p>
               </div>
             </div>
-          </div>
-
-          <div className="bg-white rounded-lg shadow-sm p-6">
-            <div className="flex items-center">
-              <div className="p-3 bg-accent rounded-lg">
-                <Star className="h-6 w-6 text-white" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Average Rating</p>
-                <p className="text-2xl font-bold text-text">{stats.averageRating}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg shadow-sm p-6">
-            <div className="flex items-center">
-              <div className="p-3 bg-green-500 rounded-lg">
-                <DollarSign className="h-6 w-6 text-white" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Total Revenue</p>
-                <p className="text-2xl font-bold text-text">${stats.totalRevenue.toLocaleString()}</p>
-              </div>
-            </div>
-          </div>
+          ))}
         </div>
 
-        <div className="grid lg:grid-cols-3 gap-8">
-          {/* Main Content */}
-          <div className="lg:col-span-2 space-y-8">
-            {/* My Courses */}
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-bold text-text">My Courses</h2>
-                <Link
-                  to="/instructor/courses"
-                  className="text-secondary hover:text-primary text-sm font-medium"
-                >
-                  Manage all courses →
-                </Link>
-              </div>
-
-              <div className="space-y-4">
-                {recentCourses.map((course) => (
-                  <div key={course.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
-                    <div className="flex items-center justify-between mb-3">
-                      <h3 className="text-lg font-semibold text-primary">{course.title}</h3>
-                      <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                        course.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
-                      }`}>
-                        {course.status}
-                      </span>
-                    </div>
-
-                    <div className="grid grid-cols-3 gap-4 text-sm">
-                      <div className="flex items-center">
-                        <Users className="h-4 w-4 text-gray-400 mr-2" />
-                        <span>{course.students} students</span>
-                      </div>
-                      <div className="flex items-center">
-                        <Star className="h-4 w-4 text-yellow-400 mr-2" />
-                        <span>{course.rating} rating</span>
-                      </div>
-                      <div className="flex items-center">
-                        <DollarSign className="h-4 w-4 text-green-500 mr-2" />
-                        <span>${course.revenue}</span>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center justify-between mt-4">
-                      <Link
-                        to={`/instructor/courses/${course.id}/lessons`}
-                        className="text-secondary hover:text-primary text-sm"
-                      >
-                        Manage lessons →
-                      </Link>
-                      <Link
-                        to={`/instructor/courses/${course.id}/students`}
-                        className="text-secondary hover:text-primary text-sm"
-                      >
-                        View students →
-                      </Link>
-                    </div>
-                  </div>
-                ))}
-              </div>
+        <div className="grid lg:grid-cols-3 gap-10">
+          {/* My Courses List */}
+          <div className="lg:col-span-2 space-y-6">
+            <div className="flex items-center justify-between rtl:flex-row-reverse">
+              <h2 className="text-2xl font-bold dark:text-white">{t('instructor.myCourses')}</h2>
+              <Link to="/instructor/courses" className="text-primary-600 font-bold hover:underline">
+                {t('instructor.manageAll')}
+              </Link>
             </div>
 
-            {/* Recent Assignments */}
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-bold text-text">Recent Submissions</h2>
-                <Link
-                  to="/instructor/assignments"
-                  className="text-secondary hover:text-primary text-sm font-medium"
+            <div className="grid gap-6">
+              {courses.map(course => (
+                <div
+                  key={course.id}
+                  className="bg-white dark:bg-slate-900 p-6 rounded-3xl shadow-soft border border-neutral-100 dark:border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-6 rtl:flex-row-reverse"
                 >
-                  View all assignments →
-                </Link>
-              </div>
-
-              <div className="space-y-4">
-                {recentAssignments.map((assignment) => (
-                  <div key={assignment.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
-                    <div>
-                      <h3 className="font-semibold text-text">{assignment.title}</h3>
-                      <p className="text-sm text-gray-600">{assignment.course}</p>
-                      <p className="text-sm text-gray-500">Submitted by {assignment.student} on {assignment.submittedDate}</p>
+                  <div className="flex items-center gap-4 rtl:flex-row-reverse">
+                    <div className="w-16 h-16 bg-neutral-100 dark:bg-slate-800 rounded-2xl flex items-center justify-center text-primary-600 flex-shrink-0">
+                      <BookOpen className="w-8 h-8" />
                     </div>
-                    <div className="flex items-center space-x-2">
-                      <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                        assignment.status === 'graded' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
-                      }`}>
-                        {assignment.status}
-                      </span>
-                      <button className="text-secondary hover:text-primary text-sm">
-                        Review
-                      </button>
+                    <div className="rtl:text-right">
+                      <h3 className="font-bold dark:text-white">{course.title}</h3>
+                      <p className="text-sm text-neutral-500">
+                        {course.enrollments.length} {t('instructor.studentsEnrolled')}
+                      </p>
                     </div>
                   </div>
-                ))}
-              </div>
+                  <div className="flex gap-3 rtl:flex-row-reverse">
+                    <Link
+                      to={`/instructor/courses/${course.id}/lessons`}
+                      className="px-4 py-2 bg-neutral-100 dark:bg-slate-800 dark:text-white rounded-xl text-sm font-bold hover:bg-primary-600 hover:text-white transition-all"
+                    >
+                      {t('instructor.edit')}
+                    </Link>
+                    <Link
+                      to="/instructor/students"
+                      className="px-4 py-2 bg-neutral-100 dark:bg-slate-800 dark:text-white rounded-xl text-sm font-bold hover:bg-secondary-600 hover:text-white transition-all"
+                    >
+                      {t('instructor.students')}
+                    </Link>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
 
-          {/* Sidebar */}
-          <div className="space-y-8">
-            {/* Quick Actions */}
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <h2 className="text-xl font-bold text-text mb-6">Quick Actions</h2>
-              <div className="space-y-3">
-                <Link
-                  to="/instructor/courses/new"
-                  className="block w-full bg-secondary text-white text-center py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors"
-                >
-                  Create New Course
-                </Link>
-                <Link
-                  to="/instructor/assignments"
-                  className="block w-full border border-gray-300 text-text text-center py-2 px-4 rounded-lg hover:bg-gray-50 transition-colors"
-                >
-                  Grade Assignments
-                </Link>
-                <Link
-                  to="/instructor/students"
-                  className="block w-full border border-gray-300 text-text text-center py-2 px-4 rounded-lg hover:bg-gray-50 transition-colors"
-                >
-                  View Students
-                </Link>
-                <Link
-                  to="/instructor/analytics"
-                  className="block w-full border border-gray-300 text-text text-center py-2 px-4 rounded-lg hover:bg-gray-50 transition-colors"
-                >
-                  View Analytics
-                </Link>
-              </div>
-            </div>
-
-            {/* Upcoming Deadlines */}
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <h2 className="text-xl font-bold text-text mb-6">Upcoming Deadlines</h2>
-              <div className="space-y-4">
-                {upcomingDeadlines.map((deadline) => (
-                  <div key={deadline.id} className="p-3 bg-red-50 border border-red-200 rounded-lg">
-                    <h3 className="font-semibold text-red-900">{deadline.title}</h3>
-                    <p className="text-sm text-red-700">{deadline.course}</p>
-                    <div className="flex items-center justify-between mt-2">
-                      <span className="text-sm text-red-600">{deadline.count} submissions</span>
-                      <span className="text-sm text-red-600">Due: {deadline.deadline}</span>
+          {/* Side Panels */}
+          <div className="space-y-10">
+            {/* Recent Submissions */}
+            <div className="bg-white dark:bg-slate-900 p-8 rounded-3xl shadow-soft border border-neutral-100 dark:border-slate-800">
+              <h2 className="text-xl font-bold mb-6 dark:text-white rtl:text-right">{t('instructor.recentSubmissions')}</h2>
+              <div className="space-y-6">
+                {recentSubmissions.map((sub, i) => (
+                  <div key={i} className="flex items-center gap-4 rtl:flex-row-reverse">
+                    <div className="w-10 h-10 bg-primary-100 dark:bg-primary-500/20 rounded-full flex items-center justify-center text-primary-600 font-bold flex-shrink-0">
+                      {sub.student?.name.charAt(0)}
                     </div>
+                    <div className="flex-1 rtl:text-right">
+                      <p className="font-bold text-sm dark:text-white">{sub.student?.name}</p>
+                      <p className="text-xs text-neutral-400">{t('common.assignment', 'Assignment')} #{sub.assignment_id}</p>
+                    </div>
+                    <button className="text-xs font-bold text-primary-600 hover:underline">
+                      {t('instructor.manage')}
+                    </button>
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* Performance Overview */}
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <h2 className="text-xl font-bold text-text mb-6">This Month</h2>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-text">Students Enrolled</span>
-                  <span className="font-semibold text-green-600">+{stats.completedThisMonth}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-text">Assignments Graded</span>
-                  <span className="font-semibold text-blue-600">{stats.totalAssignments - stats.pendingAssignments}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-text">Pending Reviews</span>
-                  <span className="font-semibold text-yellow-600">{stats.pendingAssignments}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-text">Average Rating</span>
-                  <span className="font-semibold text-accent">{stats.averageRating} ★</span>
-                </div>
-              </div>
+            {/* Analytics Teaser */}
+            <div className="bg-indigo-600 p-8 rounded-3xl text-white shadow-lg rtl:text-right">
+              <TrendingUp className="w-10 h-10 mb-4 opacity-50 rtl:mr-auto rtl:ml-0" />
+              <h3 className="text-lg font-bold mb-2">{t('instructor.performanceInsight')}</h3>
+              <p className="text-sm text-indigo-100 leading-relaxed mb-6">{t('instructor.engagementUp')}</p>
+              <Link
+                to="/instructor/analytics"
+                className="inline-block px-6 py-2 bg-white text-indigo-600 rounded-xl text-sm font-bold hover:bg-indigo-50 transition-all"
+              >
+                {t('instructor.fullAnalytics')}
+              </Link>
             </div>
           </div>
         </div>

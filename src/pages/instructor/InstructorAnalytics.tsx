@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { TrendingUp, Users, BookOpen, DollarSign, Activity } from 'lucide-react';
 
 const InstructorAnalytics: React.FC = () => {
+  const { t } = useTranslation();
   const [timeRange, setTimeRange] = useState('30d');
 
   // Mock analytics data
@@ -76,85 +78,85 @@ const InstructorAnalytics: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background dark:bg-slate-950">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-text mb-2">Analytics Dashboard</h1>
-            <p className="text-gray-600">Track your teaching performance and course metrics</p>
+        <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4 rtl:flex-row-reverse">
+          <div className="rtl:text-right">
+            <h1 className="text-3xl font-bold text-text dark:text-white mb-2">{t('instructor.analyticsTitle', 'Analytics Dashboard')}</h1>
+            <p className="text-gray-600 dark:text-slate-400">{t('instructor.analyticsSubtitle', 'Track your teaching performance and course metrics')}</p>
           </div>
           <select
             value={timeRange}
             onChange={(e) => setTimeRange(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+            className="px-4 py-2 border border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-950 dark:text-white rounded-lg focus:ring-2 focus:ring-primary outline-none rtl:text-right"
           >
-            <option value="7d">Last 7 days</option>
-            <option value="30d">Last 30 days</option>
-            <option value="90d">Last 90 days</option>
-            <option value="1y">Last year</option>
+            <option value="7d">{t('common.last7Days', 'Last 7 days')}</option>
+            <option value="30d">{t('common.last30Days', 'Last 30 days')}</option>
+            <option value="90d">{t('common.last90Days', 'Last 90 days')}</option>
+            <option value="1y">{t('common.lastYear', 'Last year')}</option>
           </select>
         </div>
 
         {/* Overview Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white rounded-lg shadow-sm p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600 mb-1">Total Students</p>
-                <p className="text-2xl font-bold text-primary">{analytics.overview.totalStudents}</p>
+          <div className="bg-white dark:bg-slate-900 rounded-lg shadow-sm p-6 border border-neutral-100 dark:border-slate-800 rtl:text-right">
+            <div className="flex items-center justify-between rtl:flex-row-reverse">
+              <div className="rtl:text-right">
+                <p className="text-sm font-bold text-gray-600 dark:text-slate-400 mb-1">{t('instructor.totalStudents')}</p>
+                <p className="text-2xl font-black text-primary">{analytics.overview.totalStudents}</p>
               </div>
               <Users className="h-8 w-8 text-primary" />
             </div>
-            <div className="mt-4 flex items-center text-sm">
-              <TrendingUp className="h-4 w-4 text-green-600 mr-1" />
-              <span className="text-green-600">+12%</span>
-              <span className="text-gray-600 ml-1">from last month</span>
+            <div className="mt-4 flex items-center text-sm rtl:flex-row-reverse">
+              <TrendingUp className="h-4 w-4 text-green-600 mr-1 rtl:mr-0 rtl:ml-1" />
+              <span className="text-green-600 font-bold">+12%</span>
+              <span className="text-gray-600 dark:text-slate-500 ml-1 rtl:ml-0 rtl:mr-1">{t('instructor.fromLastMonth', 'from last month')}</span>
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow-sm p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600 mb-1">Total Courses</p>
-                <p className="text-2xl font-bold text-secondary">{analytics.overview.totalCourses}</p>
+          <div className="bg-white dark:bg-slate-900 rounded-lg shadow-sm p-6 border border-neutral-100 dark:border-slate-800 rtl:text-right">
+            <div className="flex items-center justify-between rtl:flex-row-reverse">
+              <div className="rtl:text-right">
+                <p className="text-sm font-bold text-gray-600 dark:text-slate-400 mb-1">{t('instructor.totalCourses')}</p>
+                <p className="text-2xl font-black text-secondary">{analytics.overview.totalCourses}</p>
               </div>
               <BookOpen className="h-8 w-8 text-secondary" />
             </div>
-            <div className="mt-4 flex items-center text-sm">
-              <TrendingUp className="h-4 w-4 text-green-600 mr-1" />
-              <span className="text-green-600">+2</span>
-              <span className="text-gray-600 ml-1">new this month</span>
+            <div className="mt-4 flex items-center text-sm rtl:flex-row-reverse">
+              <TrendingUp className="h-4 w-4 text-green-600 mr-1 rtl:mr-0 rtl:ml-1" />
+              <span className="text-green-600 font-bold">+2</span>
+              <span className="text-gray-600 dark:text-slate-500 ml-1 rtl:ml-0 rtl:mr-1">{t('instructor.newThisMonth', 'new this month')}</span>
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow-sm p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600 mb-1">Total Revenue</p>
-                <p className="text-2xl font-bold text-accent">${analytics.overview.totalRevenue.toLocaleString()}</p>
+          <div className="bg-white dark:bg-slate-900 rounded-lg shadow-sm p-6 border border-neutral-100 dark:border-slate-800 rtl:text-right">
+            <div className="flex items-center justify-between rtl:flex-row-reverse">
+              <div className="rtl:text-right">
+                <p className="text-sm font-bold text-gray-600 dark:text-slate-400 mb-1">{t('common.revenue')}</p>
+                <p className="text-2xl font-black text-accent">{t('common.currency', { val: analytics.overview.totalRevenue })}</p>
               </div>
               <DollarSign className="h-8 w-8 text-accent" />
             </div>
-            <div className="mt-4 flex items-center text-sm">
-              <TrendingUp className="h-4 w-4 text-green-600 mr-1" />
-              <span className="text-green-600">+18%</span>
-              <span className="text-gray-600 ml-1">from last month</span>
+            <div className="mt-4 flex items-center text-sm rtl:flex-row-reverse">
+              <TrendingUp className="h-4 w-4 text-green-600 mr-1 rtl:mr-0 rtl:ml-1" />
+              <span className="text-green-600 font-bold">+18%</span>
+              <span className="text-gray-600 dark:text-slate-500 ml-1 rtl:ml-0 rtl:mr-1">{t('instructor.fromLastMonth')}</span>
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow-sm p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600 mb-1">Average Rating</p>
-                <p className="text-2xl font-bold text-text">{analytics.overview.averageRating}</p>
+          <div className="bg-white dark:bg-slate-900 rounded-lg shadow-sm p-6 border border-neutral-100 dark:border-slate-800 rtl:text-right">
+            <div className="flex items-center justify-between rtl:flex-row-reverse">
+              <div className="rtl:text-right">
+                <p className="text-sm font-bold text-gray-600 dark:text-slate-400 mb-1">{t('instructor.averageRating')}</p>
+                <p className="text-2xl font-black text-text dark:text-white">{analytics.overview.averageRating}</p>
               </div>
-              <Activity className="h-8 w-8 text-text" />
+              <Activity className="h-8 w-8 text-text dark:text-white" />
             </div>
-            <div className="mt-4 flex items-center text-sm">
-              <TrendingUp className="h-4 w-4 text-green-600 mr-1" />
-              <span className="text-green-600">+0.2</span>
-              <span className="text-gray-600 ml-1">from last month</span>
+            <div className="mt-4 flex items-center text-sm rtl:flex-row-reverse">
+              <TrendingUp className="h-4 w-4 text-green-600 mr-1 rtl:mr-0 rtl:ml-1" />
+              <span className="text-green-600 font-bold">+0.2</span>
+              <span className="text-gray-600 dark:text-slate-500 ml-1 rtl:ml-0 rtl:mr-1">{t('instructor.fromLastMonth')}</span>
             </div>
           </div>
         </div>
@@ -162,34 +164,34 @@ const InstructorAnalytics: React.FC = () => {
         {/* Charts Section */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
           {/* Enrollment Trends */}
-          <div className="bg-white rounded-lg shadow-sm p-6">
-            <h3 className="text-lg font-semibold text-text mb-4">Enrollment Trends</h3>
-            <div className="h-64 flex items-end justify-between space-x-2">
+          <div className="bg-white dark:bg-slate-900 rounded-lg shadow-sm p-6 border border-neutral-100 dark:border-slate-800">
+            <h3 className="text-lg font-bold text-text dark:text-white mb-6 rtl:text-right">{t('instructor.enrollmentTrends', 'Enrollment Trends')}</h3>
+            <div className="h-64 flex items-end justify-between space-x-2 rtl:space-x-reverse">
               {analytics.enrollmentTrends.map((data, index) => (
                 <div key={index} className="flex-1 flex flex-col items-center">
                   <div
-                    className="w-full bg-primary rounded-t"
+                    className="w-full bg-primary rounded-t-lg transition-all duration-500"
                     style={{ height: `${(data.enrollments / 70) * 100}%` }}
                   ></div>
-                  <span className="text-xs text-gray-600 mt-2">{data.month}</span>
-                  <span className="text-xs font-semibold text-text">{data.enrollments}</span>
+                  <span className="text-xs font-bold text-gray-500 dark:text-slate-500 mt-2">{t(`common.months.${data.month.toLowerCase()}`, data.month)}</span>
+                  <span className="text-xs font-black text-text dark:text-white">{data.enrollments}</span>
                 </div>
               ))}
             </div>
           </div>
 
           {/* Revenue Trends */}
-          <div className="bg-white rounded-lg shadow-sm p-6">
-            <h3 className="text-lg font-semibold text-text mb-4">Revenue Trends</h3>
-            <div className="h-64 flex items-end justify-between space-x-2">
+          <div className="bg-white dark:bg-slate-900 rounded-lg shadow-sm p-6 border border-neutral-100 dark:border-slate-800">
+            <h3 className="text-lg font-bold text-text dark:text-white mb-6 rtl:text-right">{t('instructor.revenueTrends', 'Revenue Trends')}</h3>
+            <div className="h-64 flex items-end justify-between space-x-2 rtl:space-x-reverse">
               {analytics.revenueTrends.map((data, index) => (
                 <div key={index} className="flex-1 flex flex-col items-center">
                   <div
-                    className="w-full bg-accent rounded-t"
+                    className="w-full bg-accent rounded-t-lg transition-all duration-500"
                     style={{ height: `${(data.revenue / 3000) * 100}%` }}
                   ></div>
-                  <span className="text-xs text-gray-600 mt-2">{data.month}</span>
-                  <span className="text-xs font-semibold text-text">${data.revenue}</span>
+                  <span className="text-xs font-bold text-gray-500 dark:text-slate-500 mt-2">{t(`common.months.${data.month.toLowerCase()}`, data.month)}</span>
+                  <span className="text-xs font-black text-text dark:text-white">{t('common.currency', { val: data.revenue })}</span>
                 </div>
               ))}
             </div>
@@ -197,54 +199,52 @@ const InstructorAnalytics: React.FC = () => {
         </div>
 
         {/* Course Performance Table */}
-        <div className="bg-white rounded-lg shadow-sm p-6">
-          <h3 className="text-lg font-semibold text-text mb-6">Course Performance</h3>
+        <div className="bg-white dark:bg-slate-900 rounded-lg shadow-sm p-8 border border-neutral-100 dark:border-slate-800">
+          <h3 className="text-lg font-bold text-text dark:text-white mb-6 rtl:text-right">{t('instructor.coursePerformance', 'Course Performance')}</h3>
 
           <div className="overflow-x-auto">
-            <table className="w-full">
+            <table className="w-full border-collapse">
               <thead>
-                <tr className="border-b border-gray-200">
-                  <th className="text-left py-3 px-4 font-semibold text-text">Course</th>
-                  <th className="text-center py-3 px-4 font-semibold text-text">Students</th>
-                  <th className="text-center py-3 px-4 font-semibold text-text">Completion</th>
-                  <th className="text-center py-3 px-4 font-semibold text-text">Avg Grade</th>
-                  <th className="text-center py-3 px-4 font-semibold text-text">Revenue</th>
-                  <th className="text-center py-3 px-4 font-semibold text-text">Rating</th>
+                <tr className="border-b border-gray-100 dark:border-slate-800">
+                  <th className="text-left rtl:text-right py-4 px-4 font-bold text-gray-500 uppercase text-xs tracking-wider">{t('common.course')}</th>
+                  <th className="text-center py-4 px-4 font-bold text-gray-500 uppercase text-xs tracking-wider">{t('instructor.totalStudents')}</th>
+                  <th className="text-center py-4 px-4 font-bold text-gray-500 uppercase text-xs tracking-wider">{t('instructor.completion', 'Completion')}</th>
+                  <th className="text-center py-4 px-4 font-bold text-gray-500 uppercase text-xs tracking-wider">{t('instructor.avgGrade', 'Avg Grade')}</th>
+                  <th className="text-center py-4 px-4 font-bold text-gray-500 uppercase text-xs tracking-wider">{t('common.revenue')}</th>
+                  <th className="text-center py-4 px-4 font-bold text-gray-500 uppercase text-xs tracking-wider">{t('common.rating')}</th>
                 </tr>
               </thead>
               <tbody>
                 {analytics.coursePerformance.map((course) => (
-                  <tr key={course.id} className="border-b border-gray-100 hover:bg-gray-50">
-                    <td className="py-4 px-4">
-                      <div>
-                        <p className="font-medium text-primary">{course.title}</p>
-                      </div>
+                  <tr key={course.id} className="border-b border-gray-50 dark:border-slate-800/50 hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors">
+                    <td className="py-5 px-4 rtl:text-right">
+                      <p className="font-bold text-primary dark:text-secondary">{course.title}</p>
                     </td>
-                    <td className="py-4 px-4 text-center">
-                      <span className="font-semibold text-text">{course.students}</span>
+                    <td className="py-5 px-4 text-center">
+                      <span className="font-black text-text dark:text-white">{course.students}</span>
                     </td>
-                    <td className="py-4 px-4 text-center">
-                      <div className="flex items-center justify-center">
-                        <div className="w-16 bg-gray-200 rounded-full h-2 mr-2">
+                    <td className="py-5 px-4 text-center">
+                      <div className="flex items-center justify-center rtl:flex-row-reverse">
+                        <div className="w-16 bg-gray-100 dark:bg-slate-800 rounded-full h-2 mr-2 rtl:mr-0 rtl:ml-2">
                           <div
-                            className="bg-green-600 h-2 rounded-full"
+                            className="bg-green-500 h-2 rounded-full"
                             style={{ width: `${course.completionRate}%` }}
                           ></div>
                         </div>
-                        <span className="text-sm font-medium">{course.completionRate}%</span>
+                        <span className="text-sm font-bold dark:text-slate-300">{course.completionRate}%</span>
                       </div>
                     </td>
-                    <td className="py-4 px-4 text-center">
-                      <span className={`font-semibold ${getGradeColor(course.averageGrade)}`}>
+                    <td className="py-5 px-4 text-center">
+                      <span className={`font-black ${getGradeColor(course.averageGrade)}`}>
                         {course.averageGrade}
                       </span>
                     </td>
-                    <td className="py-4 px-4 text-center">
-                      <span className="font-semibold text-accent">${course.revenue}</span>
+                    <td className="py-5 px-4 text-center">
+                      <span className="font-black text-accent">{t('common.currency', { val: course.revenue })}</span>
                     </td>
-                    <td className="py-4 px-4 text-center">
-                      <div className="flex items-center justify-center">
-                        <span className="font-semibold text-text mr-1">{course.rating}</span>
+                    <td className="py-5 px-4 text-center">
+                      <div className="flex items-center justify-center gap-1 rtl:flex-row-reverse">
+                        <span className="font-black text-text dark:text-white">{course.rating}</span>
                         <span className="text-yellow-400">★</span>
                       </div>
                     </td>
@@ -257,22 +257,22 @@ const InstructorAnalytics: React.FC = () => {
 
         {/* Additional Insights */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
-          <div className="bg-white rounded-lg shadow-sm p-6">
-            <h4 className="font-semibold text-text mb-4">Top Performing Course</h4>
-            <p className="text-primary font-medium mb-2">React for Beginners</p>
-            <p className="text-sm text-gray-600">Highest completion rate at 85%</p>
+          <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm p-6 border border-neutral-100 dark:border-slate-800 rtl:text-right">
+            <h4 className="font-bold text-text dark:text-white mb-3">{t('instructor.topPerforming', 'Top Performing Course')}</h4>
+            <p className="text-primary dark:text-secondary font-black mb-2">React for Beginners</p>
+            <p className="text-sm text-gray-600 dark:text-slate-400">{t('instructor.highestCompletion', 'Highest completion rate at 85%')}</p>
           </div>
 
-          <div className="bg-white rounded-lg shadow-sm p-6">
-            <h4 className="font-semibold text-text mb-4">Most Popular Course</h4>
-            <p className="text-primary font-medium mb-2">Web Development Fundamentals</p>
-            <p className="text-sm text-gray-600">89 students enrolled</p>
+          <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm p-6 border border-neutral-100 dark:border-slate-800 rtl:text-right">
+            <h4 className="font-bold text-text dark:text-white mb-3">{t('instructor.mostPopular', 'Most Popular Course')}</h4>
+            <p className="text-primary dark:text-secondary font-black mb-2">Web Development Fundamentals</p>
+            <p className="text-sm text-gray-600 dark:text-slate-400">{t('instructor.studentsEnrolled', '89 students enrolled')}</p>
           </div>
 
-          <div className="bg-white rounded-lg shadow-sm p-6">
-            <h4 className="font-semibold text-text mb-4">Revenue Leader</h4>
-            <p className="text-primary font-medium mb-2">Web Development Fundamentals</p>
-            <p className="text-sm text-gray-600">$4,500 generated</p>
+          <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm p-6 border border-neutral-100 dark:border-slate-800 rtl:text-right">
+            <h4 className="font-bold text-text dark:text-white mb-3">{t('instructor.revenueLeader', 'Revenue Leader')}</h4>
+            <p className="text-primary dark:text-secondary font-black mb-2">Web Development Fundamentals</p>
+            <p className="text-sm text-gray-600 dark:text-slate-400">{t('common.currency', { val: 4500 })} {t('instructor.generated', 'generated')}</p>
           </div>
         </div>
       </div>

@@ -1,8 +1,9 @@
 export interface User {
   id: number;
+  student_id?: string;
   name: string;
   email: string;
-  role: 'admin' | 'instructor' | 'student';
+  role: 'admin' | 'instructor' | 'student' | 'reception';
   created_at: string;
   updated_at: string;
 }

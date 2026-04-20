@@ -1,9 +1,10 @@
 import React, { createContext, useContext, useState } from 'react';
 import type { User } from '../types';
+import { mockUsers } from '../utils/mockData';
 
 interface AuthContextType {
   user: User | null;
-  login: (token: string) => void;
+  login: (email: string, password: string) => boolean;
   logout: () => void;
   isAuthenticated: boolean;
 }
@@ -32,13 +33,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     return null;
   });
 
-  const login = (token: string) => {
-    localStorage.setItem('token', token);
-    // Decode and set user
-    // Placeholder
-    const decodedUser: User = { id: 1, name: 'User', email: 'user@example.com', role: 'student', created_at: '', updated_at: '' };
-    setUser(decodedUser);
-    localStorage.setItem('user', JSON.stringify(decodedUser));
+  const login = (identifier: string, password: string): boolean => {
+    const foundUser = mockUsers.find(u => 
+      (u.email === identifier || u.student_id === identifier) && u.password === password
+    );
+    
+    if (foundUser) {
+      const { password: _, ...userData } = foundUser;
+      localStorage.setItem('token', 'fake-token-' + userData.id);
+      setUser(userData as User);
+      localStorage.setItem('user', JSON.stringify(userData));
+      return true;
+    }
+    return false;
   };
 
   const logout = () => {

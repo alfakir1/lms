@@ -32,6 +32,11 @@ import InstructorStudents from './pages/instructor/InstructorStudents';
 import InstructorAnalytics from './pages/instructor/InstructorAnalytics';
 
 // Admin Pages
+import ReceptionDashboard from './pages/reception/ReceptionDashboard';
+import RegisterStudent from './pages/reception/RegisterStudent';
+import StudentsManagement from './pages/reception/StudentsManagement';
+import CoursesView from './pages/reception/CoursesView';
+import PaymentsView from './pages/reception/PaymentsView';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import UsersManagement from './pages/admin/UsersManagement';
 import CoursesManagement from './pages/admin/CoursesManagement';
@@ -153,7 +158,47 @@ function App() {
                   }
                 />
 
-                {/* Admin Routes */}
+                {/* Add Reception routes */}
+                <Route
+                  path="/reception/dashboard"
+                  element={
+                    <ProtectedRoute roles={['reception']}>
+                      <ReceptionDashboard />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/reception/register"
+                  element={
+                    <ProtectedRoute roles={['reception']}>
+                      <RegisterStudent />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/reception/students"
+                  element={
+                    <ProtectedRoute roles={['reception']}>
+                      <StudentsManagement />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/reception/courses"
+                  element={
+                    <ProtectedRoute roles={['reception']}>
+                      <CoursesView />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/reception/payments"
+                  element={
+                    <ProtectedRoute roles={['reception']}>
+                      <PaymentsView />
+                    </ProtectedRoute>
+                  }
+                />
                 <Route
                   path="/admin/dashboard"
                   element={

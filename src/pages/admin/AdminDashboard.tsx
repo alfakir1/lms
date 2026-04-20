@@ -1,280 +1,155 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Users, BookOpen, DollarSign, Shield, Settings, BarChart3, UserCheck, CreditCard } from 'lucide-react';
+import { Users, BookOpen, DollarSign, Activity, Settings, Shield, ChevronRight, UserPlus } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import { mockUsers, mockCourses, mockPayments } from '../../utils/mockData';
 
 const AdminDashboard: React.FC = () => {
-  // Mock data - in real app, this would come from API
+  const { t } = useTranslation();
+
   const stats = {
-    totalUsers: 2450,
-    totalCourses: 89,
-    totalRevenue: 45680,
-    activeUsers: 1890,
-    pendingPayments: 12,
-    reportedIssues: 3
+    totalUsers: mockUsers.length,
+    totalCourses: mockCourses.length,
+    totalRevenue: mockPayments.reduce((acc, curr) => acc + curr.amount, 0),
+    activeUsers: 142
   };
 
-  const recentActivities = [
-    {
-      id: 1,
-      type: 'user_registration',
-      message: 'New user registered: john.doe@example.com',
-      time: '2 minutes ago',
-      icon: Users
-    },
-    {
-      id: 2,
-      type: 'course_created',
-      message: 'New course created: Advanced React Patterns',
-      time: '15 minutes ago',
-      icon: BookOpen
-    },
-    {
-      id: 3,
-      type: 'payment',
-      message: 'Payment received: $299 from sarah@example.com',
-      time: '1 hour ago',
-      icon: DollarSign
-    },
-    {
-      id: 4,
-      type: 'report',
-      message: 'Content report submitted for course: Python Basics',
-      time: '2 hours ago',
-      icon: Shield
-    }
-  ];
-
-  const systemHealth = {
-    serverStatus: 'healthy',
-    databaseStatus: 'healthy',
-    storageUsage: 68,
-    uptime: '99.9%'
-  };
+  const recentUsers = mockUsers.slice(-5).reverse();
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-text mb-2">Admin Dashboard</h1>
-          <p className="text-gray-600">Manage your LMS platform and monitor system performance</p>
-        </div>
-
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white rounded-lg shadow-sm p-6">
-            <div className="flex items-center">
-              <div className="p-3 bg-primary rounded-lg">
-                <Users className="h-6 w-6 text-white" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Total Users</p>
-                <p className="text-2xl font-bold text-text">{stats.totalUsers.toLocaleString()}</p>
-              </div>
+    <div className="min-h-screen bg-background dark:bg-slate-950 p-4 md:p-8">
+      <div className="max-w-7xl mx-auto">
+        {/* Admin Header */}
+        <div className="mb-10 flex flex-col md:flex-row md:items-center justify-between gap-6 rtl:flex-row-reverse">
+          <div className="flex items-center gap-4 rtl:flex-row-reverse">
+            <div className="p-3 bg-red-100 dark:bg-red-500/20 rounded-2xl text-red-600 shrink-0">
+              <Shield className="w-8 h-8" />
+            </div>
+            <div className="rtl:text-right">
+              <h1 className="text-4xl font-extrabold dark:text-white tracking-tight">{t('admin.dashboardTitle', 'Admin Dashboard')}</h1>
+              <p className="text-neutral-500 dark:text-neutral-400">{t('admin.subtitle', 'Platform management and system overview')}</p>
             </div>
           </div>
-
-          <div className="bg-white rounded-lg shadow-sm p-6">
-            <div className="flex items-center">
-              <div className="p-3 bg-secondary rounded-lg">
-                <BookOpen className="h-6 w-6 text-white" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Total Courses</p>
-                <p className="text-2xl font-bold text-text">{stats.totalCourses}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg shadow-sm p-6">
-            <div className="flex items-center">
-              <div className="p-3 bg-accent rounded-lg">
-                <DollarSign className="h-6 w-6 text-white" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Total Revenue</p>
-                <p className="text-2xl font-bold text-text">${stats.totalRevenue.toLocaleString()}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg shadow-sm p-6">
-            <div className="flex items-center">
-              <div className="p-3 bg-green-500 rounded-lg">
-                <UserCheck className="h-6 w-6 text-white" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Active Users</p>
-                <p className="text-2xl font-bold text-text">{stats.activeUsers.toLocaleString()}</p>
-              </div>
-            </div>
+          <div className="flex gap-4 rtl:flex-row-reverse">
+            <button className="bg-neutral-100 dark:bg-slate-800 dark:text-white px-6 py-3 rounded-2xl font-bold flex items-center gap-2 hover:bg-neutral-200 transition-all rtl:flex-row-reverse">
+              <Settings className="w-5 h-5" />
+              {t('admin.settings', 'Settings')}
+            </button>
+            <button className="bg-primary-600 text-white px-6 py-3 rounded-2xl font-bold shadow-soft hover:shadow-glow transition-all flex items-center gap-2 rtl:flex-row-reverse">
+              <UserPlus className="w-5 h-5" />
+              {t('admin.addUser', 'Add User')}
+            </button>
           </div>
         </div>
 
-        <div className="grid lg:grid-cols-3 gap-8">
-          {/* Main Content */}
-          <div className="lg:col-span-2 space-y-8">
-            {/* Quick Actions */}
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <h2 className="text-xl font-bold text-text mb-6">Quick Actions</h2>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                <Link
-                  to="/admin/users"
-                  className="flex flex-col items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-                >
-                  <Users className="h-8 w-8 text-primary mb-2" />
-                  <span className="text-sm font-medium text-text">Manage Users</span>
-                </Link>
-                <Link
-                  to="/admin/courses"
-                  className="flex flex-col items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-                >
-                  <BookOpen className="h-8 w-8 text-secondary mb-2" />
-                  <span className="text-sm font-medium text-text">Manage Courses</span>
-                </Link>
-                <Link
-                  to="/admin/payments"
-                  className="flex flex-col items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-                >
-                  <CreditCard className="h-8 w-8 text-accent mb-2" />
-                  <span className="text-sm font-medium text-text">Payments</span>
-                </Link>
-                <Link
-                  to="/admin/reports"
-                  className="flex flex-col items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-                >
-                  <BarChart3 className="h-8 w-8 text-green-600 mb-2" />
-                  <span className="text-sm font-medium text-text">Reports</span>
-                </Link>
-                <div className="flex flex-col items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer">
-                  <Settings className="h-8 w-8 text-gray-600 mb-2" />
-                  <span className="text-sm font-medium text-text">Settings</span>
-                </div>
-                <div className="flex flex-col items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer">
-                  <Shield className="h-8 w-8 text-red-600 mb-2" />
-                  <span className="text-sm font-medium text-text">Security</span>
-                </div>
+        {/* Admin Stats Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+          {[
+            { label: t('admin.totalUsers', 'Total Users'), value: stats.totalUsers, icon: <Users />, color: 'bg-blue-500' },
+            { label: t('admin.totalCourses', 'Total Courses'), value: stats.totalCourses, icon: <BookOpen />, color: 'bg-purple-500' },
+            { label: t('admin.totalRevenue', 'Total Revenue'), value: `$${stats.totalRevenue.toLocaleString()}`, icon: <DollarSign />, color: 'bg-green-500' },
+            { label: t('admin.activeUsers', 'Active Users'), value: stats.activeUsers, icon: <Activity />, color: 'bg-orange-500' }
+          ].map((stat, i) => (
+            <div
+              key={i}
+              className="bg-white dark:bg-slate-900 p-8 rounded-3xl shadow-soft border border-neutral-100 dark:border-slate-800 rtl:text-right"
+            >
+              <div className={`${stat.color} w-12 h-12 rounded-2xl flex items-center justify-center text-white mb-6 shadow-lg rtl:ml-0 rtl:mr-auto`}>
+                {React.cloneElement(stat.icon as React.ReactElement<any>, { className: 'w-6 h-6' })}
               </div>
+              <p className="text-sm font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-widest mb-1">
+                {stat.label}
+              </p>
+              <p className="text-3xl font-black text-neutral-900 dark:text-white">{stat.value}</p>
             </div>
+          ))}
+        </div>
 
-            {/* Recent Activities */}
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <h2 className="text-xl font-bold text-text mb-6">Recent Activities</h2>
-              <div className="space-y-4">
-                {recentActivities.map((activity) => (
-                  <div key={activity.id} className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg">
-                    <div className="p-2 bg-white rounded-lg">
-                      <activity.icon className="h-4 w-4 text-primary" />
+        <div className="grid lg:grid-cols-3 gap-10">
+          {/* Recent Users */}
+          <div className="lg:col-span-2 bg-white dark:bg-slate-900 rounded-[2.5rem] shadow-soft border border-neutral-100 dark:border-slate-800 overflow-hidden">
+            <div className="p-8 border-b border-neutral-50 dark:border-slate-800 flex items-center justify-between rtl:flex-row-reverse">
+              <h2 className="text-xl font-bold dark:text-white">{t('admin.recentActivities', 'Recent Activities')}</h2>
+              <Link to="/admin/users" className="text-sm font-bold text-primary-600 hover:underline flex items-center gap-1 rtl:flex-row-reverse">
+                {t('admin.manageUsers', 'Manage Users')} <ChevronRight className="w-4 h-4 rtl:rotate-180" />
+              </Link>
+            </div>
+            <div className="divide-y divide-neutral-50 dark:divide-slate-800">
+              {recentUsers.map(user => (
+                <div
+                  key={user.id}
+                  className="p-6 flex items-center justify-between hover:bg-neutral-50 dark:hover:bg-slate-800/50 transition-all rtl:flex-row-reverse"
+                >
+                  <div className="flex items-center gap-4 rtl:flex-row-reverse">
+                    <div className="w-12 h-12 rounded-full bg-neutral-100 dark:bg-slate-800 flex items-center justify-center font-bold text-neutral-400 shrink-0">
+                      {user.name.charAt(0)}
                     </div>
-                    <div className="flex-1">
-                      <p className="text-text text-sm">{activity.message}</p>
-                      <p className="text-gray-500 text-xs mt-1">{activity.time}</p>
+                    <div className="rtl:text-right">
+                      <p className="font-bold dark:text-white">{user.name}</p>
+                      <p className="text-xs text-neutral-500">{user.email}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-6 rtl:flex-row-reverse">
+                    <span
+                      className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${
+                        user.role === 'admin'
+                          ? 'bg-red-100 text-red-600'
+                          : user.role === 'instructor'
+                          ? 'bg-blue-100 text-blue-600'
+                          : 'bg-green-100 text-green-600'
+                      }`}
+                    >
+                      {t(`common.${user.role}`, user.role)}
+                    </span>
+                    <button className="p-2 text-neutral-400 hover:text-primary-600 transition-colors">
+                      <Settings className="w-5 h-5" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* System Health / Financial */}
+          <div className="space-y-10">
+            <div className="bg-white dark:bg-slate-900 p-8 rounded-3xl shadow-soft border border-neutral-100 dark:border-slate-800 rtl:text-right">
+              <h2 className="text-xl font-bold mb-6 dark:text-white">{t('admin.systemHealth', 'System Health')}</h2>
+              <div className="space-y-4">
+                {[
+                  { label: t('admin.server', 'Server'), value: '99.9%', color: 'bg-green-500' },
+                  { label: t('admin.database', 'Database'), value: '45%', color: 'bg-blue-500' },
+                  { label: t('admin.storage', 'Storage'), value: '12%', color: 'bg-green-500' }
+                ].map((log, i) => (
+                  <div key={i} className="space-y-2">
+                    <div className="flex justify-between text-xs font-bold uppercase tracking-wider rtl:flex-row-reverse">
+                      <span className="text-neutral-500">{log.label}</span>
+                      <span className="dark:text-white">{log.value}</span>
+                    </div>
+                    <div className="w-full bg-neutral-100 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                      <div className={`${log.color} h-full rounded-full`} style={{ width: log.value }} />
                     </div>
                   </div>
                 ))}
               </div>
+              <Link
+                to="/admin/reports"
+                className="block w-full mt-8 py-4 bg-primary-600 text-white rounded-2xl text-center text-sm font-bold shadow-soft hover:shadow-glow transition-all"
+              >
+                {t('admin.generateReport', 'Generate Report')}
+              </Link>
             </div>
 
-            {/* System Health */}
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <h2 className="text-xl font-bold text-text mb-6">System Health</h2>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-green-600 mb-1">●</div>
-                  <p className="text-sm font-medium text-text">Server</p>
-                  <p className="text-xs text-gray-600">{systemHealth.serverStatus}</p>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-green-600 mb-1">●</div>
-                  <p className="text-sm font-medium text-text">Database</p>
-                  <p className="text-xs text-gray-600">{systemHealth.databaseStatus}</p>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-text mb-1">{systemHealth.storageUsage}%</div>
-                  <p className="text-sm font-medium text-text">Storage</p>
-                  <p className="text-xs text-gray-600">Used</p>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-green-600 mb-1">{systemHealth.uptime}</div>
-                  <p className="text-sm font-medium text-text">Uptime</p>
-                  <p className="text-xs text-gray-600">This month</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Sidebar */}
-          <div className="space-y-8">
-            {/* Alerts */}
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <h2 className="text-xl font-bold text-text mb-6">Alerts</h2>
-              <div className="space-y-4">
-                <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                  <div className="flex items-center">
-                    <div className="w-2 h-2 bg-yellow-400 rounded-full mr-3"></div>
-                    <div>
-                      <p className="text-sm font-medium text-yellow-900">{stats.pendingPayments} Pending Payments</p>
-                      <p className="text-xs text-yellow-700">Require attention</p>
-                    </div>
-                  </div>
-                </div>
-                <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-                  <div className="flex items-center">
-                    <div className="w-2 h-2 bg-red-400 rounded-full mr-3"></div>
-                    <div>
-                      <p className="text-sm font-medium text-red-900">{stats.reportedIssues} Content Reports</p>
-                      <p className="text-xs text-red-700">Need review</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Revenue Chart Placeholder */}
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <h2 className="text-xl font-bold text-text mb-6">Revenue Trend</h2>
-              <div className="h-32 flex items-end justify-between space-x-1">
-                {[65, 45, 78, 52, 89, 67, 91].map((height, index) => (
-                  <div key={index} className="flex-1 flex flex-col items-center">
-                    <div
-                      className="w-full bg-accent rounded-t"
-                      style={{ height: `${height}%` }}
-                    ></div>
-                  </div>
-                ))}
-              </div>
-              <div className="flex justify-between mt-2 text-xs text-gray-600">
-                <span>Mon</span>
-                <span>Tue</span>
-                <span>Wed</span>
-                <span>Thu</span>
-                <span>Fri</span>
-                <span>Sat</span>
-                <span>Sun</span>
-              </div>
-            </div>
-
-            {/* Platform Stats */}
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <h2 className="text-xl font-bold text-text mb-6">Platform Stats</h2>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-text">Courses Published</span>
-                  <span className="font-semibold text-primary">{stats.totalCourses}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-text">Active Instructors</span>
-                  <span className="font-semibold text-secondary">23</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-text">Student Enrollments</span>
-                  <span className="font-semibold text-accent">1,847</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-text">Avg. Session Time</span>
-                  <span className="font-semibold text-text">42 min</span>
-                </div>
-              </div>
+            <div className="bg-neutral-900 dark:bg-primary-900 p-8 rounded-3xl text-white shadow-xl rtl:text-right">
+              <h3 className="text-lg font-bold mb-2">{t('admin.financialOverview', 'Financial Overview')}</h3>
+              <p className="text-3xl font-black mb-2">$14,250.00</p>
+              <p className="text-xs text-neutral-400 dark:text-primary-200 mb-6">{t('common.quarter', 'Q1 2024')}</p>
+              <Link
+                to="/admin/payments"
+                className="flex items-center justify-between p-4 bg-white/10 rounded-2xl hover:bg-white/20 transition-all font-bold text-sm rtl:flex-row-reverse"
+              >
+                {t('admin.viewAllPayments', 'View All Payments')}
+                <ChevronRight className="w-4 h-4 rtl:rotate-180" />
+              </Link>
             </div>
           </div>
         </div>

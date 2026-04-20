@@ -1,279 +1,238 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, Maximize, CheckCircle, Clock, FileText, MessageCircle } from 'lucide-react';
+import { useParams, Link } from 'react-router-dom';
+import { Play, CheckCircle, FileText, Clock, Award, Users, ArrowLeft } from 'lucide-react';
+import { useAuth } from '../../contexts/AuthContext';
+import { mockCourses, mockEnrollments, mockAssignments, mockSubmissions } from '../../utils/mockData';
+import { useTranslation } from 'react-i18next';
 
 const CoursePlayer: React.FC = () => {
-  const [currentLesson, setCurrentLesson] = useState(1);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [volume] = useState(80);
-  const [isMuted, setIsMuted] = useState(false);
-  const [progress, setProgress] = useState(35);
+  const { t } = useTranslation();
+  const { courseId } = useParams<{ courseId: string }>();
+  const { user } = useAuth();
+  const [activeTab, setActiveTab] = useState<'lessons' | 'assignments' | 'details'>('lessons');
 
-  // Mock course data
-  const course = {
-    id: 1,
-    title: 'Web Development Fundamentals',
-    instructor: 'Sarah Johnson',
-    currentLesson: {
-      id: 1,
-      title: 'Introduction to HTML',
-      duration: '15:30',
-      description: 'Learn the basics of HTML and how to structure web pages.',
-      videoUrl: '/api/placeholder/video',
-      completed: false
-    },
-    lessons: [
-      { id: 1, title: 'Introduction to HTML', duration: '15:30', completed: true },
-      { id: 2, title: 'HTML Elements and Tags', duration: '20:45', completed: true },
-      { id: 3, title: 'Creating Your First Webpage', duration: '18:20', completed: false },
-      { id: 4, title: 'HTML Forms', duration: '25:10', completed: false },
-      { id: 5, title: 'Semantic HTML', duration: '22:15', completed: false }
-    ],
-    progress: 35,
-    totalLessons: 24,
-    completedLessons: 8
-  };
+  const id = parseInt(courseId || '0');
+  const course = mockCourses.find(c => c.id === id);
+  const enrollment = mockEnrollments.find(e => e.course_id === id && e.student_id === user?.id);
+  const assignments = mockAssignments.filter(a => a.course_id === id);
+  const studentSubmissions = mockSubmissions.filter(s => s.student_id === user?.id);
 
-  const handlePlayPause = () => {
-    setIsPlaying(!isPlaying);
-  };
-
-  const handleLessonClick = (lessonId: number) => {
-    setCurrentLesson(lessonId);
-    setIsPlaying(false);
-    setProgress(0);
-  };
-
-  const handleCompleteLesson = () => {
-    // Mark lesson as completed
-    console.log('Lesson completed');
-  };
+  if (!course) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <p className="text-red-500 font-bold">{t('common.noData')}</p>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        {/* Course Header */}
-        <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <Link to="/student/courses" className="text-secondary hover:text-primary text-sm mb-2 inline-block">
-                ← Back to My Courses
-              </Link>
-              <h1 className="text-2xl font-bold text-text">{course.title}</h1>
-              <p className="text-gray-600">by {course.instructor}</p>
-            </div>
-            <div className="text-right">
-              <div className="text-sm text-gray-600 mb-1">
-                {course.completedLessons} of {course.totalLessons} lessons completed
-              </div>
-              <div className="w-32 bg-gray-200 rounded-full h-2">
-                <div
-                  className="bg-accent h-2 rounded-full"
-                  style={{ width: `${course.progress}%` }}
-                ></div>
-              </div>
-            </div>
+    <div className="min-h-screen bg-background dark:bg-slate-950">
+      {/* Top Navigation */}
+      <div className="bg-white dark:bg-slate-900 border-b border-neutral-100 dark:border-slate-800 sticky top-0 z-40">
+        <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between rtl:flex-row-reverse">
+          <Link
+            to="/student/dashboard"
+            className="flex items-center gap-2 text-neutral-600 dark:text-neutral-400 font-bold hover:text-primary-600 transition-colors rtl:flex-row-reverse"
+          >
+            <ArrowLeft className="w-5 h-5 rtl:rotate-180" />
+            <span className="hidden sm:inline">{t('common.backToDashboard')}</span>
+          </Link>
+          <div className="flex-1 text-center px-4">
+            <h1 className="text-sm md:text-base font-bold dark:text-white line-clamp-1">{course.title}</h1>
+          </div>
+          <div className="hidden sm:flex items-center gap-2 bg-neutral-100 dark:bg-slate-800 px-3 py-1 rounded-full rtl:flex-row-reverse">
+            <div className="w-2 h-2 rounded-full bg-green-500" />
+            <span className="text-[10px] font-bold uppercase dark:text-neutral-300">{t('common.active')}</span>
           </div>
         </div>
+      </div>
 
-        <div className="grid lg:grid-cols-4 gap-6">
-          {/* Video Player */}
-          <div className="lg:col-span-3">
-            <div className="bg-black rounded-lg overflow-hidden mb-6">
-              {/* Video Placeholder */}
-              <div className="aspect-video bg-gray-900 flex items-center justify-center relative">
-                <div className="text-white text-center">
-                  <div className="text-6xl mb-4">🎥</div>
-                  <p className="text-xl">Video Player</p>
-                  <p className="text-sm opacity-75">Lesson: {course.currentLesson.title}</p>
-                </div>
-
-                {/* Video Controls Overlay */}
-                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent p-4">
-                  {/* Progress Bar */}
-                  <div className="mb-4">
-                    <div className="w-full bg-gray-600 rounded-full h-1">
-                      <div
-                        className="bg-accent h-1 rounded-full"
-                        style={{ width: `${progress}%` }}
-                      ></div>
-                    </div>
-                  </div>
-
-                  {/* Controls */}
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-4">
-                      <button className="text-white hover:text-accent">
-                        <SkipBack className="h-6 w-6" />
-                      </button>
-                      <button
-                        onClick={handlePlayPause}
-                        className="bg-white text-black rounded-full p-2 hover:bg-accent hover:text-white transition-colors"
-                      >
-                        {isPlaying ? <Pause className="h-6 w-6" /> : <Play className="h-6 w-6" />}
-                      </button>
-                      <button className="text-white hover:text-accent">
-                        <SkipForward className="h-6 w-6" />
-                      </button>
-                      <span className="text-white text-sm">2:35 / 15:30</span>
-                    </div>
-
-                    <div className="flex items-center space-x-4">
-                      <div className="flex items-center space-x-2">
-                        <button
-                          onClick={() => setIsMuted(!isMuted)}
-                          className="text-white hover:text-accent"
-                        >
-                          {isMuted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
-                        </button>
-                        <div className="w-20 bg-gray-600 rounded-full h-1">
-                          <div
-                            className="bg-accent h-1 rounded-full"
-                            style={{ width: `${isMuted ? 0 : volume}%` }}
-                          ></div>
-                        </div>
-                      </div>
-                      <button className="text-white hover:text-accent">
-                        <Maximize className="h-5 w-5" />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Lesson Info */}
-            <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-bold text-text">{course.currentLesson.title}</h2>
-                <div className="flex items-center space-x-2">
-                  <Clock className="h-4 w-4 text-gray-400" />
-                  <span className="text-sm text-gray-600">{course.currentLesson.duration}</span>
-                </div>
-              </div>
-
-              <p className="text-text mb-6">{course.currentLesson.description}</p>
-
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-4">
-                  <button className="flex items-center space-x-2 text-secondary hover:text-primary">
-                    <FileText className="h-4 w-4" />
-                    <span>Resources</span>
-                  </button>
-                  <button className="flex items-center space-x-2 text-secondary hover:text-primary">
-                    <MessageCircle className="h-4 w-4" />
-                    <span>Discussion</span>
-                  </button>
-                </div>
-
-                <button
-                  onClick={handleCompleteLesson}
-                  className="flex items-center space-x-2 bg-accent text-white px-6 py-2 rounded-lg hover:bg-orange-600 transition-colors"
-                >
-                  <CheckCircle className="h-4 w-4" />
-                  <span>Mark as Complete</span>
+      <div className="max-w-7xl mx-auto p-4 md:p-8 lg:p-12">
+        <div className="grid lg:grid-cols-3 gap-12">
+          {/* Main Player Area */}
+          <div className="lg:col-span-2 space-y-8">
+            {/* Video Placeholder */}
+            <div className="aspect-video bg-neutral-900 rounded-[2rem] overflow-hidden shadow-2xl relative group border-8 border-neutral-100 dark:border-slate-800">
+              <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-primary-600/20 to-secondary-600/20">
+                <button className="bg-white text-primary-600 p-8 rounded-full shadow-2xl transform transition-all group-hover:scale-110 active:scale-95">
+                  <Play className="w-10 h-10 fill-current rtl:rotate-180" />
                 </button>
               </div>
+              <div className="absolute bottom-6 left-6 right-6 flex items-center justify-between text-white/70 text-xs font-bold uppercase tracking-widest rtl:flex-row-reverse">
+                <span>{t('player.module', 'Module')} 1: {t('player.gettingStarted', 'Getting Started')}</span>
+                <span className="font-mono">04:25 / 12:40</span>
+              </div>
             </div>
 
-            {/* Lesson Content */}
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <h3 className="text-lg font-semibold text-text mb-4">Lesson Content</h3>
-              <div className="prose max-w-none">
-                <p className="mb-4">
-                  Welcome to the introduction to HTML! In this lesson, we'll cover the fundamental building blocks
-                  of web development. HTML (HyperText Markup Language) is the standard markup language for creating
-                  web pages and web applications.
-                </p>
+            {/* Tabs */}
+            <div className="flex border-b border-neutral-100 dark:border-slate-800 rtl:flex-row-reverse">
+              {(['lessons', 'assignments', 'details'] as const).map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => setActiveTab(tab)}
+                  className={`px-8 py-4 text-sm font-black uppercase tracking-widest transition-all relative ${
+                    activeTab === tab
+                      ? 'text-primary-600 border-b-2 border-primary-600'
+                      : 'text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200'
+                  }`}
+                >
+                  {t(`student.tabs.${tab}`, tab)}
+                </button>
+              ))}
+            </div>
 
-                <h4 className="font-semibold mb-2">What you'll learn:</h4>
-                <ul className="list-disc list-inside mb-4 space-y-1">
-                  <li>The basic structure of an HTML document</li>
-                  <li>Common HTML elements and their purposes</li>
-                  <li>How to create your first HTML page</li>
-                  <li>Best practices for writing clean HTML code</li>
-                </ul>
-
-                <h4 className="font-semibold mb-2">Key Concepts:</h4>
-                <div className="bg-gray-50 p-4 rounded-lg mb-4">
-                  <pre className="text-sm">
-{`<!DOCTYPE html>
-<html>
-<head>
-    <title>My First Webpage</title>
-</head>
-<body>
-    <h1>Hello, World!</h1>
-    <p>This is my first HTML page.</p>
-</body>
-</html>`}
-                  </pre>
+            {/* Tab Content */}
+            <div className="min-h-[400px]">
+              {/* LESSONS TAB */}
+              {activeTab === 'lessons' && (
+                <div className="space-y-4">
+                  {course.lessons.map((lesson, i) => (
+                    <div
+                      key={lesson.id}
+                      className="group flex items-center gap-6 p-6 rounded-3xl bg-white dark:bg-slate-900 border border-neutral-100 dark:border-slate-800 hover:border-primary-500 transition-all cursor-pointer rtl:flex-row-reverse"
+                    >
+                      <div className="w-12 h-12 rounded-2xl bg-neutral-100 dark:bg-slate-800 flex items-center justify-center font-black text-neutral-400 group-hover:bg-primary-600 group-hover:text-white transition-all shrink-0">
+                        {i + 1}
+                      </div>
+                      <div className="flex-1 rtl:text-right">
+                        <h4 className="font-bold dark:text-white group-hover:text-primary-600 transition-colors">{lesson.title}</h4>
+                        <p className="text-xs text-neutral-500 mt-1 uppercase tracking-wider font-bold">{t('player.video')} • 12:45m</p>
+                      </div>
+                      {i < 2 ? (
+                        <CheckCircle className="w-6 h-6 text-green-500 shrink-0" />
+                      ) : (
+                        <Play className="w-6 h-6 text-neutral-300 group-hover:text-primary-500 transition-colors shrink-0 rtl:rotate-180" />
+                      )}
+                    </div>
+                  ))}
                 </div>
+              )}
 
-                <p>
-                  Remember to practice what you've learned by creating your own HTML files.
-                  The more you practice, the better you'll understand these concepts.
-                </p>
-              </div>
+              {/* ASSIGNMENTS TAB */}
+              {activeTab === 'assignments' && (
+                <div className="space-y-4">
+                  {assignments.length > 0 ? (
+                    assignments.map((assignment) => {
+                      const submission = studentSubmissions.find(s => s.assignment_id === assignment.id);
+                      return (
+                        <div key={assignment.id} className="p-8 rounded-3xl bg-white dark:bg-slate-900 border border-neutral-100 dark:border-slate-800 rtl:text-right">
+                          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 rtl:flex-row-reverse">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-3 mb-2 rtl:flex-row-reverse">
+                                <FileText className="w-5 h-5 text-primary-600" />
+                                <h4 className="font-bold text-xl dark:text-white">{assignment.title}</h4>
+                              </div>
+                              <p className="text-neutral-500 text-sm mb-4">{assignment.description}</p>
+                              <div className="flex items-center gap-4 text-xs font-bold uppercase tracking-wider text-neutral-400 rtl:flex-row-reverse">
+                                <span className="flex items-center gap-1 rtl:flex-row-reverse">
+                                  <Clock className="w-3.5 h-3.5" /> {t('common.due')}: {assignment.due_date}
+                                </span>
+                                {submission && (
+                                  <span className="text-green-500">{t('common.grade')}: {submission.grade}/100</span>
+                                )}
+                              </div>
+                            </div>
+                            <button
+                              className={`px-6 py-3 rounded-2xl font-bold transition-all shrink-0 ${
+                                submission
+                                  ? 'bg-green-100 dark:bg-green-500/20 text-green-700 dark:text-green-400 cursor-default'
+                                  : 'bg-primary-600 text-white hover:opacity-90 active:scale-95'
+                              }`}
+                            >
+                              {submission ? `✓ ${t('common.submitted')}` : t('student.uploadSolution')}
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <div className="text-center py-20 text-neutral-500 italic">
+                      {t('student.noAssignments')}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* DETAILS TAB */}
+              {activeTab === 'details' && (
+                <div className="bg-white dark:bg-slate-900 p-10 rounded-[2rem] border border-neutral-100 dark:border-slate-800 space-y-10 rtl:text-right">
+                  <div>
+                    <h4 className="text-2xl font-bold dark:text-white mb-4">{t('courseDetails.description')}</h4>
+                    <p className="text-neutral-600 dark:text-neutral-400 leading-relaxed text-lg">{course.description}</p>
+                  </div>
+                  <div className="grid sm:grid-cols-2 gap-8">
+                    <div className="flex items-start gap-4 rtl:flex-row-reverse">
+                      <div className="p-3 bg-blue-50 dark:bg-blue-500/10 rounded-2xl text-blue-600 shrink-0">
+                        <Users className="w-6 h-6" />
+                      </div>
+                      <div className="rtl:text-right">
+                        <p className="text-xs font-bold text-neutral-400 uppercase tracking-widest mb-1">{t('courses.instructor')}</p>
+                        <p className="font-bold dark:text-white">{course.instructor?.name || 'N/A'}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-4 rtl:flex-row-reverse">
+                      <div className="p-3 bg-purple-50 dark:bg-purple-500/10 rounded-2xl text-purple-600 shrink-0">
+                        <Clock className="w-6 h-6" />
+                      </div>
+                      <div className="rtl:text-right">
+                        <p className="text-xs font-bold text-neutral-400 uppercase tracking-widest mb-1">{t('student.enrolledOn')}</p>
+                        <p className="font-bold dark:text-white">{enrollment?.enrolled_at || '—'}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
-          {/* Sidebar - Course Content */}
-          <div className="lg:col-span-1">
-            <div className="bg-white rounded-lg shadow-sm p-4 sticky top-6">
-              <h3 className="text-lg font-semibold text-text mb-4">Course Content</h3>
-
-              <div className="space-y-2 max-h-96 overflow-y-auto">
-                {course.lessons.map((lesson, index) => (
-                  <div
-                    key={lesson.id}
-                    onClick={() => handleLessonClick(lesson.id)}
-                    className={`p-3 rounded-lg cursor-pointer transition-colors ${
-                      currentLesson === lesson.id
-                        ? 'bg-primary text-white'
-                        : 'hover:bg-gray-100'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between mb-1">
-                      <span className={`text-sm font-medium ${
-                        currentLesson === lesson.id ? 'text-white' : 'text-text'
-                      }`}>
-                        {index + 1}. {lesson.title}
-                      </span>
-                      {lesson.completed && (
-                        <CheckCircle className="h-4 w-4 text-green-500" />
-                      )}
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className={`text-xs ${
-                        currentLesson === lesson.id ? 'text-blue-100' : 'text-gray-500'
-                      }`}>
-                        {lesson.duration}
-                      </span>
-                      {currentLesson === lesson.id && (
-                        <span className="text-xs text-blue-100">Current</span>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Course Progress */}
-              <div className="mt-6 pt-4 border-t border-gray-200">
-                <div className="flex justify-between text-sm text-gray-600 mb-2">
-                  <span>Course Progress</span>
-                  <span>{course.progress}%</span>
+          {/* Sidebar */}
+          <div className="space-y-8">
+            {/* Progress Card */}
+            <div className="bg-white dark:bg-slate-900 p-8 rounded-3xl shadow-soft border border-neutral-100 dark:border-slate-800 rtl:text-right">
+              <h4 className="font-bold dark:text-white mb-6">{t('student.courseProgress')}</h4>
+              <div className="flex items-center gap-6 mb-8 rtl:flex-row-reverse">
+                <div className="relative w-24 h-24 shrink-0 flex items-center justify-center">
+                  <svg className="w-full h-full transform -rotate-90">
+                    <circle cx="48" cy="48" r="40" className="stroke-neutral-100 dark:stroke-slate-800 fill-none" strokeWidth="8" />
+                    <circle
+                      cx="48" cy="48" r="40"
+                      className="stroke-primary-600 fill-none transition-all duration-1000"
+                      strokeWidth="8"
+                      strokeDasharray="251.2"
+                      strokeDashoffset={251.2 - (251.2 * (enrollment?.progress || 0)) / 100}
+                      strokeLinecap="round"
+                    />
+                  </svg>
+                  <span className="absolute text-xl font-black dark:text-white">{enrollment?.progress || 0}%</span>
                 </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div
-                    className="bg-accent h-2 rounded-full"
-                    style={{ width: `${course.progress}%` }}
-                  ></div>
+                <div className="rtl:text-right">
+                  <p className="text-sm font-bold dark:text-white leading-tight">{t('student.welcome')}</p>
+                  <p className="text-xs text-neutral-500 mt-1">
+                    {t('student.lessons', { count: course.lessons.length })}
+                  </p>
                 </div>
-                <p className="text-xs text-gray-500 mt-2">
-                  {course.completedLessons} of {course.totalLessons} lessons completed
-                </p>
               </div>
+              <Link
+                to="/student/dashboard"
+                className="block w-full py-3 bg-neutral-100 dark:bg-slate-800 hover:bg-primary-600 hover:text-white dark:text-white rounded-2xl text-center text-sm font-bold transition-all"
+              >
+                {t('common.backToDashboard')}
+              </Link>
+            </div>
+
+            {/* Course Includes */}
+            <div className="space-y-4 rtl:text-right">
+              <h4 className="font-bold dark:text-white px-2">{t('student.courseIncludes')}:</h4>
+              {[
+                { icon: <Clock className="w-4 h-4" />, text: `${course.duration} ${t('common.hours')}` },
+                { icon: <FileText className="w-4 h-4" />, text: `${assignments.length} ${t('student.assignments')}` },
+                { icon: <Award className="w-4 h-4" />, text: t('student.certificateCompletion') },
+              ].map((item, i) => (
+                <div key={i} className="flex items-center gap-3 p-4 rounded-2xl bg-white dark:bg-slate-900 border border-neutral-100 dark:border-slate-800 text-sm font-medium text-neutral-600 dark:text-neutral-400 rtl:flex-row-reverse">
+                  <div className="text-primary-600">{item.icon}</div>
+                  {item.text}
+                </div>
+              ))}
             </div>
           </div>
         </div>
