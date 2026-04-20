@@ -1,0 +1,174 @@
+{
+  "nav": {
+    "home": "الرئيسية",
+    "courses": "الدورات",
+    "about": "حول",
+    "login": "تسجيل الدخول",
+    "register": "سجل الآن"
+  },
+  "theme": {
+    "toggle": "تغيير الوضع",
+    "light": "نهاري",
+    "dark": "ليلي"
+  },
+  "language": {
+    "label": "اللغة",
+    "switch": "تبديل اللغة"
+  },
+  "home": {
+    "hero": {
+      "title": "ابدأ رحلة التعلم الخاصة بك مع فور أكاديمي",
+      "subtitle": "منصة تعليمية متكاملة تقدم دورات احترافية يديرها مدربون خبراء",
+      "browse": "استعرض الدورات"
+    },
+    "about": {
+      "title": "معلومات عنا",
+      "who": "من نحن",
+      "vision": "رؤيتنا",
+      "why": "لماذا تختارنا",
+      "whoText": "فور أكاديمي هي منصة تعليمية رائدة مكرسة لتقديم تعليم عالي الجودة من خلال تجارب تعلم مبتكرة عبر الإنترنت.",
+      "visionText": "تمكين المتعلمين في جميع أنحاء العالم من خلال تعليم ميسر وفعال، وسد الفجوة بين المعرفة والفرص.",
+      "whyText": "مدربون خبراء، جداول تعلم مرنة، عروض دورة شاملة، ومسارات تعلم مخصصة لأهدافك."
+    },
+    "featured": {
+      "title": "الدورات المميزة",
+      "description": "اكتشف دوراتنا الأكثر شعبية المصممة لمساعدتك على تطوير مهاراتك المهنية",
+      "viewAll": "عرض جميع الدورات"
+    },
+    "benefits": {
+      "title": "لماذا تختار فور أكاديمي",
+      "certificates": "شهادات معتمدة",
+      "instructors": "مدربون محترفون",
+      "tracking": "متابعة التقدم",
+      "platform": "منصة سهلة الاستخدام",
+      "certText": "احصل على شهادات معترف بها عند إكمال الدورة",
+      "instructorsText": "تعلم من خبراء الصناعة ذوي الخبرة الواسعة",
+      "trackingText": "تابع تقدمك التعليمي من خلال تحليلات مفصلة",
+      "platformText": "واجهة سهلة الاستخدام تعمل على أي جهاز"
+    },
+    "cta": {
+      "title": "هل أنت مستعد للبدء في التعلم؟",
+      "subtitle": "انضم إلى آلاف الطلاب الذين يطورون حياتهم المهنية مع فور أكاديمي",
+      "start": "ابدأ مجاناً",
+      "browse": "استعرض الدورات"
+    }
+  },
+  "auth": {
+    "welcomeBack": "مرحباً بعودتك",
+    "loginSubtitle": "سجل الدخول إلى حساب فور أكاديمي الخاص بك",
+    "email": "البريد الإلكتروني",
+    "password": "كلمة المرور",
+    "remember": "تذكرني",
+    "forgotPassword": "نسيت كلمة المرور؟",
+    "signIn": "تسجيل الدخول",
+    "signingIn": "جاري تسجيل الدخول...",
+    "demoTitle": "حسابات العرض",
+    "studentDemo": "طالب: student@fouracademy.com / password",
+    "instructorDemo": "مدرب: instructor@fouracademy.com / password",
+    "adminDemo": "مدير: admin@fouracademy.com / password",
+    "noAccount": "ليس لديك حساب؟",
+    "signUp": "سجل الآن مجاناً",
+    "joinTitle": "انضم إلى فور أكاديمي",
+    "joinSubtitle": "ابدأ رحلة التعلم الخاصة بك اليوم",
+    "fullName": "الاسم الكامل",
+    "placeholderName": "أدخل اسمك الكامل",
+    "roleLabel": "أريد الانضمام ك",
+    "studentRole": "طالب - تعلم مهارات جديدة",
+    "instructorRole": "مدرب - درّس وشارك المعرفة",
+    "createPassword": "كلمة المرور",
+    "placeholderPassword": "أنشئ كلمة مرور",
+    "confirmPassword": "تأكيد كلمة المرور",
+    "placeholderConfirmPassword": "أكد كلمة المرور",
+    "acceptTerms": "أوافق على الشروط والأحكام وسياسة الخصوصية",
+    "createAccount": "إنشاء حساب",
+    "creatingAccount": "جارٍ إنشاء الحساب...",
+    "alreadyAccount": "لديك حساب بالفعل؟",
+    "signInLink": "تسجيل الدخول"
+  },
+  "courses": {
+    "title": "دوراتنا",
+    "subtitle": "اكتشف دورات احترافية يقدمها مدربون خبراء. ابدأ رحلتك التعليمية اليوم.",
+    "search": "ابحث عن الدورات...",
+    "allCategories": "جميع الفئات",
+    "showing": "عرض {{count}} من {{total}} دورة",
+    "students": "طلاب",
+    "instructor": "المدرب",
+    "duration": "المدة",
+    "price": "السعر",
+    "viewDetails": "عرض التفاصيل"
+  },
+  "courseDetails": {
+    "enrollNow": "اشترك الآن",
+    "startLearning": "ابدأ التعلم",
+    "whatYouLearn": "ماذا ستتعلم",
+    "courseContent": "محتوى الدورة",
+    "requirements": "المتطلبات",
+    "description": "الوصف"
+  },
+  "dashboard": {
+    "topbar": {
+      "title": "أدوات لوحة التحكم",
+      "subtitle": "استخدم هذه الأدوات لتغيير الوضع واللغة عبر المنصة"
+    }
+  },
+  "footer": {
+    "title": "فور أكاديمي",
+    "description": "منصة تعليمية متكاملة تقدم دورات احترافية يديرها مدربون خبراء.",
+    "quickLinks": "روابط سريعة",
+    "contactInfo": "معلومات التواصل",
+    "stayUpdated": "ابقَ على اطلاع",
+    "emailPlaceholder": "أدخل بريدك الإلكتروني",
+    "subscribe": "اشترك",
+    "copyright": "© 2024 فور أكاديمي. جميع الحقوق محفوظة.",
+    "privacy": "سياسة الخصوصية",
+    "terms": "شروط الخدمة",
+    "support": "الدعم"
+  },
+  "student": {
+    "welcome": "مرحباً بعودتك، جون!",
+    "subtitle": "تابع رحلة تعلمك مع فور أكاديمي",
+    "totalCourses": "إجمالي الدورات",
+    "completed": "المكتملة",
+    "studyHours": "ساعات الدراسة",
+    "certificates": "الشهادات",
+    "continueLearning": "متابعة التعلم",
+    "viewAllCourses": "عرض جميع الدورات →",
+    "progress": "التقدم",
+    "continue": "متابعة",
+    "recentAssignments": "المهام الأخيرة",
+    "viewAllAssignments": "عرض جميع المهام →",
+    "due": "الموعد النهائي"
+  },
+  "instructor": {
+    "dashboardTitle": "لوحة تحكم المدرب",
+    "subtitle": "قم بإدارة دوراتك وطلابك ومهامك",
+    "totalCourses": "إجمالي الدورات",
+    "totalStudents": "إجمالي الطلاب",
+    "averageRating": "متوسط التقييم",
+    "totalRevenue": "إجمالي الإيرادات",
+    "myCourses": "دوراتي",
+    "manageAllCourses": "إدارة جميع الدورات →",
+    "manageLessons": "إدارة الدروس →"
+  },
+  "admin": {
+    "dashboardTitle": "لوحة تحكم المدير",
+    "subtitle": "قم بإدارة نظام LMS الخاص بك ومراقبة أداء النظام",
+    "totalUsers": "إجمالي المستخدمين",
+    "totalCourses": "إجمالي الدورات",
+    "totalRevenue": "إجمالي الإيرادات",
+    "activeUsers": "المستخدمون النشطون",
+    "quickActions": "إجراءات سريعة",
+    "manageUsers": "إدارة المستخدمين",
+    "manageCourses": "إدارة الدورات",
+    "payments": "المدفوعات",
+    "reports": "التقارير",
+    "settings": "الإعدادات",
+    "security": "الأمان",
+    "recentActivities": "النشاطات الأخيرة",
+    "systemHealth": "صحة النظام",
+    "server": "الخادم",
+    "database": "قاعدة البيانات",
+    "storage": "التخزين",
+    "uptime": "زمن التشغيل"
+  }
+}
