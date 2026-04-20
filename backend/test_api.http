@@ -1,0 +1,60 @@
+@baseUrl = http://127.0.0.1:8000/api/v1
+@token = YOUR_SANCTUM_TOKEN_HERE
+
+### 1. تسجيل مستخدم جديد (Register Student)
+# @name register
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+Accept: application/json
+
+{
+    "name": "Test Student",
+    "email": "student@example.com",
+    "password": "password123",
+    "password_confirmation": "password123",
+    "role": "student"
+}
+
+### 2. تسجيل دخول كمسؤول (Admin Login)
+# @name adminLogin
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+Accept: application/json
+
+{
+    "email": "admin@example.com",
+    "password": "password123"
+}
+
+### 3. رفع طلب مدفوعات (Student)
+# ملاحظة: قم بتبديل YOUR_SANCTUM_TOKEN_HERE في أعلى الملف بالتوكن الخاص بالطالب
+# للرفع كمرفق (form-data) يجب استخدام أداة مثل Postman لأن رفع الملفات معقد قليلاً في HTTP Client
+POST {{baseUrl}}/payments
+Authorization: Bearer {{token}}
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+Accept: application/json
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="course_id"
+
+1
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="amount"
+
+50.00
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+### 4. استعراض المدفوعات للإدارة (Admin)
+GET {{baseUrl}}/admin/payments
+Authorization: Bearer {{token}}
+Accept: application/json
+
+### 5. موافقة على الدفع (هذه هي العملية التي ستنشئ التسجيل Enrollment)
+POST {{baseUrl}}/admin/payments/1/approve
+Authorization: Bearer {{token}}
+Accept: application/json
+
+### 6. التحقق من اشتراكات الطالب
+GET {{baseUrl}}/enrollments/my
+Authorization: Bearer {{token}}
+Accept: application/json
