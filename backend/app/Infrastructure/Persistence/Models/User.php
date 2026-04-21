@@ -11,6 +11,11 @@ class User extends Authenticatable
 {
     use HasApiTokens, HasFactory, Notifiable;
 
+    protected static function newFactory()
+    {
+        return \Database\Factories\UserFactory::new();
+    }
+
     protected $fillable = [
         'name', 'email', 'phone', 'password',
         'role', 'status', 'device_uuid', 'fingerprint_hash',

@@ -20,7 +20,7 @@ class ChapterController extends Controller
 
         $chapter = $course->chapters()->create($request->all());
 
-        return response()->json($chapter, 201);
+        return $this->apiResponse('success', $chapter, 'Chapter created successfully', 201);
     }
 
     public function update(Request $request, Chapter $chapter)
@@ -34,13 +34,13 @@ class ChapterController extends Controller
 
         $chapter->update($request->all());
 
-        return response()->json($chapter);
+        return $this->apiResponse('success', $chapter, 'Chapter updated successfully');
     }
 
     public function destroy(Chapter $chapter)
     {
         $this->authorize('update', $chapter->course);
         $chapter->delete();
-        return response()->json(['message' => 'Chapter deleted']);
+        return $this->apiResponse('success', null, 'Chapter deleted');
     }
 }

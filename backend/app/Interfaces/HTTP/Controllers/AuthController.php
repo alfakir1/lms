@@ -4,7 +4,7 @@ namespace App\Interfaces\HTTP\Controllers;
 
 use App\Application\Users\AuthService;
 use Illuminate\Http\Request;
-use Illuminate\Routing\Controller;
+use App\Http\Controllers\Controller;
 use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
@@ -24,11 +24,10 @@ class AuthController extends Controller
 
         $result = $this->authService->register($data);
 
-        return response()->json([
-            'message' => 'Registered successfully.',
+        return $this->apiResponse('success', [
             'user'    => $result['user'],
             'token'   => $result['token'],
-        ], 201);
+        ], 'Registered successfully.', 201);
     }
 
     public function login(Request $request)
@@ -46,31 +45,30 @@ class AuthController extends Controller
                 $data['device_uuid'] ?? null
             );
 
-            return response()->json([
-                'message' => 'Login successful.',
+            return $this->apiResponse('success', [
                 'user'    => $result['user'],
                 'token'   => $result['token'],
-            ]);
+            ], 'Login successful.');
         } catch (\Exception $e) {
-            return response()->json(['message' => $e->getMessage()], 401);
+            return $this->apiResponse('error', null, $e->getMessage(), 401);
         }
     }
 
     public function logout(Request $request)
     {
         $this->authService->logout($request->user());
-        return response()->json(['message' => 'Logged out successfully.']);
+        return $this->apiResponse('success', null, 'Logged out successfully.');
     }
 
     public function me(Request $request)
     {
-        return response()->json(['user' => $request->user()]);
+        return $this->apiResponse('success', $request->user());
     }
 
     public function updateFingerprint(Request $request)
     {
         $data = $request->validate(['fingerprint_hash' => 'required|string']);
         $this->authService->updateFingerprint($request->user(), $data['fingerprint_hash']);
-        return response()->json(['message' => 'Fingerprint updated.']);
+        return $this->apiResponse('success', null, 'Fingerprint updated.');
     }
 }

@@ -2,7 +2,7 @@
 
 namespace App\Application\Enrollment;
 
-use App\Infrastructure\Persistence\Models\Student;
+use App\Infrastructure\Persistence\Models\User;
 use App\Infrastructure\Persistence\Models\Course;
 use App\Infrastructure\Persistence\Models\Enrollment;
 use App\Infrastructure\Persistence\Models\CourseDiscount;
@@ -12,9 +12,9 @@ use Illuminate\Support\Facades\DB;
 class EnrollmentService
 {
     /**
-     * Check if a student meets prerequisites for a course.
+     * Check if a user meets prerequisites for a course.
      */
-    public function meetsPrerequisites(Student $student, Course $course): bool
+    public function meetsPrerequisites(User $user, Course $course): bool
     {
         $prerequisites = $course->prerequisites;
 
@@ -23,7 +23,7 @@ class EnrollmentService
         }
 
         // Check if there's an approved exemption
-        $hasExemption = PrerequisiteExemption::where('student_id', $student->id)
+        $hasExemption = PrerequisiteExemption::where('user_id', $user->id)
             ->where('course_id', $course->id)
             ->exists();
 
@@ -33,7 +33,7 @@ class EnrollmentService
 
         // Check if student completed every prerequisite course
         foreach ($prerequisites as $prereq) {
-            $completed = Enrollment::where('student_id', $student->id)
+            $completed = Enrollment::where('user_id', $user->id)
                 ->where('course_id', $prereq->id)
                 ->where('status', 'completed')
                 ->exists();
@@ -49,10 +49,10 @@ class EnrollmentService
     /**
      * Calculate the final price after any active discount.
      */
-    public function calculatePrice(Student $student, Course $course): float
+    public function calculatePrice(User $user, Course $course): float
     {
         $discount = CourseDiscount::where('course_id', $course->id)
-            ->where(fn ($q) => $q->whereNull('student_id')->orWhere('student_id', $student->id))
+            ->where(fn ($q) => $q->whereNull('user_id')->orWhere('user_id', $user->id))
             ->where('is_active', true)
             ->where(fn ($q) => $q->whereNull('expires_at')->orWhere('expires_at', '>', now()))
             ->orderByDesc('discount_percentage')
@@ -66,28 +66,28 @@ class EnrollmentService
     }
 
     /**
-     * Enroll a student in a course (wraps prerequisite check + discount).
+     * Enroll a user in a course (wraps prerequisite check + discount).
      */
-    public function enroll(Student $student, Course $course): Enrollment
+    public function enroll(User $user, Course $course): Enrollment
     {
-        if (! $this->meetsPrerequisites($student, $course)) {
-            throw new \Exception('Student does not meet course prerequisites.');
+        if (! $this->meetsPrerequisites($user, $course)) {
+            throw new \Exception('User does not meet course prerequisites.');
         }
 
-        $alreadyEnrolled = Enrollment::where('student_id', $student->id)
+        $alreadyEnrolled = Enrollment::where('user_id', $user->id)
             ->where('course_id', $course->id)
             ->whereIn('status', ['pending', 'active'])
             ->exists();
 
         if ($alreadyEnrolled) {
-            throw new \Exception('Student is already enrolled in this course.');
+            throw new \Exception('User is already enrolled in this course.');
         }
 
-        return DB::transaction(function () use ($student, $course) {
-            $finalPrice = $this->calculatePrice($student, $course);
+        return DB::transaction(function () use ($user, $course) {
+            $finalPrice = $this->calculatePrice($user, $course);
 
             return Enrollment::create([
-                'student_id'     => $student->id,
+                'user_id'        => $user->id,
                 'course_id'      => $course->id,
                 'payment_status' => $finalPrice > 0 ? 'unpaid' : 'paid',
                 'status'         => 'pending',

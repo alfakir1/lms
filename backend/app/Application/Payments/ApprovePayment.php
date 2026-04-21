@@ -2,6 +2,8 @@
 
 namespace App\Application\Payments;
 
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use App\Application\Interfaces\PaymentRepositoryInterface;
 use App\Application\Events\PaymentApproved;
 
@@ -25,10 +27,14 @@ class ApprovePayment
             throw new \Exception('Payment is already approved.');
         }
 
-        $this->paymentRepository->updateStatus($payment, 'approved', $adminId);
+        DB::transaction(function () use ($payment, $adminId) {
+            $this->paymentRepository->updateStatus($payment, 'approved', $adminId);
 
-        // Dispatch Event for Enrollment Creation
-        event(new PaymentApproved($payment));
+            // Dispatch Event for Enrollment Creation
+            event(new PaymentApproved($payment));
+        });
+
+        Log::info('Payment approved', ['payment_id' => $paymentId, 'admin_id' => $adminId, 'user_id' => $payment->user_id]);
 
         return $payment;
     }

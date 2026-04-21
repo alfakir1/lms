@@ -6,27 +6,11 @@ import api from '../../api/axios';
 
 const AdminDashboard: React.FC = () => {
   // Fetch real data from Backend with mock fallback
-  const { data: statsResponse, isLoading, error } = useQuery({
+  const { data: stats, isLoading, error } = useQuery({
     queryKey: ['admin-stats'],
     queryFn: async () => {
-      try {
-        const response = await api.get('/admin/stats');
-        return response.data.data;
-      } catch (err) {
-        console.warn('API fetch failed for admin-stats, using mock data');
-        return {
-          total_users: 1250,
-          total_courses: 48,
-          total_revenue: 15420,
-          active_students: 840,
-          pending_enrollments: 12,
-          recent_activities: [
-            { id: 1, message: 'New student John Doe registered', time: '2 minutes ago' },
-            { id: 2, message: 'Instructor Sarah added a new course', time: '15 minutes ago' },
-            { id: 3, message: 'Payment received for STU-1002', time: '1 hour ago' }
-          ]
-        };
-      }
+      const response = await api.get('/admin/stats');
+      return response.data.data;
     }
   });
 
@@ -39,7 +23,15 @@ const AdminDashboard: React.FC = () => {
     );
   }
 
-  const stats = statsResponse;
+  if (error || !stats) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4 text-center">
+        <h2 className="text-2xl font-bold text-red-600 mb-2">Error Loading Dashboard</h2>
+        <p className="text-gray-600 mb-4">You may not have the required permissions or the API is unavailable.</p>
+        <Link to="/" className="text-primary hover:underline">Return to Home</Link>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">

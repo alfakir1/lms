@@ -21,10 +21,11 @@ class PaymentController extends Controller
         $this->paymentRepo = $paymentRepo;
     }
 
-    public function index()
+    public function index(Request $request)
     {
-        $payments = $this->paymentRepo->listByUserPaginated(Auth::id());
-        return response()->json($payments);
+        $perPage = $request->input('per_page', 10);
+        $payments = $this->paymentRepo->listByUserPaginated(Auth::id(), $perPage);
+        return $this->apiResponse('success', $payments, 'Payments retrieved successfully');
     }
 
     public function store(Request $request)
@@ -32,7 +33,7 @@ class PaymentController extends Controller
         $request->validate([
             'course_id' => 'required|exists:courses,id',
             'amount' => 'required|numeric|min:0',
-            'proof_file' => 'nullable|image|max:5000',
+            'proof_file' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5000',
         ]);
 
         try {
@@ -42,9 +43,9 @@ class PaymentController extends Controller
                 $request->amount,
                 $request->file('proof_file')
             );
-            return response()->json($payment, 201);
+            return $this->apiResponse('success', $payment, 'Payment request submitted successfully', 201);
         } catch (\Exception $e) {
-            return response()->json(['error' => $e->getMessage()], 400);
+            return $this->apiResponse('error', null, $e->getMessage(), 400);
         }
     }
 }

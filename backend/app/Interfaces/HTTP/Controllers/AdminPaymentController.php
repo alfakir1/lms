@@ -25,10 +25,11 @@ class AdminPaymentController extends Controller
         $this->paymentRepo = $paymentRepo;
     }
 
-    public function index()
+    public function index(Request $request)
     {
-        $payments = $this->paymentRepo->listAllPaginated(20);
-        return response()->json($payments);
+        $perPage = $request->input('per_page', 10);
+        $payments = $this->paymentRepo->listAllPaginated($perPage);
+        return $this->apiResponse('success', $payments, 'All payments retrieved successfully');
     }
 
     public function approve($id)
@@ -41,9 +42,9 @@ class AdminPaymentController extends Controller
 
         try {
             $payment = $this->approvePaymentUseCase->execute($id, $user->id);
-            return response()->json(['message' => 'Payment approved successfully', 'payment' => $payment]);
+            return $this->apiResponse('success', $payment, 'Payment approved successfully');
         } catch (\Exception $e) {
-            return response()->json(['error' => $e->getMessage()], 400);
+            return $this->apiResponse('error', null, $e->getMessage(), 400);
         }
     }
 
@@ -56,9 +57,9 @@ class AdminPaymentController extends Controller
 
         try {
             $payment = $this->rejectPaymentUseCase->execute($id, $user->id);
-            return response()->json(['message' => 'Payment rejected successfully', 'payment' => $payment]);
+            return $this->apiResponse('success', $payment, 'Payment rejected successfully');
         } catch (\Exception $e) {
-            return response()->json(['error' => $e->getMessage()], 400);
+            return $this->apiResponse('error', null, $e->getMessage(), 400);
         }
     }
 }

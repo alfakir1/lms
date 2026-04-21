@@ -6,7 +6,7 @@ use App\Application\Enrollment\EnrollmentService;
 use App\Infrastructure\Persistence\Models\Course;
 use App\Infrastructure\Persistence\Models\Enrollment;
 use Illuminate\Http\Request;
-use Illuminate\Routing\Controller;
+use App\Http\Controllers\Controller;
 
 class EnrollmentController extends Controller
 {
@@ -15,36 +15,34 @@ class EnrollmentController extends Controller
     /** Student: request enrollment in a course */
     public function enroll(Request $request, Course $course)
     {
-        $student = $request->user()->student;
-
-        if (! $student) {
-            return response()->json(['message' => 'Only students can enroll.'], 403);
-        }
+        $user = $request->user();
 
         try {
-            $enrollment = $this->enrollmentService->enroll($student, $course);
-            return response()->json(['message' => 'Enrollment request submitted.', 'enrollment' => $enrollment], 201);
+            // Service expects Student entity usually, but here we might need to update the service too.
+            // For now, let's keep it consistent with the user_id change.
+            $enrollment = $this->enrollmentService->enroll($user, $course);
+            return $this->apiResponse('success', $enrollment, 'Enrollment request submitted', 201);
         } catch (\Exception $e) {
-            return response()->json(['message' => $e->getMessage()], 422);
+            return $this->apiResponse('error', null, $e->getMessage(), 422);
         }
     }
 
-    /** Admin: list all pending enrollments */
-    public function pending()
+    public function pending(Request $request)
     {
-        $enrollments = Enrollment::with(['student.user', 'course'])
+        $perPage = $request->input('per_page', 10);
+        $enrollments = Enrollment::with(['user', 'course'])
             ->where('status', 'pending')
             ->latest()
-            ->paginate(20);
+            ->paginate($perPage);
 
-        return response()->json($enrollments);
+        return $this->apiResponse('success', $enrollments);
     }
 
     /** Admin: approve an enrollment */
     public function approve(Enrollment $enrollment)
     {
         $enrollment = $this->enrollmentService->approve($enrollment);
-        return response()->json(['message' => 'Enrollment approved.', 'enrollment' => $enrollment]);
+        return $this->apiResponse('success', $enrollment, 'Enrollment approved');
     }
 
     /** Admin: ban a student from a course */
@@ -68,12 +66,12 @@ class EnrollmentController extends Controller
     /** Student: view own enrollments */
     public function myEnrollments(Request $request)
     {
-        $student = $request->user()->student;
+        $user = $request->user();
         $enrollments = Enrollment::with('course')
-            ->where('student_id', $student->id)
+            ->where('user_id', $user->id)
             ->latest()
             ->get();
 
-        return response()->json($enrollments);
+        return $this->apiResponse('success', $enrollments);
     }
 }

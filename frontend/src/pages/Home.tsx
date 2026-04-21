@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useQuery } from '@tanstack/react-query';
+import api from '../api/axios';
 import { 
   BookOpen, 
   Award, 
@@ -9,45 +11,23 @@ import {
   Star, 
   Clock, 
   CheckCircle2,
-  X
+  X,
+  Loader2
 } from 'lucide-react';
 
 const Home: React.FC = () => {
   const [selectedCourse, setSelectedCourse] = useState<number | null>(null);
   const [selectedFeature, setSelectedFeature] = useState<number | null>(null);
 
-  const courses = [
-    {
-      id: 1,
-      title: "Full-Stack Web Development",
-      instructor: "Dr. Sarah Ahmed",
-      price: "$199",
-      duration: "40 Hours",
-      rating: 4.8,
-      description: "Learn how to build modern web applications using React, Node.js, and PostgreSQL. This course covers everything from basic HTML/CSS to advanced database management and deployment.",
-      features: ["Hands-on projects", "Certificate of completion", "Job placement assistance"]
-    },
-    {
-      id: 2,
-      title: "Data Science & AI",
-      instructor: "Eng. Omar Khalid",
-      price: "$249",
-      duration: "60 Hours",
-      rating: 4.9,
-      description: "Dive deep into the world of data science. Learn Python, Machine Learning, and Neural Networks. Master data visualization and statistical analysis to solve real-world problems.",
-      features: ["Real-world datasets", "Mentorship sessions", "Access to AI labs"]
-    },
-    {
-      id: 3,
-      title: "Graphic Design Masterclass",
-      instructor: "Mona Yassin",
-      price: "$149",
-      duration: "30 Hours",
-      rating: 4.7,
-      description: "Master the art of visual communication. Learn Adobe Photoshop, Illustrator, and Figma. Build a professional portfolio and understand design principles and branding.",
-      features: ["Portfolio reviews", "Creative workshops", "Lifetime access"]
+  const { data: response, isLoading } = useQuery({
+    queryKey: ['featured-courses'],
+    queryFn: async () => {
+      const resp = await api.get('/courses');
+      return resp.data;
     }
-  ];
+  });
+
+  const courses = (response?.data || []).slice(0, 3);
 
   const featuresList = [
     {
@@ -125,7 +105,11 @@ const Home: React.FC = () => {
           </div>
           
           <div className="grid md:grid-cols-3 gap-8">
-            {courses.map((course) => (
+            {isLoading ? (
+              <div className="col-span-3 flex justify-center py-12">
+                <Loader2 className="w-12 h-12 text-primary animate-spin" />
+              </div>
+            ) : courses.map((course: any) => (
               <motion.div
                 key={course.id}
                 onClick={() => setSelectedCourse(course.id)}
@@ -138,21 +122,22 @@ const Home: React.FC = () => {
                 <div className="p-6">
                   <div className="flex items-center gap-2 mb-3">
                     <Star className="w-4 h-4 text-accent fill-accent" />
-                    <span className="text-sm font-bold text-neutral-700 dark:text-neutral-300">{course.rating}</span>
+                    <span className="text-sm font-bold text-neutral-700 dark:text-neutral-300">{course.rating || '4.5'}</span>
                   </div>
                   <h3 className="text-2xl font-bold text-neutral-900 dark:text-white mb-2">{course.title}</h3>
-                  <p className="text-sm text-neutral-500 dark:text-neutral-400 mb-4">By {course.instructor}</p>
+                  <p className="text-sm text-neutral-500 dark:text-neutral-400 mb-4">By {course.instructor?.user?.name || 'Expert'}</p>
                   <div className="flex justify-between items-center border-t border-neutral-100 dark:border-slate-800 pt-4">
-                    <span className="text-xl font-bold text-primary dark:text-secondary">{course.price}</span>
+                    <span className="text-xl font-bold text-primary dark:text-secondary">${course.price}</span>
                     <div className="flex items-center gap-2 text-neutral-500 dark:text-neutral-400 text-sm">
                       <Clock className="w-4 h-4" />
-                      {course.duration}
+                      {course.duration || 'Flexible'}
                     </div>
                   </div>
                 </div>
               </motion.div>
             ))}
           </div>
+
 
           <AnimatePresence>
             {selectedCourse && (

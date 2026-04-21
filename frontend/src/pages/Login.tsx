@@ -29,7 +29,7 @@ const Login: React.FC = () => {
 
     try {
       // Try real API first
-      const response = await api.post('/login', { email, password });
+      const response = await api.post('/auth/login', { email, password });
       login(response.data.user, response.data.token);
       navigateBasedOnRole(response.data.user);
     } catch (err: any) {

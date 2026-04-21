@@ -61,46 +61,60 @@ class DatabaseSeeder extends Seeder
         ]);
         Student::create(['user_id' => $studentUser->id]);
 
-        // 5. Create a Mock Course for the Instructor
-        $course = Course::create([
-            'instructor_id' => $instructor->id,
-            'title' => 'Mastering Laravel Clean Architecture',
-            'slug' => 'mastering-laravel-clean-architecture-' . Str::uuid(),
-            'description' => 'A complete guide to building enterprise applications.',
-            'price' => 199.99,
-            'status' => 'published',
-        ]);
+        // 5. Create Multiple Instructors and Courses
+        $categories = ['web-development', 'programming', 'data-science', 'design', 'marketing'];
+        $instructorNames = ['Dr. Sarah Ahmed', 'Eng. Mohammed Ali', 'Prof. David Chen', 'Expert Lisa Ray'];
 
-        // 6. Create Chapters
-        $chapter1 = Chapter::create([
-            'course_id' => $course->id,
-            'title' => 'Introduction to Clean Architecture',
-            'order_index' => 1,
-        ]);
+        foreach ($instructorNames as $name) {
+            $user = User::create([
+                'name' => $name,
+                'email' => strtolower(str_replace(' ', '.', $name)) . '@example.com',
+                'password' => Hash::make('password123'),
+                'role' => 'instructor',
+                'status' => 'active'
+            ]);
+            $inst = Instructor::create(['user_id' => $user->id, 'bio' => "Expert in " . $categories[array_rand($categories)]]);
 
-        $chapter2 = Chapter::create([
-            'course_id' => $course->id,
-            'title' => 'Building the Domain Layer',
-            'order_index' => 2,
-        ]);
+            // Create 2 courses for each instructor
+            for ($i = 1; $i <= 2; $i++) {
+                $category = $categories[array_rand($categories)];
+                $course = Course::create([
+                    'instructor_id' => $inst->id,
+                    'title' => "Mastering {$category} Vol. {$i}",
+                    'slug' => Str::slug("Mastering {$category} Vol. {$i}") . '-' . Str::random(5),
+                    'description' => "A comprehensive guide to {$category} techniques and best practices.",
+                    'price' => rand(99, 299),
+                    'status' => 'published',
+                ]);
 
-        // 7. Create Lectures
-        Lecture::create([
-            'chapter_id' => $chapter1->id,
-            'title' => 'What is Clean Architecture?',
-            'content_type' => 'video',
-            'content_url' => 'lectures/videos/mock_video_1.mp4',
-            'duration' => 600, // 10 mins
-            'order_index' => 1,
-        ]);
+                // Create a basic chapter and lecture for each
+                $chapter = Chapter::create([
+                    'course_id' => $course->id,
+                    'title' => 'Getting Started',
+                    'order_index' => 1,
+                ]);
 
-        Lecture::create([
-            'chapter_id' => $chapter2->id,
-            'title' => 'Entities and Value Objects',
-            'content_type' => 'video',
-            'content_url' => 'lectures/videos/mock_video_2.mp4',
-            'duration' => 1200, // 20 mins
-            'order_index' => 1,
-        ]);
+                Lecture::create([
+                    'chapter_id' => $chapter->id,
+                    'title' => 'Introduction to the Course',
+                    'content_type' => 'video',
+                    'content_url' => 'lectures/videos/intro.mp4',
+                    'duration' => 600,
+                    'order_index' => 1,
+                ]);
+            }
+        }
+
+        // 6. Create Multiple Students
+        for ($i = 1; $i <= 5; $i++) {
+            $user = User::create([
+                'name' => "Student $i",
+                'email' => "student$i@example.com",
+                'password' => Hash::make('password123'),
+                'role' => 'student',
+                'status' => 'active'
+            ]);
+            Student::create(['user_id' => $user->id]);
+        }
     }
 }

@@ -16,6 +16,7 @@ class Payment extends Model
         'payment_method', 
         'status', 
         'proof_image', 
+        'reference_code',
         'reviewed_by', 
         'reviewed_at'
     ];

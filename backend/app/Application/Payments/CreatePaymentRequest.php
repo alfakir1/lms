@@ -31,6 +31,8 @@ class CreatePaymentRequest
             $proofPath = $this->storageService->uploadFile($path, file_get_contents($proofFile->getRealPath()));
         }
 
+        $referenceCode = 'PAY-' . strtoupper(Str::random(8));
+
         return $this->paymentRepository->create([
             'user_id' => $userId,
             'course_id' => $courseId,
@@ -38,6 +40,7 @@ class CreatePaymentRequest
             'payment_method' => 'cash',
             'status' => 'pending',
             'proof_image' => $proofPath,
+            'reference_code' => $referenceCode,
         ]);
     }
 }

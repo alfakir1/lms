@@ -43,7 +43,7 @@ class LectureController extends Controller
             $request->file('video_file')
         );
 
-        return response()->json($lecture, 201);
+        return $this->apiResponse('success', $lecture, 'Lecture created successfully', 201);
     }
 
     public function show(Lecture $lecture)
@@ -55,7 +55,7 @@ class LectureController extends Controller
             $lectureArray['secure_video_url'] = $this->storageService->generateSecureUrl($lecture->video_url);
         }
 
-        return response()->json($lectureArray);
+        return $this->apiResponse('success', $lectureArray);
     }
 
     public function trackProgress(Request $request, Lecture $lecture)
@@ -76,6 +76,6 @@ class LectureController extends Controller
             $request->input('mark_completed', false)
         );
 
-        return response()->json($progress);
+        return $this->apiResponse('success', $progress, 'Progress tracked successfully');
     }
 }

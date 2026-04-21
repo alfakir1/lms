@@ -17,14 +17,26 @@ class CourseController extends Controller
         $this->createCourseUseCase = $createCourseUseCase;
     }
 
-    public function index()
+    public function index(Request $request)
     {
-        // For phase 1, list all published, or if instructor, list their own
+        $perPage = $request->input('per_page', 10);
         $user = Auth::user();
+        
+        $query = Course::with(['chapters.lectures', 'instructor.user']);
+
         if ($user && $user->isRole('instructor')) {
-            return Course::where('instructor_id', $user->instructor->id)->paginate(15);
+            $courses = $query->where('instructor_id', $user->instructor->id)->paginate($perPage);
+        } else {
+            $courses = $query->where('status', 'published')->paginate($perPage);
         }
-        return Course::where('status', 'published')->paginate(15);
+
+        return $this->apiResponse('success', $courses, 'Courses retrieved successfully');
+    }
+
+    public function show($id)
+    {
+        $course = Course::with(['instructor.user', 'chapters.lectures'])->findOrFail($id);
+        return $this->apiResponse('success', $course);
     }
 
     public function store(Request $request)
@@ -47,7 +59,7 @@ class CourseController extends Controller
             $request->file('thumbnail')
         );
 
-        return response()->json($course, 201);
+        return $this->apiResponse('success', $course, 'Course created successfully', 201);
     }
 
     public function update(Request $request, Course $course)
@@ -62,13 +74,13 @@ class CourseController extends Controller
 
         $course->update($request->all());
 
-        return response()->json($course);
+        return $this->apiResponse('success', $course, 'Course updated successfully');
     }
 
     public function destroy(Course $course)
     {
         $this->authorize('delete', $course);
         $course->delete();
-        return response()->json(['message' => 'Course deleted']);
+        return $this->apiResponse('success', null, 'Course deleted');
     }
 }

@@ -1,97 +1,21 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import api from '../api/axios';
 import { Search, Filter, Star, Clock, Users } from 'lucide-react';
 
 const Courses: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
 
-  const courses = [
-    {
-      id: 1,
-      title: 'Web Development Fundamentals',
-      description: 'Learn HTML, CSS, and JavaScript to build modern websites from scratch.',
-      instructor: 'Sarah Johnson',
-      price: 99,
-      originalPrice: 149,
-      duration: '8 hours',
-      students: 1234,
-      rating: 4.8,
-      category: 'web-development',
-      level: 'Beginner',
-      image: '/api/placeholder/300/200'
-    },
-    {
-      id: 2,
-      title: 'React for Beginners',
-      description: 'Master React.js and build interactive user interfaces with modern hooks.',
-      instructor: 'Mike Chen',
-      price: 149,
-      originalPrice: 199,
-      duration: '12 hours',
-      students: 856,
-      rating: 4.9,
-      category: 'web-development',
-      level: 'Intermediate',
-      image: '/api/placeholder/300/200'
-    },
-    {
-      id: 3,
-      title: 'Python Programming Complete Guide',
-      description: 'Complete guide to Python programming from basics to advanced concepts.',
-      instructor: 'David Wilson',
-      price: 129,
-      originalPrice: 179,
-      duration: '15 hours',
-      students: 2156,
-      rating: 4.7,
-      category: 'programming',
-      level: 'All Levels',
-      image: '/api/placeholder/300/200'
-    },
-    {
-      id: 4,
-      title: 'Data Science with Python',
-      description: 'Learn data analysis, visualization, and machine learning with Python.',
-      instructor: 'Lisa Rodriguez',
-      price: 199,
-      originalPrice: 249,
-      duration: '20 hours',
-      students: 743,
-      rating: 4.6,
-      category: 'data-science',
-      level: 'Advanced',
-      image: '/api/placeholder/300/200'
-    },
-    {
-      id: 5,
-      title: 'UI/UX Design Principles',
-      description: 'Master the fundamentals of user interface and user experience design.',
-      instructor: 'Alex Thompson',
-      price: 89,
-      originalPrice: 129,
-      duration: '10 hours',
-      students: 967,
-      rating: 4.5,
-      category: 'design',
-      level: 'Beginner',
-      image: '/api/placeholder/300/200'
-    },
-    {
-      id: 6,
-      title: 'Digital Marketing Mastery',
-      description: 'Complete digital marketing course covering SEO, social media, and analytics.',
-      instructor: 'Emma Davis',
-      price: 159,
-      originalPrice: 199,
-      duration: '18 hours',
-      students: 1543,
-      rating: 4.4,
-      category: 'marketing',
-      level: 'Intermediate',
-      image: '/api/placeholder/300/200'
+  const { data: response, isLoading, error } = useQuery({
+    queryKey: ['courses', selectedCategory],
+    queryFn: async () => {
+      const response = await api.get('/courses');
+      // For now, index returns paginated results
+      return response.data;
     }
-  ];
+  });
 
   const categories = [
     { value: 'all', label: 'All Categories' },
@@ -102,10 +26,19 @@ const Courses: React.FC = () => {
     { value: 'marketing', label: 'Marketing' }
   ];
 
-  const filteredCourses = courses.filter(course => {
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  const courses = response?.data || [];
+
+  const filteredCourses = courses.filter((course: any) => {
     const matchesSearch = course.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         course.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         course.instructor.toLowerCase().includes(searchTerm.toLowerCase());
+                         course.description?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = selectedCategory === 'all' || course.category === selectedCategory;
     return matchesSearch && matchesCategory;
   });

@@ -24,6 +24,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        \Illuminate\Support\Facades\Event::listen(
+            \App\Application\Events\PaymentApproved::class,
+            \App\Infrastructure\Listeners\CreateEnrollmentListener::class
+        );
     }
 }
