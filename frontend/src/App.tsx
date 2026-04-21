@@ -1,3 +1,4 @@
+import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from './contexts/AuthContext';
@@ -8,6 +9,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 // Layout Components
 import Header from './components/layout/Header';
 import Footer from './components/layout/Footer';
+import DashboardLayout from './components/layout/DashboardLayout';
 
 // Public Pages
 import Home from './pages/Home';
@@ -30,6 +32,15 @@ import ManageLessons from './pages/instructor/ManageLessons';
 import InstructorAssignments from './pages/instructor/InstructorAssignments';
 import InstructorStudents from './pages/instructor/InstructorStudents';
 import InstructorAnalytics from './pages/instructor/InstructorAnalytics';
+import Attendance from './pages/instructor/Attendance';
+import GradeSheet from './pages/instructor/GradeSheet';
+
+// Reception Pages
+import ReceptionDashboard from './pages/reception/ReceptionDashboard';
+import RegisterStudent from './pages/reception/RegisterStudent';
+import StudentsManagement from './pages/reception/StudentsManagement';
+import CoursesView from './pages/reception/CoursesView';
+import PaymentsView from './pages/reception/PaymentsView';
 
 // Admin Pages
 import AdminDashboard from './pages/admin/AdminDashboard';
@@ -43,6 +54,19 @@ import './App.css';
 
 const queryClient = new QueryClient();
 
+// Helper: wrap a component in DashboardLayout + ProtectedRoute
+const DashboardRoute = ({
+  element,
+  roles,
+}: {
+  element: React.ReactNode;
+  roles: string[];
+}) => (
+  <ProtectedRoute roles={roles}>
+    <DashboardLayout>{element}</DashboardLayout>
+  </ProtectedRoute>
+);
+
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
@@ -50,158 +74,49 @@ function App() {
         <LanguageProvider>
           <AuthProvider>
             <Router>
-              <div className="min-h-screen bg-background text-text dark:bg-slate-950 dark:text-white">
-                <Header />
-                <main className="flex-1">
               <Routes>
-                {/* Public Routes */}
-                <Route path="/" element={<Home />} />
-                <Route path="/courses" element={<Courses />} />
-                <Route path="/courses/:id" element={<CourseDetails />} />
+                {/* ── Public Routes (with Header + Footer) ── */}
+                <Route path="/" element={<><Header /><Home /><Footer /></>} />
+                <Route path="/courses" element={<><Header /><Courses /><Footer /></>} />
+                <Route path="/courses/:id" element={<><Header /><CourseDetails /><Footer /></>} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
 
-                {/* Student Routes */}
-                <Route
-                  path="/student/dashboard"
-                  element={
-                    <ProtectedRoute roles={['student']}>
-                      <StudentDashboard />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/student/courses"
-                  element={
-                    <ProtectedRoute roles={['student']}>
-                      <MyCourses />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/student/courses/:courseId/learn"
-                  element={
-                    <ProtectedRoute roles={['student']}>
-                      <CoursePlayer />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/student/assignments"
-                  element={
-                    <ProtectedRoute roles={['student']}>
-                      <StudentAssignments />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/student/certificates"
-                  element={
-                    <ProtectedRoute roles={['student']}>
-                      <Certificates />
-                    </ProtectedRoute>
-                  }
-                />
+                {/* ── Student Routes ── */}
+                <Route path="/student/dashboard"           element={<DashboardRoute roles={['student']} element={<StudentDashboard />} />} />
+                <Route path="/student/courses"             element={<DashboardRoute roles={['student']} element={<MyCourses />} />} />
+                <Route path="/student/courses/:courseId/learn" element={<DashboardRoute roles={['student']} element={<CoursePlayer />} />} />
+                <Route path="/student/assignments"         element={<DashboardRoute roles={['student']} element={<StudentAssignments />} />} />
+                <Route path="/student/certificates"        element={<DashboardRoute roles={['student']} element={<Certificates />} />} />
 
-                {/* Instructor Routes */}
-                <Route
-                  path="/instructor/dashboard"
-                  element={
-                    <ProtectedRoute roles={['instructor']}>
-                      <InstructorDashboard />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/instructor/courses"
-                  element={
-                    <ProtectedRoute roles={['instructor']}>
-                      <ManageCourses />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/instructor/courses/:courseId/lessons"
-                  element={
-                    <ProtectedRoute roles={['instructor']}>
-                      <ManageLessons />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/instructor/assignments"
-                  element={
-                    <ProtectedRoute roles={['instructor']}>
-                      <InstructorAssignments />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/instructor/students"
-                  element={
-                    <ProtectedRoute roles={['instructor']}>
-                      <InstructorStudents />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/instructor/analytics"
-                  element={
-                    <ProtectedRoute roles={['instructor']}>
-                      <InstructorAnalytics />
-                    </ProtectedRoute>
-                  }
-                />
+                {/* ── Instructor Routes ── */}
+                <Route path="/instructor/dashboard"  element={<DashboardRoute roles={['instructor']} element={<InstructorDashboard />} />} />
+                <Route path="/instructor/courses"    element={<DashboardRoute roles={['instructor']} element={<ManageCourses />} />} />
+                <Route path="/instructor/courses/:courseId/lessons" element={<DashboardRoute roles={['instructor']} element={<ManageLessons />} />} />
+                <Route path="/instructor/assignments" element={<DashboardRoute roles={['instructor']} element={<InstructorAssignments />} />} />
+                <Route path="/instructor/students"   element={<DashboardRoute roles={['instructor']} element={<InstructorStudents />} />} />
+                <Route path="/instructor/analytics"  element={<DashboardRoute roles={['instructor']} element={<InstructorAnalytics />} />} />
+                <Route path="/instructor/attendance" element={<DashboardRoute roles={['instructor']} element={<Attendance />} />} />
+                <Route path="/instructor/grades"     element={<DashboardRoute roles={['instructor']} element={<GradeSheet />} />} />
 
-                {/* Admin Routes */}
-                <Route
-                  path="/admin/dashboard"
-                  element={
-                    <ProtectedRoute roles={['admin', 'super_admin']}>
-                      <AdminDashboard />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/admin/users"
-                  element={
-                    <ProtectedRoute roles={['admin', 'super_admin']}>
-                      <UsersManagement />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/admin/courses"
-                  element={
-                    <ProtectedRoute roles={['admin', 'super_admin']}>
-                      <CoursesManagement />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/admin/payments"
-                  element={
-                    <ProtectedRoute roles={['admin', 'super_admin']}>
-                      <Payments />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/admin/reports"
-                  element={
-                    <ProtectedRoute roles={['admin', 'super_admin']}>
-                      <Reports />
-                    </ProtectedRoute>
-                  }
-                />
+                {/* ── Reception Routes ── */}
+                <Route path="/reception/dashboard" element={<DashboardRoute roles={['reception']} element={<ReceptionDashboard />} />} />
+                <Route path="/reception/register"  element={<DashboardRoute roles={['reception']} element={<RegisterStudent />} />} />
+                <Route path="/reception/students"  element={<DashboardRoute roles={['reception']} element={<StudentsManagement />} />} />
+                <Route path="/reception/courses"   element={<DashboardRoute roles={['reception']} element={<CoursesView />} />} />
+                <Route path="/reception/payments"  element={<DashboardRoute roles={['reception']} element={<PaymentsView />} />} />
+
+                {/* ── Admin Routes ── */}
+                <Route path="/admin/dashboard" element={<DashboardRoute roles={['admin', 'super_admin']} element={<AdminDashboard />} />} />
+                <Route path="/admin/users"     element={<DashboardRoute roles={['admin', 'super_admin']} element={<UsersManagement />} />} />
+                <Route path="/admin/courses"   element={<DashboardRoute roles={['admin', 'super_admin']} element={<CoursesManagement />} />} />
+                <Route path="/admin/payments"  element={<DashboardRoute roles={['admin', 'super_admin']} element={<Payments />} />} />
+                <Route path="/admin/reports"   element={<DashboardRoute roles={['admin', 'super_admin']} element={<Reports />} />} />
               </Routes>
-            </main>
-            <Footer />
-          </div>
-        </Router>
-      </AuthProvider>
-    </LanguageProvider>
-  </ThemeProvider>
+            </Router>
+          </AuthProvider>
+        </LanguageProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   );
 }

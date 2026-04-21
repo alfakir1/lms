@@ -223,12 +223,21 @@ const StudentAssignments: React.FC = () => {
                 )}
 
                 <div className="flex items-center justify-between">
-                  <div className="flex space-x-3">
+                    <div className="flex space-x-3">
                     {assignment.status === 'submitted' ? (
-                      <button className="flex items-center space-x-2 text-secondary hover:text-primary">
-                        <Eye className="h-4 w-4" />
-                        <span>View Submission</span>
-                      </button>
+                      <>
+                        <button 
+                          onClick={() => window.print()}
+                          className="flex items-center space-x-2 text-secondary hover:text-primary border border-secondary/20 px-3 py-2 rounded-lg"
+                        >
+                          <FileText className="h-4 w-4" />
+                          <span>Print as PDF</span>
+                        </button>
+                        <button className="flex items-center space-x-2 text-secondary hover:text-primary px-3 py-2">
+                          <Eye className="h-4 w-4" />
+                          <span>View Submission</span>
+                        </button>
+                      </>
                     ) : (
                       <button className="flex items-center space-x-2 bg-secondary text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
                         <Upload className="h-4 w-4" />

@@ -2,7 +2,8 @@ export interface User {
   id: number;
   name: string;
   email: string;
-  role: 'admin' | 'instructor' | 'student';
+  student_id?: string;
+  role: 'admin' | 'super_admin' | 'instructor' | 'student' | 'reception';
   created_at: string;
   updated_at: string;
 }

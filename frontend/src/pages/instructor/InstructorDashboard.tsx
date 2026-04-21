@@ -267,6 +267,18 @@ const InstructorDashboard: React.FC = () => {
                   View Students
                 </Link>
                 <Link
+                  to="/instructor/attendance"
+                  className="block w-full border border-gray-300 text-text text-center py-2 px-4 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  Attendance Table
+                </Link>
+                <Link
+                  to="/instructor/grades"
+                  className="block w-full border border-gray-300 text-text text-center py-2 px-4 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  Grade Management Sheet
+                </Link>
+                <Link
                   to="/instructor/analytics"
                   className="block w-full border border-gray-300 text-text text-center py-2 px-4 rounded-lg hover:bg-gray-50 transition-colors"
                 >

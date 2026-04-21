@@ -48,6 +48,12 @@ const Header: React.FC = () => {
             <div className="flex items-center gap-3">
               {isAuthenticated ? (
                 <>
+                  <Link 
+                    to={user?.role === 'super_admin' ? '/admin/dashboard' : `/${user?.role}/dashboard`}
+                    className="hidden sm:flex items-center gap-2 rounded-xl border border-primary/20 bg-primary/5 px-4 py-2 text-sm font-bold text-primary hover:bg-primary hover:text-white transition-all duration-300 shadow-sm"
+                  >
+                    {t('nav.dashboard', 'Dashboard')}
+                  </Link>
                   <div className="flex items-center gap-3 rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-2 text-sm shadow-soft dark:border-slate-700 dark:bg-slate-900">
                     <div className="w-8 h-8 bg-gradient-to-br from-primary to-secondary rounded-full flex items-center justify-center shadow-sm">
                       <User className="h-4 w-4 text-white" />

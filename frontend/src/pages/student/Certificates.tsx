@@ -63,9 +63,44 @@ const Certificates: React.FC = () => {
     }
   ];
 
-  const handleDownloadCertificate = (certificateId: string) => {
-    // In real app, this would trigger a download
-    console.log('Downloading certificate:', certificateId);
+  const handleDownloadCertificate = (cert: any) => {
+    // In a real app, this might download a PDF
+    // For now, we'll open a print window for the certificate details
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+      printWindow.document.write(`
+        <html>
+          <head>
+            <title>Certificate - ${cert.courseTitle}</title>
+            <style>
+              body { font-family: sans-serif; text-align: center; padding: 50px; border: 20px solid #0f172a; }
+              .logo { font-size: 24px; font-weight: bold; color: #10b981; margin-bottom: 40px; }
+              .title { font-size: 48px; color: #0f172a; margin-bottom: 20px; }
+              .name { font-size: 32px; font-weight: bold; margin-bottom: 40px; text-decoration: underline; }
+              .details { font-size: 20px; color: #64748b; line-height: 1.6; }
+              .id { margin-top: 50px; font-size: 14px; color: #94a3b8; }
+              @media print { .no-print { display: none; } }
+            </style>
+          </head>
+          <body>
+            <div class="logo">FOUR ACADEMY</div>
+            <p>This is to certify that</p>
+            <h2 class="name">Student Name</h2>
+            <p>has successfully completed the course</p>
+            <h1 class="title">${cert.courseTitle}</h1>
+            <div class="details">
+              <p>Conducted by: ${cert.instructor}</p>
+              <p>Date of Completion: ${cert.completionDate}</p>
+              <p>Grade Obtained: ${cert.grade}</p>
+              <p>Total Duration: ${cert.hours} Hours</p>
+            </div>
+            <p class="id">Certificate ID: ${cert.certificateId}</p>
+            <script>window.print();</script>
+          </body>
+        </html>
+      `);
+      printWindow.document.close();
+    }
   };
 
   return (
@@ -155,11 +190,11 @@ const Certificates: React.FC = () => {
                       Certificate ID: {certificate.certificateId}
                     </div>
                     <button
-                      onClick={() => handleDownloadCertificate(certificate.certificateId)}
+                      onClick={() => handleDownloadCertificate(certificate)}
                       className="flex items-center space-x-2 bg-secondary text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm"
                     >
                       <Download className="h-4 w-4" />
-                      <span>Download</span>
+                      <span>Download & Print</span>
                     </button>
                   </div>
                 </div>

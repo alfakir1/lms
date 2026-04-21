@@ -1,5 +1,44 @@
 @import "tailwindcss";
 
+/* Explicitly define dark mode variant for Tailwind v4 */
+@variant dark (&:where(.dark, .dark *));
+
+:root {
+  --primary: #1E3A8A;
+  --secondary: #3B82F6;
+  --accent: #F59E0B;
+  --background: #ffffff;
+  --text: #111827;
+  --text-h: #0f172a;
+  
+  --border: #e2e8f0;
+  --code-bg: #f1f5f9;
+  --accent-bg: #fef3c7;
+  --accent-border: #f59e0b;
+  --social-bg: #ffffff;
+  --shadow-soft: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  
+  --heading: "Inter", "Cairo", "sans-serif";
+  --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+
+.dark {
+  --primary: #3b82f6;
+  --secondary: #60a5fa;
+  --accent: #fbbf24;
+  --background: #020617; /* Deeper slate for better contrast */
+  --text: #f8fafc;
+  --text-h: #ffffff;
+  --border: #1e293b;
+  --code-bg: #1e293b;
+  --accent-bg: #451a03;
+  --accent-border: #d97706;
+  --social-bg: #1e293b;
+  
+  --shadow-glow: 0 0 20px -5px #3b82f6;
+  --shadow-soft: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -4px rgba(0, 0, 0, 0.4);
+}
+
 @theme {
   --color-primary: var(--primary);
   --color-secondary: var(--secondary);
@@ -10,66 +49,10 @@
   --font-sans: "Inter", "Cairo", "sans-serif";
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
   
-  --shadow-soft: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-}
-
-:root {
-  /* Premium SaaS Palette: Sky Blue & Growth Green */
-  --primary: #0ea5e9; /* Sky Blue */
-  --primary-dark: #0284c7;
-  --secondary: #10b981; /* Growth Green */
-  --secondary-dark: #059669;
-  --accent: #f59e0b;
-  --background: #f8fafc; /* Slate 50 */
-  --text: #334155; /* Slate 700 */
-  --text-h: #0f172a; /* Slate 900 */
-  
-  --border: #e2e8f0;
-  --code-bg: #f1f5f9;
-  --accent-bg: #fef3c7;
-  --accent-border: #f59e0b;
-  --social-bg: #ffffff;
-  --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-  
-  /* Glassmorphism Tokens */
-  --glass-bg: rgba(255, 255, 255, 0.75);
-  --glass-border: rgba(255, 255, 255, 0.4);
-  --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.05);
-  
-  --heading: "Inter", "Cairo", "sans-serif";
-  --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-}
-
-.dark {
-  --primary: #38bdf8; 
-  --primary-dark: #0ea5e9;
-  --secondary: #34d399;
-  --secondary-dark: #10b981;
-  --accent: #fbbf24;
-  --background: #020617; /* Slate 950 */
-  --text: #cbd5e1; /* Slate 300 */
-  --text-h: #f8fafc; /* Slate 50 */
-  
-  --border: #1e293b;
-  --code-bg: #1e293b;
-  --accent-bg: #451a03;
-  --accent-border: #d97706;
-  --social-bg: #0f172a;
-  
-  /* Glassmorphism Tokens - Dark */
-  --glass-bg: rgba(15, 23, 42, 0.75);
-  --glass-border: rgba(255, 255, 255, 0.08);
-  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
-}
-
-@layer utilities {
-  .glass {
-    background: var(--glass-bg);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid var(--glass-border);
-    box-shadow: var(--glass-shadow);
-  }
+  --shadow-soft: var(--shadow-soft);
+  --shadow-glow: 0 0 20px -5px var(--primary);
+  --shadow-glow-sm: 0 0 10px -2px var(--primary);
+  --shadow-glow-lg: 0 0 30px -5px var(--primary);
 }
 
 @layer base {
@@ -80,12 +63,13 @@
     box-sizing: border-box;
     background-color: var(--background);
     color: var(--text);
-    transition: background-color 0.3s ease, color 0.3s ease;
+    transition: background-color 0.5s ease, color 0.5s ease;
   }
 
   body {
     margin: 0;
     font-family: var(--font-sans);
+    background-color: var(--background);
   }
 
   h1, h2, h3, h4, h5, h6 {
@@ -130,7 +114,42 @@
   /* Ensure transitions for theme switching */
   * {
     transition-property: background-color, border-color, color, fill, stroke;
-    transition-duration: 200ms;
+    transition-duration: 300ms;
     transition-timing-function: ease;
   }
+}
+
+/* ============================================
+   RTL SUPPORT — Arabic Language
+   ============================================ */
+[dir="rtl"] {
+  /* Use Cairo font for Arabic */
+  font-family: "Cairo", "Inter", sans-serif;
+}
+
+[dir="rtl"] h1,
+[dir="rtl"] h2,
+[dir="rtl"] h3,
+[dir="rtl"] h4,
+[dir="rtl"] h5,
+[dir="rtl"] h6 {
+  font-family: "Cairo", sans-serif;
+  letter-spacing: 0; /* Arabic doesn't need letter-spacing */
+}
+
+/* Flip horizontal margins / paddings for proper RTL flow */
+[dir="rtl"] .space-x-2 > * + * { margin-right: 0.5rem; margin-left: 0; }
+[dir="rtl"] .space-x-3 > * + * { margin-right: 0.75rem; margin-left: 0; }
+[dir="rtl"] .space-x-4 > * + * { margin-right: 1rem; margin-left: 0; }
+[dir="rtl"] .space-x-6 > * + * { margin-right: 1.5rem; margin-left: 0; }
+[dir="rtl"] .space-x-8 > * + * { margin-right: 2rem; margin-left: 0; }
+
+/* ml- / mr- swap for flex items */
+[dir="rtl"] .ml-4 { margin-left: 0; margin-right: 1rem; }
+[dir="rtl"] .ml-6 { margin-left: 0; margin-right: 1.5rem; }
+[dir="rtl"] .mr-2 { margin-right: 0; margin-left: 0.5rem; }
+
+/* Smooth direction transition */
+html {
+  transition: direction 0s; /* instant dir change, no flash */
 }
