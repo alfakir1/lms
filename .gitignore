@@ -27,3 +27,4 @@ frontend/.env.production.local
 *.log
 .DS_Store
 Thumbs.db
+node_modules

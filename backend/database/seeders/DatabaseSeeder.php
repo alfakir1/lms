@@ -20,9 +20,9 @@ class DatabaseSeeder extends Seeder
     {
         // 1. Create Super Admin
         $superAdminUser = User::create([
-            'name' => 'Super Admin',
-            'email' => 'superadmin@example.com',
-            'password' => Hash::make('password123'),
+            'name' => 'Super System Admin',
+            'email' => 'super@four.com',
+            'password' => Hash::make('superpassword'),
             'role' => 'super_admin',
             'status' => 'active'
         ]);
@@ -30,9 +30,9 @@ class DatabaseSeeder extends Seeder
 
         // 2. Create Admin
         $adminUser = User::create([
-            'name' => 'Admin Manager',
-            'email' => 'admin@example.com',
-            'password' => Hash::make('password123'),
+            'name' => 'Main Admin',
+            'email' => 'admin@four.com',
+            'password' => Hash::make('adminpassword'),
             'role' => 'admin',
             'status' => 'active'
         ]);
@@ -40,8 +40,8 @@ class DatabaseSeeder extends Seeder
 
         // 3. Create Instructor
         $instructorUser = User::create([
-            'name' => 'Dr. John Doe',
-            'email' => 'instructor@example.com',
+            'name' => 'Dr. Sarah Ahmed',
+            'email' => 'sarah@four.com',
             'password' => Hash::make('password123'),
             'role' => 'instructor',
             'status' => 'active'
@@ -54,12 +54,21 @@ class DatabaseSeeder extends Seeder
         // 4. Create Student
         $studentUser = User::create([
             'name' => 'Jane Student',
-            'email' => 'student@example.com',
+            'email' => 'student@four.com',
             'password' => Hash::make('password123'),
             'role' => 'student',
             'status' => 'active'
         ]);
         Student::create(['user_id' => $studentUser->id]);
+
+        // 4.5 Create Reception
+        User::create([
+            'name' => 'Reception Desk',
+            'email' => 'reception@four.com',
+            'password' => Hash::make('password123'),
+            'role' => 'reception',
+            'status' => 'active'
+        ]);
 
         // 5. Create a Mock Course for the Instructor
         $course = Course::create([
