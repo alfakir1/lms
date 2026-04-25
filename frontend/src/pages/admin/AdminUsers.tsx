@@ -19,13 +19,13 @@ const AdminUsers: React.FC = () => {
   });
 
   const updateRoleMutation = useMutation({
-    mutationFn: ({ id, role }: { id: number; role: string }) => adminService.updateUser(id, { role }),
+    mutationFn: ({ id, role, status }: { id: number; role?: string; status?: string }) => adminService.updateUser(id, { role, status }),
     onSuccess: () => {
-      showSuccess('User role updated successfully');
+      showSuccess('User updated successfully');
       queryClient.invalidateQueries({ queryKey: ['admin-users'] });
     },
     onError: (err: any) => {
-      showError(err?.message || 'Failed to update user role');
+      showError(err?.message || 'Failed to update user');
     },
   });
 
@@ -102,6 +102,7 @@ const AdminUsers: React.FC = () => {
                 <tr>
                   <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">{t('common.user') || 'User'}</th>
                   <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Role</th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Status</th>
                   <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">{t('admin.joinedDate') || 'Joined Date'}</th>
                   <th className="px-6 py-4 text-right text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">{t('admin.actions') || 'Actions'}</th>
                 </tr>
@@ -131,6 +132,20 @@ const AdminUsers: React.FC = () => {
                         <option value="instructor">Instructor</option>
                         <option value="admin">Admin</option>
                         <option value="super_admin">Super Admin</option>
+                      </select>
+                    </td>
+                    <td className="px-6 py-4">
+                      <select
+                        value={user.status || 'active'}
+                        onChange={(e) => updateRoleMutation.mutate({ id: user.id, status: e.target.value })}
+                        disabled={updateRoleMutation.isPending && updateRoleMutation.variables?.id === user.id}
+                        className={`px-3 py-1.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-bold uppercase ${
+                          user.status === 'banned' ? 'text-red-600' : 'text-slate-900 dark:text-white'
+                        }`}
+                      >
+                        <option value="active">Active</option>
+                        <option value="inactive">Inactive</option>
+                        <option value="banned">Banned</option>
                       </select>
                       {updateRoleMutation.isPending && updateRoleMutation.variables?.id === user.id && (
                         <Loader2 className="inline ml-2 h-4 w-4 animate-spin text-primary-600" />

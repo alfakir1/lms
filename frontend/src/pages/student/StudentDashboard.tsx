@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { BookOpen, CheckCircle, Clock, CreditCard } from 'lucide-react';
+import { BookOpen, CheckCircle, Clock, CreditCard, QrCode } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../contexts/AuthContext';
 import { enrollmentService } from '../../services/enrollmentService';
@@ -229,6 +229,12 @@ const StudentDashboard: React.FC = () => {
                     <Button variant="outline" className="w-full justify-start ltr:text-left rtl:text-right">
                       <CreditCard className="h-4 w-4 ltr:mr-3 rtl:ml-3 text-slate-400" />
                       {t('admin.payments')}
+                    </Button>
+                  </Link>
+                  <Link to="/student/attendance">
+                    <Button variant="outline" className="w-full justify-start ltr:text-left rtl:text-right">
+                      <QrCode className="h-4 w-4 ltr:mr-3 rtl:ml-3 text-secondary-500" />
+                      {t('nav.attendance')}
                     </Button>
                   </Link>
                 </div>

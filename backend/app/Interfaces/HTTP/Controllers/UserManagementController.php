@@ -41,8 +41,9 @@ class UserManagementController extends Controller
     public function update(Request $request, User $user): JsonResponse
     {
         $validated = $request->validate([
-            'name' => 'string|max:255',
-            'role' => 'in:student,instructor,admin,super_admin',
+            'name'   => 'string|max:255',
+            'role'   => 'in:student,instructor,admin,super_admin',
+            'status' => 'in:active,inactive,banned',
         ]);
 
         $user->update($validated);

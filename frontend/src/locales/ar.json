@@ -6,7 +6,8 @@
     "login": "تسجيل الدخول",
     "register": "سجل الآن",
     "logout": "تسجيل الخروج",
-    "dashboard": "لوحة التحكم"
+    "dashboard": "لوحة التحكم",
+    "attendance": "التحضير"
   },
   "theme": {
     "toggle": "تغيير الوضع",

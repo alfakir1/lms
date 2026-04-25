@@ -19,16 +19,18 @@ import CourseDetails from './pages/CourseDetails';
 import Login from './pages/Login';
 import Register from './pages/Register';
 
+// Instructor Pages
+import InstructorDashboard from './pages/instructor/InstructorDashboard';
+import InstructorCourses from './pages/instructor/InstructorCourses';
+import InstructorLectures from './pages/instructor/InstructorLectures';
+import InstructorAttendance from './pages/instructor/InstructorAttendance';
+
 // Student Pages
 import StudentDashboard from './pages/student/StudentDashboard';
 import MyCourses from './pages/student/MyCourses';
 import CoursePlayer from './pages/student/CoursePlayer';
 import StudentPayments from './pages/student/StudentPayments';
-
-// Instructor Pages
-import InstructorDashboard from './pages/instructor/InstructorDashboard';
-import InstructorCourses from './pages/instructor/InstructorCourses';
-import InstructorLectures from './pages/instructor/InstructorLectures';
+import StudentAttendance from './pages/student/StudentAttendance';
 
 // Admin Pages
 import AdminDashboard from './pages/admin/AdminDashboard';
@@ -79,11 +81,13 @@ function App() {
                   <Route path="/student/courses" element={<DashboardRoute roles={['student']} element={<MyCourses />} />} />
                   <Route path="/student/courses/:courseId/learn" element={<DashboardRoute roles={['student']} element={<CoursePlayer />} />} />
                   <Route path="/student/payments" element={<DashboardRoute roles={['student']} element={<StudentPayments />} />} />
+                  <Route path="/student/attendance" element={<DashboardRoute roles={['student']} element={<StudentAttendance />} />} />
 
                   {/* Instructor Routes */}
                   <Route path="/instructor/dashboard" element={<DashboardRoute roles={['instructor', 'admin', 'super_admin']} element={<InstructorDashboard />} />} />
                   <Route path="/instructor/courses" element={<DashboardRoute roles={['instructor', 'admin', 'super_admin']} element={<InstructorCourses />} />} />
                   <Route path="/instructor/lectures" element={<DashboardRoute roles={['instructor', 'admin', 'super_admin']} element={<InstructorLectures />} />} />
+                  <Route path="/instructor/attendance" element={<DashboardRoute roles={['instructor', 'admin', 'super_admin']} element={<InstructorAttendance />} />} />
 
                   {/* Admin Routes */}
                   <Route path="/admin/dashboard" element={<DashboardRoute roles={['admin', 'super_admin']} element={<AdminDashboard />} />} />

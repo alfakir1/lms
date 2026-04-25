@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { BookOpen, Users, Activity } from 'lucide-react';
+import { BookOpen, Users, Activity, QrCode } from 'lucide-react';
 import { courseService } from '../../services/courseService';
 import { Card, CardContent } from '../../components/ui/Card';
 import { ErrorMessage, LoadingSpinner } from '../../components/ui/Feedback';
@@ -133,6 +133,10 @@ const InstructorDashboard: React.FC = () => {
                   <Link to="/instructor/courses" className="flex items-center p-3 rounded-lg border border-slate-200 dark:border-slate-800 hover:border-primary-300 dark:hover:border-primary-700 transition">
                     <BookOpen className="h-5 w-5 text-primary-600 dark:text-primary-400 ltr:mr-3 rtl:ml-3" />
                     <span className="font-medium text-slate-700 dark:text-slate-300">Manage Courses</span>
+                  </Link>
+                  <Link to="/instructor/attendance" className="flex items-center p-3 rounded-lg border border-slate-200 dark:border-slate-800 hover:border-primary-300 dark:hover:border-primary-700 transition">
+                    <QrCode className="h-5 w-5 text-secondary-600 dark:text-secondary-400 ltr:mr-3 rtl:ml-3" />
+                    <span className="font-medium text-slate-700 dark:text-slate-300">Live Attendance</span>
                   </Link>
                 </div>
               </CardContent>

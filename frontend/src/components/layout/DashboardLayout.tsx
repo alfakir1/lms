@@ -14,7 +14,8 @@ import {
   Sun,
   Globe,
   Users,
-  Video
+  Video,
+  QrCode
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -31,11 +32,13 @@ const navByRole: Record<string, NavItem[]> = {
     { label: 'nav.dashboard', path: '/student/dashboard', icon: LayoutDashboard },
     { label: 'student.myCourses', path: '/student/courses', icon: BookOpen },
     { label: 'admin.payments', path: '/student/payments', icon: CreditCard },
+    { label: 'nav.attendance', path: '/student/attendance', icon: QrCode },
   ],
   instructor: [
     { label: 'nav.dashboard', path: '/instructor/dashboard', icon: LayoutDashboard },
     { label: 'instructor.manageCourses', path: '/instructor/courses', icon: BookOpen },
     { label: 'Manage Lectures', path: '/instructor/lectures', icon: Video },
+    { label: 'nav.attendance', path: '/instructor/attendance', icon: QrCode },
   ],
   admin: [
     { label: 'nav.dashboard', path: '/admin/dashboard', icon: LayoutDashboard },

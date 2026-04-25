@@ -107,7 +107,8 @@ class AttendanceController extends Controller
     /** Get attendance report for a session */
     public function sessionReport(AttendanceSession $session)
     {
-        $records = $session->attendanceRecords()->with('student.user')->get();
+        $session->load('activeToken');
+        $records = $session->attendanceRecords()->with('student.user')->orderBy('timestamp', 'desc')->get();
         return response()->json(['session' => $session, 'records' => $records]);
     }
 }

@@ -115,3 +115,23 @@ export interface AdminStats {
   pending_enrollments: number;
   recent_activities: Array<{ id: number; type: string; message: string; time: string }>;
 }
+
+export interface AttendanceSession {
+  id: number;
+  course_id: number;
+  instructor_id: number;
+  start_time: string;
+  end_time: string | null;
+  status: 'active' | 'closed';
+  course?: Course;
+  instructor?: Instructor;
+}
+
+export interface Attendance {
+  id: number;
+  session_id: number;
+  student_id: number;
+  status: 'present' | 'absent' | 'excused' | 'manual';
+  timestamp: string;
+  session?: AttendanceSession;
+}
