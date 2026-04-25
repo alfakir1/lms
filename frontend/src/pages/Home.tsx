@@ -1,282 +1,179 @@
-import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React from 'react';
+import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import api from '../api/axios';
-import { 
-  BookOpen, 
-  Award, 
-  Users, 
-  BarChart, 
-  ChevronRight, 
-  Star, 
-  Clock, 
-  CheckCircle2,
-  X,
-  Loader2
-} from 'lucide-react';
+import { courseService } from '../services/courseService';
+import { Users, BookOpen, Star, ArrowRight, PlayCircle } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import Button from '../components/ui/Button';
+import { Card, CardContent } from '../components/ui/Card';
+import { ErrorMessage, LoadingSpinner } from '../components/ui/Feedback';
 
 const Home: React.FC = () => {
-  const [selectedCourse, setSelectedCourse] = useState<number | null>(null);
-  const [selectedFeature, setSelectedFeature] = useState<number | null>(null);
-
-  const { data: response, isLoading } = useQuery({
+  const { t } = useTranslation();
+  const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['featured-courses'],
-    queryFn: async () => {
-      const resp = await api.get('/courses');
-      return resp.data;
-    }
+    queryFn: () => courseService.getAll({ per_page: 3 }),
   });
 
-  const courses = (response?.data || []).slice(0, 3);
-
-  const featuresList = [
-    {
-      id: 1,
-      icon: <Award className="w-10 h-10" />,
-      title: "Certified Certificates",
-      details: "Our certificates are recognized by leading industry partners and can significantly boost your LinkedIn profile and resume credibility."
-    },
-    {
-      id: 2,
-      icon: <Users className="w-10 h-10" />,
-      title: "Professional Instructors",
-      details: "Learn from industry experts with years of practical experience. Our instructors are dedicated to your success and provide personalized feedback."
-    },
-    {
-      id: 3,
-      icon: <BarChart className="w-10 h-10" />,
-      title: "Progress Tracking",
-      details: "Monitor your learning journey with our advanced analytics dashboard. Set goals, track milestones, and visualize your improvement over time."
-    },
-    {
-      id: 4,
-      icon: <BookOpen className="w-10 h-10" />,
-      title: "Rich Content Library",
-      details: "Access thousands of hours of high-quality video content, interactive quizzes, and downloadable resources available anytime, anywhere."
-    }
-  ];
-
   return (
-    <div className="min-h-screen bg-background dark:bg-slate-950 transition-colors duration-500 overflow-x-hidden">
-      {/* Hero Section */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-primary to-secondary text-white py-24 lg:py-32">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
-          <motion.h1 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-5xl md:text-7xl font-extrabold mb-6 tracking-tight leading-tight"
-          >
-            Start Your Learning Journey <br/> with <span className="text-accent">Four Academy</span>
-          </motion.h1>
-          <motion.p 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.2 }}
-            className="text-xl md:text-2xl mb-10 text-white/90 max-w-3xl mx-auto font-light"
-          >
-            Unlock your potential with professional courses led by industry giants. Join 50,000+ students worldwide.
-          </motion.p>
-          <motion.div 
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
-            className="flex flex-col sm:flex-row justify-center gap-4"
-          >
-            <button className="bg-accent text-white px-10 py-4 rounded-2xl font-bold shadow-lg hover:brightness-110 transition-all hover:scale-105 active:scale-95">
-              Browse All Courses
-            </button>
-            <button className="bg-white/10 backdrop-blur-md border border-white/20 text-white px-10 py-4 rounded-2xl font-bold hover:bg-white/20 transition-all">
-              Watch Demo
-            </button>
-          </motion.div>
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 selection:bg-primary-500/30 transition-colors duration-300">
+      
+      {/* Premium Hero Section */}
+      <section className="relative pt-32 pb-20 lg:pt-48 lg:pb-32 overflow-hidden">
+        {/* Abstract Background Elements */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[500px] opacity-20 pointer-events-none">
+          <div className="absolute inset-0 bg-gradient-to-r from-primary-400 to-secondary-400 blur-[100px] rounded-full mix-blend-multiply animate-pulse-slow"></div>
         </div>
-        
-        {/* Abstract shapes */}
-        <div className="absolute -top-24 -left-24 w-96 h-96 bg-accent/20 rounded-full blur-3xl" />
-        <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-primary/20 rounded-full blur-3xl" />
-      </section>
 
-      {/* Courses Section */}
-      <section id="courses" className="py-24 bg-neutral-50 dark:bg-slate-950">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-neutral-900 dark:text-white mb-4">Featured Courses</h2>
-            <p className="text-neutral-600 dark:text-neutral-400">Click on any course to see details</p>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 text-sm font-medium mb-8 shadow-sm">
+            <span className="flex h-2 w-2 rounded-full bg-primary-500 animate-pulse"></span>
+            {t('home.hero.title')}
           </div>
           
-          <div className="grid md:grid-cols-3 gap-8">
-            {isLoading ? (
-              <div className="col-span-3 flex justify-center py-12">
-                <Loader2 className="w-12 h-12 text-primary animate-spin" />
-              </div>
-            ) : courses.map((course: any) => (
-              <motion.div
-                key={course.id}
-                onClick={() => setSelectedCourse(course.id)}
-                className="group bg-white dark:bg-slate-900 rounded-3xl overflow-hidden shadow-sm hover:shadow-xl transition-all cursor-pointer border border-neutral-100 dark:border-slate-800"
-                whileHover={{ y: -8 }}
-              >
-                <div className="h-48 bg-gradient-to-br from-primary to-secondary p-8 flex items-end">
-                  <BookOpen className="w-12 h-12 text-white/40 group-hover:scale-110 transition-transform" />
-                </div>
-                <div className="p-6">
-                  <div className="flex items-center gap-2 mb-3">
-                    <Star className="w-4 h-4 text-accent fill-accent" />
-                    <span className="text-sm font-bold text-neutral-700 dark:text-neutral-300">{course.rating || '4.5'}</span>
-                  </div>
-                  <h3 className="text-2xl font-bold text-neutral-900 dark:text-white mb-2">{course.title}</h3>
-                  <p className="text-sm text-neutral-500 dark:text-neutral-400 mb-4">By {course.instructor?.user?.name || 'Expert'}</p>
-                  <div className="flex justify-between items-center border-t border-neutral-100 dark:border-slate-800 pt-4">
-                    <span className="text-xl font-bold text-primary dark:text-secondary">${course.price}</span>
-                    <div className="flex items-center gap-2 text-neutral-500 dark:text-neutral-400 text-sm">
-                      <Clock className="w-4 h-4" />
-                      {course.duration || 'Flexible'}
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-
-
-          <AnimatePresence>
-            {selectedCourse && (
-              <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-                <motion.div 
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  onClick={() => setSelectedCourse(null)}
-                  className="absolute inset-0 bg-slate-950/80 backdrop-blur-md"
-                />
-                <motion.div 
-                  initial={{ opacity: 0, scale: 0.9, y: 40 }}
-                  animate={{ opacity: 1, scale: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.9, y: 40 }}
-                  className="bg-white dark:bg-slate-900 w-full max-w-2xl rounded-3xl overflow-hidden shadow-2xl relative z-10 border border-neutral-200 dark:border-slate-800"
-                >
-                  <button 
-                    onClick={() => setSelectedCourse(null)}
-                    className="absolute top-6 right-6 p-2 rounded-full bg-neutral-100 dark:bg-slate-800 hover:bg-neutral-200 dark:hover:bg-slate-700 transition-colors z-20"
-                  >
-                    <X className="w-6 h-6 dark:text-white" />
-                  </button>
-                  
-                  <div className="h-48 bg-gradient-to-br from-primary to-secondary" />
-                  
-                  <div className="p-10 text-neutral-900 dark:text-white">
-                    <h3 className="text-3xl font-bold mb-6">
-                      {courses.find(c => c.id === selectedCourse)?.title}
-                    </h3>
-                    <p className="text-neutral-600 dark:text-neutral-400 mb-8 leading-relaxed text-lg">
-                      {courses.find(c => c.id === selectedCourse)?.description}
-                    </p>
-                    <div className="grid gap-4 mb-10">
-                      {courses.find(c => c.id === selectedCourse)?.features.map((feature, i) => (
-                        <div key={i} className="flex items-center gap-4 text-neutral-800 dark:text-neutral-200">
-                          <CheckCircle2 className="w-6 h-6 text-green-500 flex-shrink-0" />
-                          <span className="font-medium">{feature}</span>
-                        </div>
-                      ))}
-                    </div>
-                    <button className="w-full bg-primary hover:bg-primary/90 text-white py-5 rounded-2xl font-bold text-lg transition-all shadow-lg active:scale-[0.98]">
-                      Enroll Now - {courses.find(c => c.id === selectedCourse)?.price}
-                    </button>
-                  </div>
-                </motion.div>
-              </div>
-            )}
-          </AnimatePresence>
-        </div>
-      </section>
-
-      {/* Features Section */}
-      <section className="py-24 bg-white dark:bg-slate-900">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-neutral-900 dark:text-white mb-4">Institute Features</h2>
-            <div className="w-24 h-1.5 bg-secondary mx-auto rounded-full"></div>
-            <p className="mt-4 text-neutral-600 dark:text-neutral-400">Click on any feature to learn more</p>
-          </div>
+          <h1 className="text-5xl md:text-7xl font-display font-black text-slate-900 dark:text-white tracking-tight mb-8 leading-[1.1]">
+            <span className="text-gradient">Four Academy</span>
+          </h1>
           
-          <div className="grid md:grid-cols-4 gap-8">
-            {featuresList.map((feature) => (
-              <div
-                key={feature.id}
-                onClick={() => setSelectedFeature(selectedFeature === feature.id ? null : feature.id)}
-                className={`relative p-8 rounded-3xl border cursor-pointer transition-all duration-300 overflow-hidden ${
-                  selectedFeature === feature.id 
-                  ? 'bg-secondary border-secondary shadow-xl scale-105 ring-4 ring-secondary/20' 
-                  : 'bg-neutral-50 dark:bg-slate-800 border-neutral-100 dark:border-slate-700 hover:border-secondary/50'
-                }`}
-              >
-                <div className={`mb-6 transition-colors duration-300 ${
-                  selectedFeature === feature.id ? 'text-white' : 'text-secondary dark:text-primary'
-                }`}>
-                  {feature.icon}
-                </div>
-                <h3 className={`text-xl font-bold mb-4 transition-colors duration-300 ${
-                  selectedFeature === feature.id ? 'text-white' : 'text-neutral-900 dark:text-white'
-                }`}>
-                  {feature.title}
-                </h3>
-                
-                <div className={`transition-all duration-300 overflow-hidden ${
-                  selectedFeature === feature.id ? 'max-h-40 opacity-100' : 'max-h-0 opacity-0'
-                }`}>
-                  <p className="text-white/90 text-sm leading-relaxed mt-2">
-                    {feature.details}
-                  </p>
-                </div>
+          <p className="mt-6 text-xl text-slate-600 dark:text-slate-300 max-w-2xl mx-auto leading-relaxed mb-10">
+            {t('home.hero.subtitle')}
+          </p>
+          
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <Link to="/register">
+              <Button size="lg" className="h-14 px-8 text-lg font-bold shadow-glow-primary hover:-translate-y-1 transition-transform">
+                {t('home.enrollNow')}
+              </Button>
+            </Link>
+            <Link to="/courses">
+              <Button size="lg" variant="outline" className="h-14 px-8 text-lg font-bold bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300">
+                <PlayCircle className="ltr:mr-2 rtl:ml-2 h-5 w-5" />
+                {t('home.exploreNew')}
+              </Button>
+            </Link>
+          </div>
 
-                {!selectedFeature && (
-                  <div className="mt-4 flex items-center gap-2 text-xs font-bold text-secondary dark:text-primary group">
-                    LEARN MORE <ChevronRight className="w-3 h-3 group-hover:translate-x-1 transition-transform" />
-                  </div>
-                )}
-              </div>
-            ))}
+          {/* Social Proof */}
+          <div className="mt-20 pt-10 border-t border-slate-200/60 flex flex-wrap justify-center items-center gap-x-12 gap-y-8 opacity-60 grayscale hover:grayscale-0 transition-all duration-500">
+            <div className="text-2xl font-display font-bold">Google</div>
+            <div className="text-2xl font-display font-bold">Microsoft</div>
+            <div className="text-2xl font-display font-bold">Amazon</div>
+            <div className="text-2xl font-display font-bold">Meta</div>
           </div>
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="bg-neutral-950 text-white py-20 border-t border-white/5">
+      {/* Featured Courses Section */}
+      <section className="py-24 bg-white dark:bg-slate-900 relative z-20 border-t border-slate-100 dark:border-slate-800 transition-colors duration-300">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid md:grid-cols-4 gap-12">
-            <div className="col-span-1 md:col-span-2">
-              <h3 className="text-3xl font-bold mb-6 text-white">
-                Four Academy
-              </h3>
-              <p className="text-neutral-500 max-w-md leading-relaxed mb-8">
-                Empowering the next generation of digital leaders through high-quality education and expert mentorship. Join us and shape your future today.
+          <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-6">
+            <div className="max-w-2xl">
+              <h2 className="text-4xl font-display font-bold text-slate-900 dark:text-white mb-4">
+                {t('home.featured.title')}
+              </h2>
+              <p className="text-lg text-slate-500 dark:text-slate-400">
+                {t('home.featured.description')}
               </p>
             </div>
-            <div>
-              <h4 className="text-lg font-bold mb-6">Quick Links</h4>
-              <ul className="space-y-4">
-                <li><a href="#" className="text-neutral-500 hover:text-white transition-colors">All Courses</a></li>
-                <li><a href="#" className="text-neutral-500 hover:text-white transition-colors">Our Vision</a></li>
-                <li><a href="#" className="text-neutral-500 hover:text-white transition-colors">Contact Us</a></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="text-lg font-bold mb-6">Social</h4>
-              <div className="flex gap-4">
-                 <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center hover:bg-white/10 transition-colors cursor-pointer">
-                    <Users className="w-5 h-5" />
-                 </div>
-                 <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center hover:bg-white/10 transition-colors cursor-pointer">
-                    <Star className="w-5 h-5" />
-                 </div>
-              </div>
-            </div>
+            <Link to="/courses">
+              <Button variant="ghost" className="text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20 font-bold group">
+                {t('home.featured.viewAll')}
+                <ArrowRight className="ltr:ml-2 rtl:mr-2 h-4 w-4 group-hover:ltr:translate-x-1 group-hover:rtl:-translate-x-1 transition-transform" />
+              </Button>
+            </Link>
           </div>
-          <div className="mt-20 pt-8 border-t border-white/5 text-center text-neutral-600 text-sm font-medium">
-            <p>&copy; {new Date().getFullYear()} Four Academy. All rights reserved.</p>
+
+          {isLoading ? (
+            <LoadingSpinner text={t('common.loading')} />
+          ) : error ? (
+            <ErrorMessage 
+              title={t('common.noData')} 
+              message={t('common.noData')}
+              onRetry={() => refetch()} 
+            />
+          ) : data?.data && data.data.length > 0 ? (
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {data.data.map((course: any) => (
+                <Link key={course.id} to={`/courses/${course.id}`} className="group block h-full">
+                  <Card className="h-full border-0 shadow-soft hover:shadow-xl hover:-translate-y-2 transition-all duration-300 bg-white dark:bg-slate-950 overflow-hidden flex flex-col">
+                    {/* Course Image Area */}
+                    <div className="h-48 relative bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                      <div className="absolute inset-0 bg-gradient-to-br from-primary-600/20 to-secondary-600/20 mix-blend-overlay z-10 group-hover:opacity-0 transition-opacity duration-500"></div>
+                      <img 
+                        src={`https://source.unsplash.com/random/800x600?education,technology&sig=${course.id}`} 
+                        alt={course.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = 'https://via.placeholder.com/800x600?text=Course';
+                        }}
+                      />
+                      <div className="absolute top-4 ltr:right-4 rtl:left-4 z-20">
+                        <span className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-md px-3 py-1 rounded-full text-sm font-bold text-slate-900 dark:text-white shadow-sm">
+                          {Number(course.price) > 0 ? `$${Number(course.price).toFixed(2)}` : t('common.free') || 'Free'}
+                        </span>
+                      </div>
+                    </div>
+                    
+                    <CardContent className="flex-1 flex flex-col p-6">
+                      <div className="flex items-center gap-2 mb-3">
+                        <span className="px-2.5 py-1 bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-400 rounded-md text-xs font-bold tracking-wide uppercase">
+                          {t('home.featured.title')}
+                        </span>
+                      </div>
+                      <h3 className="text-xl font-display font-bold text-slate-900 dark:text-white mb-2 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors line-clamp-2">
+                        {course.title}
+                      </h3>
+                      <p className="text-slate-500 dark:text-slate-400 text-sm mb-6 line-clamp-2 flex-1 leading-relaxed">
+                        {course.description || t('common.noData')}
+                      </p>
+                      
+                      <div className="flex items-center justify-between pt-4 border-t border-slate-100 dark:border-slate-800 mt-auto">
+                        <div className="flex items-center text-slate-500 dark:text-slate-400 text-sm font-medium">
+                          <Users className="h-4 w-4 ltr:mr-1.5 rtl:ml-1.5" />
+                          <span>1.2k</span>
+                        </div>
+                        <div className="flex items-center text-amber-500 text-sm font-medium">
+                          <Star className="h-4 w-4 ltr:mr-1.5 rtl:ml-1.5 fill-current" />
+                          <span>4.9</span>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-20 bg-slate-50 dark:bg-slate-800 rounded-3xl border border-slate-200 dark:border-slate-700 border-dashed">
+              <BookOpen className="h-12 w-12 text-slate-300 dark:text-slate-600 mx-auto mb-4" />
+              <p className="text-slate-600 dark:text-slate-400 font-medium">{t('common.noData')}</p>
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* Stats Section */}
+      <section className="py-24 bg-slate-900 text-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+            <div>
+              <div className="text-4xl font-display font-black text-primary-400 mb-2">50k+</div>
+              <div className="text-slate-400 font-medium">{t('home.benefits.platform')}</div>
+            </div>
+            <div>
+              <div className="text-4xl font-display font-black text-secondary-400 mb-2">200+</div>
+              <div className="text-slate-400 font-medium">{t('home.benefits.instructors')}</div>
+            </div>
+            <div>
+              <div className="text-4xl font-display font-black text-primary-400 mb-2">100%</div>
+              <div className="text-slate-400 font-medium">{t('home.benefits.certificates')}</div>
+            </div>
+            <div>
+              <div className="text-4xl font-display font-black text-secondary-400 mb-2">24/7</div>
+              <div className="text-slate-400 font-medium">{t('home.benefits.tracking')}</div>
+            </div>
           </div>
         </div>
-      </footer>
+      </section>
     </div>
   );
 };

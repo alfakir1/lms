@@ -27,6 +27,10 @@ class ApprovePayment
             throw new \Exception('Payment is already approved.');
         }
 
+        if (!in_array($payment->status, ['pending', 'under_review'])) {
+            throw new \Exception('Invalid payment state');
+        }
+
         DB::transaction(function () use ($payment, $adminId) {
             $this->paymentRepository->updateStatus($payment, 'approved', $adminId);
 

@@ -8,6 +8,7 @@ use App\Infrastructure\Persistence\Models\Enrollment;
 use App\Infrastructure\Persistence\Models\CourseDiscount;
 use App\Infrastructure\Persistence\Models\PrerequisiteExemption;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class EnrollmentService
 {
@@ -22,10 +23,20 @@ class EnrollmentService
             return true;
         }
 
+        $student = $user->student;
+        if (! $student) {
+            return false;
+        }
+
         // Check if there's an approved exemption
-        $hasExemption = PrerequisiteExemption::where('user_id', $user->id)
-            ->where('course_id', $course->id)
-            ->exists();
+        // Backward compatibility: older DBs might have user_id instead of student_id
+        $exemptionsQuery = PrerequisiteExemption::query()->where('course_id', $course->id);
+        if (Schema::hasColumn('prerequisite_exemptions', 'student_id')) {
+            $exemptionsQuery->where('student_id', $student->id);
+        } else {
+            $exemptionsQuery->where('user_id', $user->id);
+        }
+        $hasExemption = $exemptionsQuery->exists();
 
         if ($hasExemption) {
             return true;
@@ -51,12 +62,26 @@ class EnrollmentService
      */
     public function calculatePrice(User $user, Course $course): float
     {
-        $discount = CourseDiscount::where('course_id', $course->id)
-            ->where(fn ($q) => $q->whereNull('user_id')->orWhere('user_id', $user->id))
+        $student = $user->student;
+
+        $discountQuery = CourseDiscount::query()->where('course_id', $course->id)
             ->where('is_active', true)
             ->where(fn ($q) => $q->whereNull('expires_at')->orWhere('expires_at', '>', now()))
-            ->orderByDesc('discount_percentage')
-            ->first();
+            ->orderByDesc('discount_percentage');
+
+        // Backward compatibility: older DBs might have user_id instead of student_id
+        if (Schema::hasColumn('course_discounts', 'student_id')) {
+            if (! $student) {
+                // Only allow global discounts (student_id NULL) if we cannot resolve student
+                $discountQuery->whereNull('student_id');
+            } else {
+                $discountQuery->where(fn ($q) => $q->whereNull('student_id')->orWhere('student_id', $student->id));
+            }
+        } else {
+            $discountQuery->where(fn ($q) => $q->whereNull('user_id')->orWhere('user_id', $user->id));
+        }
+
+        $discount = $discountQuery->first();
 
         if (! $discount) {
             return (float) $course->price;

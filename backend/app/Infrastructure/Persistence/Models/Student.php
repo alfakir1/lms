@@ -19,12 +19,12 @@ class Student extends Model
 
     public function enrollments()
     {
-        return $this->hasMany(Enrollment::class);
+        return $this->hasMany(Enrollment::class, 'user_id', 'user_id');
     }
 
     public function courses()
     {
-        return $this->hasManyThrough(Course::class, Enrollment::class, 'student_id', 'id', 'id', 'course_id');
+        return $this->belongsToMany(Course::class, 'enrollments', 'user_id', 'course_id', 'user_id', 'id');
     }
 
     public function attendanceRecords()

@@ -1,226 +1,250 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
+import { BookOpen, CheckCircle, Clock, CreditCard } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../contexts/AuthContext';
-import api from '../../api/axios';
-import { BookOpen, Clock, Award, Play, CheckCircle, Loader2 } from 'lucide-react';
+import { enrollmentService } from '../../services/enrollmentService';
+import { paymentService } from '../../services/paymentService';
+import type { EnrollmentWithCourse } from '../../services/enrollmentService';
+import Button from '../../components/ui/Button';
+import { Card, CardContent } from '../../components/ui/Card';
+import { ErrorMessage, LoadingSpinner, EmptyState } from '../../components/ui/Feedback';
+
+function StatCard({ icon, label, value, cls }: { icon: React.ReactNode; label: string; value: number | string; cls: string }) {
+  return (
+    <Card className="dark:bg-slate-900 border-0 shadow-soft">
+      <CardContent className="p-6">
+        <div className="flex items-center gap-4">
+          <div className={`p-3 rounded-xl text-white ${cls}`}>{icon}</div>
+          <div>
+            <p className="text-sm font-semibold text-slate-500 dark:text-slate-400">{label}</p>
+            <p className="text-2xl font-bold text-slate-900 dark:text-white">{value}</p>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
 
 const StudentDashboard: React.FC = () => {
+  const { t } = useTranslation();
   const { user } = useAuth();
 
-  const { data: enrollments, isLoading: enrollmentsLoading } = useQuery({
+  const { data: enrollments, isLoading: enrollmentsLoading, error: enrollmentsError, refetch: refetchEnrollments } = useQuery({
     queryKey: ['my-enrollments'],
-    queryFn: async () => {
-      const response = await api.get('/enrollments/my');
-      return response.data;
-    }
+    queryFn: () => enrollmentService.getMyEnrollments(),
   });
 
-  const isLoading = enrollmentsLoading;
+  const { data: payments, isLoading: paymentsLoading, error: paymentsError, refetch: refetchPayments } = useQuery({
+    queryKey: ['my-payments'],
+    queryFn: () => paymentService.getAll({ per_page: 10 }),
+  });
 
-  if (isLoading) {
+  const activeEnrollments = useMemo(
+    () => (enrollments || []).filter((e) => e.status === 'active' && e.payment_status === 'paid'),
+    [enrollments]
+  );
+
+  const completedCount = activeEnrollments.filter((e) => (e.progress_percent ?? 0) >= 100).length;
+  const inProgressCount = activeEnrollments.filter((e) => {
+    const p = e.progress_percent ?? 0;
+    return p > 0 && p < 100;
+  }).length;
+
+  const pendingAccessCount = (enrollments || []).filter((e) => !(e.status === 'active' && e.payment_status === 'paid')).length;
+
+  const paymentStats = useMemo(() => {
+    const list = payments?.data || [];
+    return {
+      pending: list.filter((p) => p.status === 'pending').length,
+      under_review: list.filter((p) => p.status === 'under_review').length,
+      rejected: list.filter((p) => p.status === 'rejected').length,
+    };
+  }, [payments]);
+
+  if (enrollmentsLoading || paymentsLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <span className="ml-2 text-text font-medium">Loading Dashboard...</span>
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center transition-colors duration-300">
+        <LoadingSpinner text={t('common.loading')} />
       </div>
     );
   }
 
-  // Derived stats
-  const totalCourses = enrollments?.length || 0;
-  const completedCourses = enrollments?.filter((e: any) => e.progress === 100).length || 0;
+  if (enrollmentsError || paymentsError) {
+    return (
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center p-4 transition-colors duration-300">
+        <div className="max-w-md w-full">
+          <ErrorMessage 
+            title={t('common.noData') || 'Dashboard Error'} 
+            message="We couldn't load your dashboard data." 
+            onRetry={() => { refetchEnrollments(); refetchPayments(); }} 
+          />
+        </div>
+      </div>
+    );
+  }
 
-  const enrolledCourses = enrollments || [];
+  const continueLearning = [...activeEnrollments]
+    .sort((a, b) => (b.progress_percent ?? 0) - (a.progress_percent ?? 0))
+    .slice(0, 3);
 
-  const stats = {
-    totalCourses,
-    completedCourses,
-    totalHours: 0, // Not yet tracked in backend
-    certificates: 0 // Mock for now
-  };
+  const recentPayments = (payments?.data || []).slice(0, 5);
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Welcome Section */}
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 py-10 transition-colors duration-300">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-text mb-2">Welcome back, {user?.name || 'Student'}!</h1>
-          <p className="text-gray-600">Continue your learning journey with Four Academy</p>
+          <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">{t('student.welcome')} {user?.name?.split(' ')[0]}</h1>
+          <p className="text-slate-600 dark:text-slate-400">Track your progress and pick up where you left off.</p>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white rounded-lg shadow-sm p-6">
-            <div className="flex items-center">
-              <div className="p-3 bg-primary rounded-lg">
-                <BookOpen className="h-6 w-6 text-white" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Total Courses</p>
-                <p className="text-2xl font-bold text-text">{stats.totalCourses}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg shadow-sm p-6">
-            <div className="flex items-center">
-              <div className="p-3 bg-accent rounded-lg">
-                <CheckCircle className="h-6 w-6 text-white" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Completed</p>
-                <p className="text-2xl font-bold text-text">{stats.completedCourses}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg shadow-sm p-6">
-            <div className="flex items-center">
-              <div className="p-3 bg-secondary rounded-lg">
-                <Clock className="h-6 w-6 text-white" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Study Hours</p>
-                <p className="text-2xl font-bold text-text">{stats.totalHours}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg shadow-sm p-6">
-            <div className="flex items-center">
-              <div className="p-3 bg-accent rounded-lg">
-                <Award className="h-6 w-6 text-white" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Certificates</p>
-                <p className="text-2xl font-bold text-text">{stats.certificates}</p>
-              </div>
-            </div>
-          </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <StatCard
+            icon={<BookOpen className="h-6 w-6" />}
+            label={t('student.activeCourses')}
+            value={activeEnrollments.length}
+            cls="bg-primary-600"
+          />
+          <StatCard
+            icon={<CheckCircle className="h-6 w-6" />}
+            label={t('student.completed')}
+            value={completedCount}
+            cls="bg-secondary-600"
+          />
+          <StatCard
+            icon={<Clock className="h-6 w-6" />}
+            label={t('student.ongoingLearning')}
+            value={inProgressCount}
+            cls="bg-sky-500"
+          />
+          <StatCard
+            icon={<CreditCard className="h-6 w-6" />}
+            label={t('reception.pendingPayments')}
+            value={paymentStats.pending + paymentStats.under_review}
+            cls="bg-amber-500"
+          />
         </div>
 
         <div className="grid lg:grid-cols-3 gap-8">
-          {/* Main Content */}
           <div className="lg:col-span-2 space-y-8">
             {/* Continue Learning */}
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-bold text-text">Continue Learning</h2>
-                <Link
-                  to="/student/courses"
-                  className="text-secondary hover:text-primary text-sm font-medium"
-                >
-                  View all courses →
-                </Link>
-              </div>
+            <Card className="dark:bg-slate-900 border-0 shadow-soft">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-xl font-bold text-slate-900 dark:text-white">{t('student.continueLearning')}</h2>
+                  <Link to="/student/courses" className="text-sm font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300">
+                    {t('common.viewAll')}
+                  </Link>
+                </div>
 
-              <div className="space-y-4">
-                {enrolledCourses.length > 0 ? enrolledCourses.map((enrollment: any) => (
-                  <div key={enrollment.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
-                    <div className="flex items-center space-x-4">
-                      <div className="w-16 h-16 bg-gradient-to-r from-primary to-secondary rounded-lg flex items-center justify-center">
-                        <BookOpen className="h-8 w-8 text-white" />
-                      </div>
-
-                      <div className="flex-1">
-                        <h3 className="font-semibold text-text mb-1">{enrollment.course?.title}</h3>
-                        <p className="text-sm text-gray-600 mb-2">Progress: {enrollment.progress}%</p>
-
-                        <div className="flex items-center space-x-4 mb-3">
-                          <div className="flex-1">
-                            <div className="w-full bg-gray-200 rounded-full h-2">
-                              <div
-                                className="bg-accent h-2 rounded-full"
-                                style={{ width: `${enrollment.progress}%` }}
-                              ></div>
+                {continueLearning.length === 0 ? (
+                  <EmptyState 
+                    title={t('student.noCoursesYet')} 
+                    description={t('student.browseCourseCatalog')}
+                    action={
+                      <Link to="/courses">
+                        <Button>{t('student.browseCourseCatalog')}</Button>
+                      </Link>
+                    }
+                  />
+                ) : (
+                  <div className="space-y-4">
+                    {continueLearning.map((e: EnrollmentWithCourse) => {
+                      const p = e.progress_percent ?? 0;
+                      return (
+                        <div key={e.id} className="border border-slate-200 dark:border-slate-800 rounded-xl p-5 hover:border-primary-200 dark:hover:border-primary-800 transition">
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                            <div className="flex-1 min-w-0">
+                              <h3 className="font-bold text-slate-900 dark:text-white truncate">{e.course?.title}</h3>
+                              <div className="flex items-center gap-3 mt-2">
+                                <div className="flex-1 h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden max-w-xs">
+                                  <div className="h-full bg-primary-600 rounded-full" style={{ width: `${p}%` }} />
+                                </div>
+                                <span className="text-sm font-medium text-slate-600 dark:text-slate-400">{p}% {t('common.completed')}</span>
+                              </div>
                             </div>
+                            <Link to={`/student/courses/${e.course_id}/learn`}>
+                              <Button>{t('student.continue')}</Button>
+                            </Link>
                           </div>
                         </div>
-
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm text-gray-600">
-                             Keep pushing forward!
-                          </span>
-                          <Link
-                            to={`/student/courses/${enrollment.course?.id}/learn`}
-                            className="flex items-center space-x-1 bg-secondary text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm"
-                          >
-                            <Play className="h-4 w-4" />
-                            <span>Continue</span>
-                          </Link>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )) : (
-                  <div className="text-center py-8">
-                    <p className="text-gray-500">You are not enrolled in any courses yet.</p>
-                    <Link to="/courses" className="text-primary hover:underline mt-2 inline-block">Browse Courses</Link>
+                      );
+                    })}
                   </div>
                 )}
-              </div>
-            </div>
+              </CardContent>
+            </Card>
 
-            {/* Recent Assignments */}
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-bold text-text">Recent Assignments</h2>
-              </div>
+            {/* Recent Payments */}
+            <Card className="dark:bg-slate-900 border-0 shadow-soft">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-xl font-bold text-slate-900 dark:text-white">{t('admin.payments')}</h2>
+                  <Link to="/student/payments" className="text-sm font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300">
+                    {t('common.viewAll')}
+                  </Link>
+                </div>
 
-              <div className="bg-slate-50 dark:bg-slate-900/50 border border-dashed border-slate-200 dark:border-slate-800 rounded-2xl p-8 text-center">
-                <p className="text-slate-500 font-medium">Assignments feature is coming soon!</p>
-              </div>
-            </div>
+                {recentPayments.length === 0 ? (
+                  <div className="text-center py-8 text-slate-500 dark:text-slate-400 text-sm">
+                    No payment requests yet.
+                  </div>
+                ) : (
+                  <div className="divide-y divide-slate-100 dark:divide-slate-800">
+                    {recentPayments.map((p) => (
+                      <div key={p.id} className="py-4 flex items-center justify-between first:pt-0 last:pb-0">
+                        <div>
+                          <p className="font-semibold text-slate-900 dark:text-white">{p.course?.title || `Course #${p.course_id}`}</p>
+                          <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">#{p.id} • ${Number(p.amount).toFixed(2)}</p>
+                        </div>
+                        <span className={`px-2.5 py-1 rounded text-xs font-bold uppercase ${
+                          p.status === 'approved' ? 'bg-secondary-50 dark:bg-secondary-900/20 text-secondary-700 dark:text-secondary-400' :
+                          p.status === 'rejected' ? 'bg-rose-50 dark:bg-rose-900/20 text-rose-700 dark:text-rose-400' :
+                          'bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400'
+                        }`}>
+                          {t(`common.${p.status}`) || p.status.replace('_', ' ')}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </div>
 
-          {/* Sidebar */}
           <div className="space-y-8">
-            {/* Achievements */}
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <h2 className="text-xl font-bold text-text mb-6">Recent Achievements</h2>
-              <div className="bg-slate-50 dark:bg-slate-900/50 border border-dashed border-slate-200 dark:border-slate-800 rounded-2xl p-6 text-center">
-                <p className="text-slate-500 text-sm font-medium">Coming Soon</p>
-              </div>
-            </div>
-
-            {/* Learning Streak */}
-            <div className="bg-gradient-to-r from-primary to-secondary text-white rounded-lg p-6">
-              <div className="text-center">
-                <div className="text-4xl mb-2">🔥</div>
-                <h3 className="text-xl font-bold mb-2">7 Day Streak!</h3>
-                <p className="text-blue-100 mb-4">Keep it up! You're on fire!</p>
-                <div className="flex justify-center space-x-1">
-                  {[...Array(7)].map((_, i) => (
-                    <div
-                      key={i}
-                      className={`w-3 h-3 rounded-full ${
-                        i < 5 ? 'bg-accent' : 'bg-blue-300'
-                      }`}
-                    ></div>
-                  ))}
+            <Card className="dark:bg-slate-900 border-0 shadow-soft">
+              <CardContent className="p-6">
+                <h2 className="font-bold text-slate-900 dark:text-white mb-4">{t('footer.quickLinks')}</h2>
+                <div className="space-y-3">
+                  <Link to="/courses">
+                    <Button variant="outline" className="w-full justify-start ltr:text-left rtl:text-right">
+                      <BookOpen className="h-4 w-4 ltr:mr-3 rtl:ml-3 text-slate-400" />
+                      {t('student.browseCourseCatalog')}
+                    </Button>
+                  </Link>
+                  <Link to="/student/payments">
+                    <Button variant="outline" className="w-full justify-start ltr:text-left rtl:text-right">
+                      <CreditCard className="h-4 w-4 ltr:mr-3 rtl:ml-3 text-slate-400" />
+                      {t('admin.payments')}
+                    </Button>
+                  </Link>
                 </div>
-              </div>
-            </div>
+              </CardContent>
+            </Card>
 
-            {/* Quick Actions */}
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <h2 className="text-xl font-bold text-text mb-6">Quick Actions</h2>
-              <div className="space-y-3">
-                <Link
-                  to="/courses"
-                  className="block w-full bg-secondary text-white text-center py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors"
-                >
-                  Browse Courses
-                </Link>
-                <Link
-                  to="/student/certificates"
-                  className="block w-full border border-gray-300 text-text text-center py-2 px-4 rounded-lg hover:bg-gray-50 transition-colors"
-                >
-                  View Certificates
-                </Link>
+            {pendingAccessCount > 0 && (
+              <div className="bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800 rounded-xl p-5 text-amber-900 dark:text-amber-400">
+                <h3 className="font-bold flex items-center gap-2">
+                  <Clock className="h-5 w-5" /> {t('common.pending')}
+                </h3>
+                <p className="text-sm mt-2">
+                  You have {pendingAccessCount} course(s) awaiting payment approval. Access will be granted automatically once approved.
+                </p>
               </div>
-            </div>
+            )}
           </div>
         </div>
       </div>

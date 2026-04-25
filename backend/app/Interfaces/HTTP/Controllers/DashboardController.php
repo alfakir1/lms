@@ -7,7 +7,7 @@ use App\Infrastructure\Persistence\Models\Course;
 use App\Infrastructure\Persistence\Models\Enrollment;
 use App\Infrastructure\Persistence\Models\Payment;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Routing\Controller;
+use App\Http\Controllers\Controller;
 
 class DashboardController extends Controller
 {
@@ -16,17 +16,16 @@ class DashboardController extends Controller
      */
     public function stats(): JsonResponse
     {
-        return response()->json([
-            'success' => true,
-            'data' => [
-                'total_users' => User::count(),
-                'total_courses' => Course::count(),
-                'total_revenue' => (float) Payment::sum('amount'),
-                'active_students' => User::where('role', 'student')->count(),
-                'pending_enrollments' => Enrollment::where('status', 'pending')->count(),
-                'recent_activities' => $this->getRecentActivities(),
-            ]
-        ]);
+        $data = [
+            'total_users' => User::count(),
+            'total_courses' => Course::count(),
+            'total_revenue' => (float) Payment::sum('amount'),
+            'active_students' => User::where('role', 'student')->count(),
+            'pending_enrollments' => Enrollment::where('status', 'pending')->count(),
+            'recent_activities' => $this->getRecentActivities(),
+        ];
+
+        return $this->apiResponse('success', $data, 'Dashboard statistics retrieved successfully');
     }
 
     /**

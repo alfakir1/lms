@@ -1,95 +1,137 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { GraduationCap, LogOut, Menu, User, X, Moon, Sun, Globe } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTheme } from '../../contexts/ThemeContext';
+import { useLanguage } from '../../contexts/LanguageContext';
 import { useTranslation } from 'react-i18next';
-import { GraduationCap, User, LogOut } from 'lucide-react';
-import ThemeToggle from '../ui/ThemeToggle';
-import LanguageSwitcher from '../ui/LanguageSwitcher';
+import Button from '../ui/Button';
 
 const Header: React.FC = () => {
   const { user, logout, isAuthenticated } = useAuth();
+  const { theme, toggleTheme } = useTheme();
+  const { language, changeLanguage } = useLanguage();
+  const { t } = useTranslation();
   const navigate = useNavigate();
+  const [mobileOpen, setMobileOpen] = React.useState(false);
 
-  const handleLogout = () => {
-    logout();
+  const dashboardPath = user?.role === 'super_admin' ? '/admin/dashboard' : `/${user?.role}/dashboard`;
+
+  const handleLogout = async () => {
+    await logout();
     navigate('/');
   };
 
-  const { t } = useTranslation();
-
   return (
-    <header className="glass sticky top-0 z-50 border-b border-neutral-200/50 dark:border-slate-800/50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-col gap-4 py-4 md:flex-row md:items-center md:justify-between">
-          <div className="flex flex-col gap-3 md:flex-row md:items-center md:gap-6">
-            <Link to="/" className="flex items-center space-x-3 group">
-              <div className="p-2 bg-gradient-to-br from-primary to-primary-dark rounded-xl shadow-lg shadow-primary/20 group-hover:scale-110 group-hover:shadow-primary/40 transition-all duration-300">
-                <GraduationCap className="h-6 w-6 text-white" />
-              </div>
-              <span className="text-2xl font-black tracking-tight bg-gradient-to-r from-primary to-secondary dark:from-primary dark:to-secondary bg-clip-text text-transparent transform transition-all group-hover:scale-[1.02]">
-                Four Academy
-              </span>
-            </Link>
-            <nav className="hidden md:flex items-center space-x-8">
-              <Link to="/" className="text-text hover:text-primary font-medium transition-all duration-300 hover:-translate-y-0.5 dark:text-text-h dark:hover:text-primary">
-                {t('nav.home')}
-              </Link>
-              <Link to="/courses" className="text-text hover:text-primary font-medium transition-all duration-300 hover:-translate-y-0.5 dark:text-text-h dark:hover:text-primary">
-                {t('nav.courses')}
-              </Link>
-              <a href="#about" className="text-text hover:text-primary font-medium transition-all duration-300 hover:-translate-y-0.5 dark:text-text-h dark:hover:text-primary">
-                {t('nav.about')}
-              </a>
-            </nav>
-          </div>
-          <div className="flex flex-wrap items-center gap-3">
-            <LanguageSwitcher />
-            <ThemeToggle />
-            <div className="flex items-center gap-3">
-              {isAuthenticated ? (
-                <>
-                  <Link 
-                    to={user?.role === 'super_admin' ? '/admin/dashboard' : `/${user?.role}/dashboard`}
-                    className="hidden sm:flex items-center gap-2 rounded-xl border border-primary/20 bg-primary/5 px-4 py-2 text-sm font-bold text-primary hover:bg-primary hover:text-white transition-all duration-300 shadow-sm"
-                  >
-                    {t('nav.dashboard', 'Dashboard')}
-                  </Link>
-                  <div className="flex items-center gap-3 rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-2 text-sm shadow-soft dark:border-slate-700 dark:bg-slate-900">
-                    <div className="w-8 h-8 bg-gradient-to-br from-primary to-secondary rounded-full flex items-center justify-center shadow-sm">
-                      <User className="h-4 w-4 text-white" />
-                    </div>
-                    <span className="text-neutral-700 font-medium dark:text-neutral-300">
-                      {user?.name || 'User'}
-                    </span>
-                  </div>
-                  <button
-                    onClick={handleLogout}
-                    className="flex items-center gap-2 rounded-xl border border-neutral-200 bg-white px-4 py-2 text-sm font-medium text-text hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-all duration-300 shadow-sm hover:shadow-md dark:border-slate-700 dark:bg-slate-800 dark:text-text-h dark:hover:bg-red-500/10 dark:hover:text-red-400 dark:hover:border-red-500/30"
-                  >
-                    <LogOut className="h-4 w-4" />
-                    {t('auth.logout', 'Logout')}
-                  </button>
-                </>
-              ) : (
-                <div className="flex items-center gap-3">
-                  <Link
-                    to="/login"
-                    className="text-text hover:text-primary font-medium transition-colors dark:text-text-h dark:hover:text-primary"
-                  >
-                    {t('nav.login')}
-                  </Link>
-                  <Link
-                    to="/register"
-                    className="bg-primary text-white text-sm px-5 py-2.5 rounded-xl font-medium shadow-lg shadow-primary/25 hover:bg-primary-dark hover:shadow-primary/40 transform hover:-translate-y-0.5 transition-all duration-300"
-                  >
-                    {t('nav.register')}
-                  </Link>
-                </div>
-              )}
+    <header className="sticky top-0 z-50 border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md transition-colors duration-300">
+      <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-8">
+        <div className="flex items-center gap-8">
+          <Link to="/" className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary-600 text-white shadow-glow-primary">
+              <GraduationCap className="h-6 w-6" />
             </div>
-          </div>
+            <div>
+              <div className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">Four Academy</div>
+            </div>
+          </Link>
+
+          <nav className="hidden items-center gap-6 md:flex">
+            <Link to="/" className="text-sm font-medium text-slate-600 dark:text-slate-300 transition hover:text-primary-600 dark:hover:text-primary-400">
+              {t('nav.home')}
+            </Link>
+            <Link to="/courses" className="text-sm font-medium text-slate-600 dark:text-slate-300 transition hover:text-primary-600 dark:hover:text-primary-400">
+              {t('nav.courses')}
+            </Link>
+          </nav>
+        </div>
+
+        <div className="hidden items-center gap-3 md:flex">
+          <button onClick={() => changeLanguage(language === 'ar' ? 'en' : 'ar')} className="p-2 text-slate-600 dark:text-slate-400 hover:text-primary-600 dark:hover:text-primary-400 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+            <Globe className="h-5 w-5" />
+          </button>
+          <button onClick={toggleTheme} className="p-2 text-slate-600 dark:text-slate-400 hover:text-primary-600 dark:hover:text-primary-400 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors mr-2">
+            {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+          </button>
+
+          {isAuthenticated ? (
+            <div className="flex items-center gap-4">
+              <Link to={dashboardPath}>
+                <Button variant="ghost" size="sm">
+                  <User className="h-4 w-4 ltr:mr-2 rtl:ml-2" />
+                  {t('nav.dashboard')}
+                </Button>
+              </Link>
+              <Button variant="outline" size="sm" onClick={handleLogout}>
+                <LogOut className="h-4 w-4 ltr:mr-2 rtl:ml-2" />
+                {t('nav.logout')}
+              </Button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-3">
+              <Link to="/login">
+                <Button variant="ghost" size="sm">{t('nav.login')}</Button>
+              </Link>
+              <Link to="/register">
+                <Button size="sm">{t('nav.register')}</Button>
+              </Link>
+            </div>
+          )}
+        </div>
+
+        <div className="flex items-center gap-2 md:hidden">
+          <button onClick={() => changeLanguage(language === 'ar' ? 'en' : 'ar')} className="p-2 text-slate-600 dark:text-slate-400 hover:text-primary-600">
+            <Globe className="h-5 w-5" />
+          </button>
+          <button onClick={toggleTheme} className="p-2 text-slate-600 dark:text-slate-400 hover:text-primary-600">
+            {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+          </button>
+          <button
+            onClick={() => setMobileOpen((value) => !value)}
+            className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300"
+          >
+            {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </button>
         </div>
       </div>
+
+      {mobileOpen && (
+        <div className="border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 md:hidden p-4">
+          <nav className="flex flex-col gap-2">
+            <Link to="/" onClick={() => setMobileOpen(false)} className="rounded-lg px-4 py-2 font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800">
+              {t('nav.home')}
+            </Link>
+            <Link to="/courses" onClick={() => setMobileOpen(false)} className="rounded-lg px-4 py-2 font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800">
+              {t('nav.courses')}
+            </Link>
+            <div className="border-t border-slate-100 dark:border-slate-800 my-2"></div>
+            {isAuthenticated ? (
+              <>
+                <Link to={dashboardPath} onClick={() => setMobileOpen(false)} className="rounded-lg px-4 py-2 font-medium text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/20">
+                  {t('nav.dashboard')}
+                </Link>
+                <button
+                  onClick={async () => {
+                    setMobileOpen(false);
+                    await handleLogout();
+                  }}
+                  className="rounded-lg px-4 py-2 font-medium text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/20 text-left"
+                >
+                  {t('nav.logout')}
+                </button>
+              </>
+            ) : (
+              <>
+                <Link to="/login" onClick={() => setMobileOpen(false)} className="rounded-lg px-4 py-2 font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800">
+                  {t('nav.login')}
+                </Link>
+                <Link to="/register" onClick={() => setMobileOpen(false)} className="rounded-lg px-4 py-2 font-medium text-white bg-primary-600 text-center">
+                  {t('nav.register')}
+                </Link>
+              </>
+            )}
+          </nav>
+        </div>
+      )}
     </header>
   );
 };

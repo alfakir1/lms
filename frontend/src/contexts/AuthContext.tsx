@@ -1,12 +1,12 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import type { User } from '../types';
-import api from '../api/axios';
+import { authService } from '../services/authService';
 import { RolePermissions } from '../utils/permissions';
 
 interface AuthContextType {
   user: User | null;
   login: (userData: User, token: string) => void;
-  logout: () => void;
+  logout: () => Promise<void>;
   isAuthenticated: boolean;
   loading: boolean;
   hasPermission: (permission: string) => boolean;
@@ -33,15 +33,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   useEffect(() => {
     const initAuth = async () => {
       const token = localStorage.getItem('token');
-      const savedUser = localStorage.getItem('user');
-      
-      if (token && savedUser) {
-        try {
-          setUser(JSON.parse(savedUser));
-        } catch (e) {
-          localStorage.removeItem('token');
-          localStorage.removeItem('user');
-        }
+      if (!token) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const me = await authService.getCurrentUser();
+        localStorage.setItem('user', JSON.stringify(me));
+        setUser(me);
+      } catch {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        setUser(null);
       }
       setLoading(false);
     };
@@ -56,9 +60,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const logout = async () => {
     try {
-      await api.post('/auth/logout');
-    } catch (e) {
-      console.error('Logout failed', e);
+      await authService.logout();
     } finally {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
@@ -66,7 +68,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  const isAuthenticated = !!user;
+  const isAuthenticated = useMemo(() => !!user, [user]);
 
   const hasPermission = (permission: any) => {
     if (!user) return false;

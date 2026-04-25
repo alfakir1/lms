@@ -25,6 +25,14 @@ class EloquentPaymentRepository implements PaymentRepositoryInterface
             ->where('status', 'pending')
             ->first();
     }
+
+    public function findLatestByUserAndCourse(int $userId, int $courseId): ?Payment
+    {
+        return Payment::where('user_id', $userId)
+            ->where('course_id', $courseId)
+            ->latest()
+            ->first();
+    }
     
     public function updateStatus(Payment $payment, string $status, ?int $reviewedBy = null): bool
     {
@@ -43,6 +51,9 @@ class EloquentPaymentRepository implements PaymentRepositoryInterface
     
     public function listByUserPaginated(int $userId, int $perPage = 15)
     {
-        return Payment::where('user_id', $userId)->latest()->paginate($perPage);
+        return Payment::with(['course'])
+            ->where('user_id', $userId)
+            ->latest()
+            ->paginate($perPage);
     }
 }

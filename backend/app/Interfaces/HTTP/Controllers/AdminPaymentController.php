@@ -28,7 +28,13 @@ class AdminPaymentController extends Controller
     public function index(Request $request)
     {
         $perPage = $request->input('per_page', 10);
-        $payments = $this->paymentRepo->listAllPaginated($perPage);
+
+        $query = \App\Infrastructure\Persistence\Models\Payment::with(['user', 'course'])->latest();
+        if ($request->filled('status')) {
+            $query->where('status', $request->input('status'));
+        }
+
+        $payments = $query->paginate($perPage);
         return $this->apiResponse('success', $payments, 'All payments retrieved successfully');
     }
 

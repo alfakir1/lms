@@ -9,6 +9,22 @@ use App\Infrastructure\Persistence\Models\Chapter;
 
 class ChapterController extends Controller
 {
+    public function index(Request $request, Course $course)
+    {
+        $this->authorize('view', $course);
+
+        $chapters = $course->chapters()->with('lectures')->orderBy('order_index')->get();
+        return $this->apiResponse('success', $chapters);
+    }
+
+    public function show(Chapter $chapter)
+    {
+        $this->authorize('view', $chapter->course);
+
+        $chapter->load('lectures');
+        return $this->apiResponse('success', $chapter);
+    }
+
     public function store(Request $request, Course $course)
     {
         $this->authorize('update', $course);

@@ -5,7 +5,7 @@ namespace App\Interfaces\HTTP\Controllers;
 use App\Infrastructure\Persistence\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Routing\Controller;
+use App\Http\Controllers\Controller;
 
 class UserManagementController extends Controller
 {
@@ -32,10 +32,7 @@ class UserManagementController extends Controller
 
         $users = $query->latest()->paginate(10);
 
-        return response()->json([
-            'success' => true,
-            'data' => $users
-        ]);
+        return $this->apiResponse('success', $users, 'Users retrieved successfully');
     }
 
     /**
@@ -50,10 +47,6 @@ class UserManagementController extends Controller
 
         $user->update($validated);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'User updated successfully',
-            'data' => $user
-        ]);
+        return $this->apiResponse('success', $user, 'User updated successfully');
     }
 }

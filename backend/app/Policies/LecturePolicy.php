@@ -24,12 +24,30 @@ class LecturePolicy
 
         // Student must be enrolled
         if ($user->isRole('student')) {
-            return Enrollment::where('student_id', $user->id)
+            return Enrollment::where('user_id', $user->id)
                 ->where('course_id', $courseId)
-                ->where('status', 'approved')
+                ->whereIn('status', ['active', 'completed'])
                 ->exists();
         }
 
         return false;
+    }
+
+    public function update(User $user, Lecture $lecture)
+    {
+        if ($user->isRole('admin') || $user->isRole('super_admin')) {
+            return true;
+        }
+
+        if ($user->isRole('instructor') && $user->instructor) {
+            return $lecture->chapter->course->instructor_id === $user->instructor->id;
+        }
+
+        return false;
+    }
+
+    public function delete(User $user, Lecture $lecture)
+    {
+        return $this->update($user, $lecture);
     }
 }

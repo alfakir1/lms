@@ -1,361 +1,248 @@
-import React, { useState } from 'react';
-import { CreditCard, Search, Filter, Download, Eye, CheckCircle, XCircle, Clock, DollarSign } from 'lucide-react';
+import React, { useMemo, useState } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { CheckCircle, Clock, CreditCard, Eye, Search, X, XCircle, Loader2, FileText } from 'lucide-react';
+import { adminPaymentService } from '../../services/paymentService';
+import { useToast } from '../../contexts/ToastContext';
+import type { Payment, PaymentStatus } from '../../services/paymentService';
+
+const StatusBadge: React.FC<{ status: PaymentStatus }> = ({ status }) => {
+  const config = {
+    approved: { cls: 'bg-green-100 text-green-800 border-green-200', icon: <CheckCircle className="h-4 w-4 text-green-600" /> },
+    rejected: { cls: 'bg-red-100 text-red-800 border-red-200', icon: <XCircle className="h-4 w-4 text-red-600" /> },
+    under_review: { cls: 'bg-blue-100 text-blue-800 border-blue-200', icon: <Clock className="h-4 w-4 text-blue-600" /> },
+    pending: { cls: 'bg-amber-100 text-amber-800 border-amber-200', icon: <Clock className="h-4 w-4 text-amber-600" /> },
+  };
+
+  const { cls, icon } = config[status];
+
+  return (
+    <div className="flex items-center">
+      {icon}
+      <span className={`ml-2 px-2.5 py-1 text-xs font-semibold rounded-full border ${cls}`}>
+        {status.replace('_', ' ')}
+      </span>
+    </div>
+  );
+};
+
+const PaymentRowSkeleton: React.FC = () => (
+  <tr className="animate-pulse">
+    <td className="px-6 py-4"><div className="h-4 bg-slate-200 rounded w-24" /></td>
+    <td className="px-6 py-4"><div className="h-4 bg-slate-200 rounded w-32" /></td>
+    <td className="px-6 py-4"><div className="h-4 bg-slate-200 rounded w-40" /></td>
+    <td className="px-6 py-4"><div className="h-4 bg-slate-200 rounded w-16" /></td>
+    <td className="px-6 py-4"><div className="h-6 bg-slate-200 rounded w-24" /></td>
+    <td className="px-6 py-4"><div className="h-8 bg-slate-200 rounded w-28 ml-auto" /></td>
+  </tr>
+);
 
 const Payments: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [filter, setFilter] = useState('all');
-  const [selectedPayments, setSelectedPayments] = useState<number[]>([]);
+  const [selected, setSelected] = useState<Payment | null>(null);
+  const [statusFilter, setStatusFilter] = useState<PaymentStatus | 'all'>('all');
+  const queryClient = useQueryClient();
+  const { showSuccess, showError } = useToast();
 
-  // Mock payments data
-  const payments = [
-    {
-      id: 1,
-      transactionId: 'TXN_001234',
-      user: 'John Doe',
-      email: 'john@example.com',
-      course: 'Web Development Fundamentals',
-      amount: 99,
-      currency: 'USD',
-      status: 'completed',
-      paymentMethod: 'Credit Card',
-      date: '2024-01-18',
-      processedDate: '2024-01-18 14:30:00',
-      instructorShare: 79.20,
-      platformFee: 19.80
-    },
-    {
-      id: 2,
-      transactionId: 'TXN_001235',
-      user: 'Jane Smith',
-      email: 'jane@example.com',
-      course: 'React for Beginners',
-      amount: 79,
-      currency: 'USD',
-      status: 'completed',
-      paymentMethod: 'PayPal',
-      date: '2024-01-17',
-      processedDate: '2024-01-17 09:15:00',
-      instructorShare: 63.20,
-      platformFee: 15.80
-    },
-    {
-      id: 3,
-      transactionId: 'TXN_001236',
-      user: 'Mike Johnson',
-      email: 'mike@example.com',
-      course: 'Python Programming',
-      amount: 89,
-      currency: 'USD',
-      status: 'pending',
-      paymentMethod: 'Credit Card',
-      date: '2024-01-16',
-      processedDate: null,
-      instructorShare: 71.20,
-      platformFee: 17.80
-    },
-    {
-      id: 4,
-      transactionId: 'TXN_001237',
-      user: 'Sarah Wilson',
-      email: 'sarah@example.com',
-      course: 'Data Science with Python',
-      amount: 149,
-      currency: 'USD',
-      status: 'failed',
-      paymentMethod: 'Credit Card',
-      date: '2024-01-15',
-      processedDate: null,
-      instructorShare: 119.20,
-      platformFee: 29.80
-    },
-    {
-      id: 5,
-      transactionId: 'TXN_001238',
-      user: 'David Brown',
-      email: 'david@example.com',
-      course: 'UI/UX Design Principles',
-      amount: 119,
-      currency: 'USD',
-      status: 'refunded',
-      paymentMethod: 'PayPal',
-      date: '2024-01-14',
-      processedDate: '2024-01-14 16:45:00',
-      instructorShare: 0,
-      platformFee: 0
-    }
-  ];
-
-  const filteredPayments = payments.filter(payment => {
-    const matchesSearch = payment.user.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         payment.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         payment.transactionId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         payment.course.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesFilter = filter === 'all' || payment.status === filter;
-    return matchesSearch && matchesFilter;
+  const { data: paymentsData, isLoading, error } = useQuery({
+    queryKey: ['admin-payments', statusFilter],
+    queryFn: () => adminPaymentService.getAll(statusFilter !== 'all' ? { status: statusFilter } : undefined),
   });
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'completed':
-        return 'bg-green-100 text-green-800';
-      case 'pending':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'failed':
-        return 'bg-red-100 text-red-800';
-      case 'refunded':
-        return 'bg-gray-100 text-gray-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
-  };
+  const approveMutation = useMutation({
+    mutationFn: (id: number) => adminPaymentService.approve(id),
+    onSuccess: () => {
+      showSuccess('Payment approved successfully');
+      queryClient.invalidateQueries({ queryKey: ['admin-payments'] });
+      if (selected) setSelected(null);
+    },
+    onError: (err: any) => {
+      showError(err?.message || 'Failed to approve payment');
+    },
+  });
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'completed':
-        return <CheckCircle className="h-4 w-4 text-green-600" />;
-      case 'pending':
-        return <Clock className="h-4 w-4 text-yellow-600" />;
-      case 'failed':
-        return <XCircle className="h-4 w-4 text-red-600" />;
-      case 'refunded':
-        return <DollarSign className="h-4 w-4 text-gray-600" />;
-      default:
-        return <Clock className="h-4 w-4 text-gray-600" />;
-    }
-  };
+  const rejectMutation = useMutation({
+    mutationFn: (id: number) => adminPaymentService.reject(id),
+    onSuccess: () => {
+      showSuccess('Payment rejected successfully');
+      queryClient.invalidateQueries({ queryKey: ['admin-payments'] });
+      if (selected) setSelected(null);
+    },
+    onError: (err: any) => {
+      showError(err?.message || 'Failed to reject payment');
+    },
+  });
 
-  const handleSelectPayment = (paymentId: number) => {
-    setSelectedPayments(prev =>
-      prev.includes(paymentId)
-        ? prev.filter(id => id !== paymentId)
-        : [...prev, paymentId]
+  const payments = paymentsData?.data || [];
+
+  const filtered = useMemo(() => {
+    const q = searchTerm.trim().toLowerCase();
+    if (!q) return payments;
+    return payments.filter((p) => {
+      return (
+        String(p.user?.name || '').toLowerCase().includes(q) ||
+        String(p.user?.email || '').toLowerCase().includes(q) ||
+        String(p.course?.title || '').toLowerCase().includes(q)
+      );
+    });
+  }, [payments, searchTerm]);
+
+  const pendingCount = payments.filter(p => p.status === 'pending' || p.status === 'under_review').length;
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-slate-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="flex items-center justify-between mb-6">
+            <h1 className="text-3xl font-bold text-slate-900 flex items-center gap-2">
+              <CreditCard className="text-primary-600" />
+              Payments
+            </h1>
+          </div>
+          <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+              <table className="w-full">
+                <thead className="bg-slate-50 border-b border-slate-100">
+                  <tr>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-slate-400 uppercase">ID</th>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-slate-400 uppercase">Student</th>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-slate-400 uppercase">Course</th>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-slate-400 uppercase">Amount</th>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-slate-400 uppercase">Status</th>
+                    <th className="px-6 py-4 text-right text-xs font-bold text-slate-400 uppercase">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-50">
+                  {Array.from({ length: 5 }).map((_, i) => <PaymentRowSkeleton key={i} />)}
+                </tbody>
+              </table>
+          </div>
+        </div>
+      </div>
     );
-  };
+  }
 
-  const handleSelectAll = () => {
-    setSelectedPayments(
-      selectedPayments.length === filteredPayments.length
-        ? []
-        : filteredPayments.map(payment => payment.id)
+  if (error) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 p-4 text-center">
+        <div className="text-6xl mb-4">⚠️</div>
+        <h2 className="text-2xl font-bold text-red-600 mb-2">Error Loading Payments</h2>
+        <p className="text-slate-600 mb-6">Unable to fetch payment data. Please try again later.</p>
+        <button
+          onClick={() => window.location.reload()}
+          className="px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 font-medium"
+        >
+          Retry
+        </button>
+      </div>
     );
-  };
-
-  const handleBulkAction = (action: string) => {
-    console.log(`Performing ${action} on payments:`, selectedPayments);
-    // In real app, this would call API
-    setSelectedPayments([]);
-  };
-
-  const totalRevenue = payments
-    .filter(p => p.status === 'completed')
-    .reduce((sum, p) => sum + p.amount, 0);
-
-  const pendingPayments = payments.filter(p => p.status === 'pending').length;
-  const failedPayments = payments.filter(p => p.status === 'failed').length;
+  }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-slate-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
           <div>
-            <h1 className="text-3xl font-bold text-text mb-2">Payments Management</h1>
-            <p className="text-gray-600">Monitor transactions, process payments, and manage refunds</p>
-          </div>
-          <div className="flex space-x-3">
-            <button className="flex items-center space-x-2 border border-gray-300 text-text px-4 py-2 rounded-lg hover:bg-gray-50">
-              <Download className="h-4 w-4" />
-              <span>Export</span>
-            </button>
-            <button className="bg-secondary text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors">
-              Process Payments
-            </button>
-          </div>
-        </div>
-
-        {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white rounded-lg shadow-sm p-6 text-center">
-            <div className="text-2xl font-bold text-green-600 mb-2">${totalRevenue.toLocaleString()}</div>
-            <div className="text-sm text-gray-600">Total Revenue</div>
-          </div>
-          <div className="bg-white rounded-lg shadow-sm p-6 text-center">
-            <div className="text-2xl font-bold text-primary mb-2">{payments.filter(p => p.status === 'completed').length}</div>
-            <div className="text-sm text-gray-600">Successful Payments</div>
-          </div>
-          <div className="bg-white rounded-lg shadow-sm p-6 text-center">
-            <div className="text-2xl font-bold text-yellow-600 mb-2">{pendingPayments}</div>
-            <div className="text-sm text-gray-600">Pending</div>
-          </div>
-          <div className="bg-white rounded-lg shadow-sm p-6 text-center">
-            <div className="text-2xl font-bold text-red-600 mb-2">{failedPayments}</div>
-            <div className="text-sm text-gray-600">Failed</div>
+            <h1 className="text-3xl font-bold text-slate-900 flex items-center gap-2">
+              <CreditCard className="text-primary-600" />
+              Payments
+            </h1>
+            <p className="text-slate-600 mt-1">
+              {pendingCount > 0 ? (
+                <span className="text-amber-600 font-medium">{pendingCount} payments pending review</span>
+              ) : (
+                'All payments have been processed'
+              )}
+            </p>
           </div>
         </div>
 
-        {/* Search and Filter */}
-        <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
-          <div className="flex flex-col md:flex-row gap-4 mb-4">
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+        {/* Filters */}
+        <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-5 mb-6">
+          <div className="flex flex-col sm:flex-row gap-4">
+            <div className="relative flex-1 max-w-lg">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 h-5 w-5" />
               <input
                 type="text"
-                placeholder="Search payments by user, email, transaction ID, or course..."
+                placeholder="Search by student, email, course..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                className="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all"
               />
             </div>
-            <div className="flex items-center space-x-2">
-              <Filter className="h-5 w-5 text-gray-400" />
-              <select
-                value={filter}
-                onChange={(e) => setFilter(e.target.value)}
-                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-              >
-                <option value="all">All Payments</option>
-                <option value="completed">Completed</option>
-                <option value="pending">Pending</option>
-                <option value="failed">Failed</option>
-                <option value="refunded">Refunded</option>
-              </select>
-            </div>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value as PaymentStatus | 'all')}
+              className="px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary-500 outline-none"
+            >
+              <option value="all">All Status</option>
+              <option value="pending">Pending</option>
+              <option value="under_review">Under Review</option>
+              <option value="approved">Approved</option>
+              <option value="rejected">Rejected</option>
+            </select>
           </div>
-
-          {/* Bulk Actions */}
-          {selectedPayments.length > 0 && (
-            <div className="flex items-center space-x-3 pt-4 border-t border-gray-200">
-              <span className="text-sm text-gray-600">
-                {selectedPayments.length} payment{selectedPayments.length > 1 ? 's' : ''} selected
-              </span>
-              <button
-                onClick={() => handleBulkAction('process')}
-                className="text-green-600 hover:text-green-800 text-sm"
-              >
-                Process
-              </button>
-              <button
-                onClick={() => handleBulkAction('refund')}
-                className="text-yellow-600 hover:text-yellow-800 text-sm"
-              >
-                Refund
-              </button>
-              <button
-                onClick={() => handleBulkAction('cancel')}
-                className="text-red-600 hover:text-red-800 text-sm"
-              >
-                Cancel
-              </button>
-            </div>
-          )}
         </div>
 
-        {/* Payments Table */}
-        <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+        {/* Table */}
+        <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gray-50">
+              <thead className="bg-slate-50 border-b border-slate-100">
                 <tr>
-                  <th className="px-6 py-3 text-left">
-                    <input
-                      type="checkbox"
-                      checked={selectedPayments.length === filteredPayments.length && filteredPayments.length > 0}
-                      onChange={handleSelectAll}
-                      className="rounded border-gray-300 text-primary focus:ring-primary"
-                    />
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Transaction
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    User
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Course
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Amount
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Method
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Date
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Actions
-                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-slate-400 uppercase tracking-wider">ID</th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-slate-400 uppercase tracking-wider">Student</th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-slate-400 uppercase tracking-wider">Course</th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-slate-400 uppercase tracking-wider">Amount</th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-slate-400 uppercase tracking-wider">Status</th>
+                  <th className="px-6 py-4 text-right text-xs font-bold text-slate-400 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {filteredPayments.map((payment) => (
-                  <tr key={payment.id} className="hover:bg-gray-50">
+              <tbody className="divide-y divide-slate-50">
+                {filtered.map((p) => (
+                  <tr key={p.id} className="hover:bg-slate-50 transition-colors">
                     <td className="px-6 py-4">
-                      <input
-                        type="checkbox"
-                        checked={selectedPayments.includes(payment.id)}
-                        onChange={() => handleSelectPayment(payment.id)}
-                        className="rounded border-gray-300 text-primary focus:ring-primary"
-                      />
-                    </td>
-                    <td className="px-6 py-4">
-                      <div>
-                        <div className="text-sm font-medium text-text">{payment.transactionId}</div>
-                        <div className="text-sm text-gray-500">
-                          {payment.processedDate || 'Not processed'}
-                        </div>
+                      <div className="text-sm font-medium text-slate-900">#{p.id}</div>
+                      <div className="text-xs text-slate-500">
+                        {p.created_at ? new Date(p.created_at).toLocaleDateString() : ''}
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <div>
-                        <div className="text-sm font-medium text-text">{payment.user}</div>
-                        <div className="text-sm text-gray-500">{payment.email}</div>
-                      </div>
+                      <div className="text-sm font-medium text-slate-900">{p.user?.name || 'N/A'}</div>
+                      <div className="text-xs text-slate-500">{p.user?.email || ''}</div>
                     </td>
+                    <td className="px-6 py-4 text-sm text-slate-700">{p.course?.title || 'N/A'}</td>
+                    <td className="px-6 py-4 text-sm font-bold text-slate-900">${Number(p.amount).toFixed(2)}</td>
                     <td className="px-6 py-4">
-                      <div className="text-sm text-text max-w-xs truncate">{payment.course}</div>
+                      <StatusBadge status={p.status} />
                     </td>
-                    <td className="px-6 py-4">
-                      <div>
-                        <div className="text-sm font-medium text-text">
-                          ${payment.amount} {payment.currency}
-                        </div>
-                        <div className="text-xs text-gray-500">
-                          Instructor: ${payment.instructorShare}
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center">
-                        {getStatusIcon(payment.status)}
-                        <span className={`ml-2 px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(payment.status)}`}>
-                          {payment.status}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-text">
-                      {payment.paymentMethod}
-                    </td>
-                    <td className="px-6 py-4 text-sm text-text">
-                      {payment.date}
-                    </td>
-                    <td className="px-6 py-4 text-right text-sm font-medium">
-                      <div className="flex items-center space-x-2">
-                        <button className="text-secondary hover:text-primary">
-                          <Eye className="h-4 w-4" />
+                    <td className="px-6 py-4 text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          onClick={() => setSelected(p)}
+                          className="p-2 rounded-lg border border-slate-200 hover:bg-slate-100 transition-colors"
+                          title="View details"
+                        >
+                          <Eye className="h-4 w-4 text-slate-600" />
                         </button>
-                        {payment.status === 'pending' && (
-                          <button className="text-green-600 hover:text-green-800">
-                            Process
-                          </button>
-                        )}
-                        {payment.status === 'completed' && (
-                          <button className="text-yellow-600 hover:text-yellow-800">
-                            Refund
-                          </button>
+                        {(p.status === 'pending' || p.status === 'under_review') && (
+                          <>
+                            <button
+                              onClick={() => approveMutation.mutate(p.id)}
+                              disabled={approveMutation.isPending}
+                              className="px-3 py-2 rounded-lg bg-green-600 text-white text-sm font-medium hover:bg-green-700 disabled:opacity-50 flex items-center gap-1"
+                            >
+                              {approveMutation.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : <CheckCircle className="h-3 w-3" />}
+                              Approve
+                            </button>
+                            <button
+                              onClick={() => rejectMutation.mutate(p.id)}
+                              disabled={rejectMutation.isPending}
+                              className="px-3 py-2 rounded-lg bg-red-600 text-white text-sm font-medium hover:bg-red-700 disabled:opacity-50 flex items-center gap-1"
+                            >
+                              {rejectMutation.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : <XCircle className="h-3 w-3" />}
+                              Reject
+                            </button>
+                          </>
                         )}
                       </div>
                     </td>
@@ -365,37 +252,107 @@ const Payments: React.FC = () => {
             </table>
           </div>
 
-          {/* Pagination */}
-          <div className="bg-white px-4 py-3 border-t border-gray-200 sm:px-6">
-            <div className="flex items-center justify-between">
-              <div className="text-sm text-gray-700">
-                Showing <span className="font-medium">1</span> to <span className="font-medium">{filteredPayments.length}</span> of{' '}
-                <span className="font-medium">{filteredPayments.length}</span> results
+          {filtered.length === 0 && (
+            <div className="text-center py-16">
+              <CreditCard className="h-16 w-16 text-slate-200 mx-auto mb-4" />
+              <h3 className="text-xl font-bold text-slate-900 mb-2">No payments found</h3>
+              <p className="text-slate-500">{searchTerm ? 'Try adjusting your search.' : 'No payment records available.'}</p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Detail Modal */}
+      {selected && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+          <div className="bg-white w-full max-w-2xl rounded-2xl shadow-2xl border border-slate-100 overflow-hidden">
+            <div className="p-5 border-b border-slate-100 flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-bold text-slate-900">Payment Details</h3>
+                <p className="text-sm text-slate-500">Payment #{selected.id}</p>
               </div>
-              <div className="flex space-x-2">
-                <button className="px-3 py-1 border border-gray-300 rounded text-sm hover:bg-gray-50">
-                  Previous
-                </button>
-                <button className="px-3 py-1 bg-primary text-white rounded text-sm hover:bg-blue-900">
-                  1
-                </button>
-                <button className="px-3 py-1 border border-gray-300 rounded text-sm hover:bg-gray-50">
-                  Next
-                </button>
+              <button
+                onClick={() => setSelected(null)}
+                className="p-2 rounded-xl hover:bg-slate-50 transition-colors"
+              >
+                <X className="h-5 w-5 text-slate-500" />
+              </button>
+            </div>
+
+            <div className="p-5 grid md:grid-cols-2 gap-4">
+              <div className="bg-slate-50 rounded-xl p-4">
+                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Student</p>
+                <p className="font-semibold text-slate-900">{selected.user?.name || 'N/A'}</p>
+                <p className="text-sm text-slate-500">{selected.user?.email || ''}</p>
               </div>
+              <div className="bg-slate-50 rounded-xl p-4">
+                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Course</p>
+                <p className="font-semibold text-slate-900">{selected.course?.title || 'N/A'}</p>
+                <p className="text-sm text-slate-500">Amount: ${Number(selected.amount).toFixed(2)}</p>
+              </div>
+
+              <div className="md:col-span-2 bg-slate-50 rounded-xl p-4">
+                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Payment Proof</p>
+                {selected.proof_url ? (
+                  <div className="space-y-3">
+                    <a
+                      href={selected.proof_url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-2 text-primary-600 hover:text-primary-700 text-sm font-medium"
+                    >
+                      <FileText className="h-4 w-4" />
+                      View Proof File
+                    </a>
+                    <div className="bg-white rounded-xl p-3 border border-slate-200">
+                      <img
+                        src={selected.proof_url}
+                        alt="Payment proof"
+                        className="w-full max-h-[400px] object-contain rounded-lg"
+                        onError={(e) => {
+                          (e.currentTarget as HTMLImageElement).style.display = 'none';
+                        }}
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-3 text-slate-500">
+                    <FileText className="h-5 w-5" />
+                    <p className="text-sm">No proof uploaded.</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="p-5 border-t border-slate-100 flex items-center justify-end gap-3">
+              <button
+                onClick={() => setSelected(null)}
+                className="px-4 py-2 rounded-xl border border-slate-200 text-slate-700 font-medium hover:bg-slate-50"
+              >
+                Close
+              </button>
+              {(selected.status === 'pending' || selected.status === 'under_review') && (
+                <>
+                  <button
+                    onClick={() => rejectMutation.mutate(selected.id)}
+                    disabled={rejectMutation.isPending}
+                    className="px-4 py-2 rounded-xl bg-red-600 text-white font-medium hover:bg-red-700 disabled:opacity-50"
+                  >
+                    {rejectMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Reject'}
+                  </button>
+                  <button
+                    onClick={() => approveMutation.mutate(selected.id)}
+                    disabled={approveMutation.isPending}
+                    className="px-4 py-2 rounded-xl bg-green-600 text-white font-medium hover:bg-green-700 disabled:opacity-50"
+                  >
+                    {approveMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Approve'}
+                  </button>
+                </>
+              )}
             </div>
           </div>
         </div>
-
-        {/* No Payments */}
-        {filteredPayments.length === 0 && (
-          <div className="text-center py-12">
-            <CreditCard className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-xl font-semibold text-text mb-2">No payments found</h3>
-            <p className="text-gray-600">Try adjusting your search or filter criteria.</p>
-          </div>
-        )}
-      </div>
+      )}
     </div>
   );
 };

@@ -4,6 +4,9 @@ use Illuminate\Support\Facades\Route;
 use App\Interfaces\HTTP\Controllers\AuthController;
 use App\Interfaces\HTTP\Controllers\EnrollmentController;
 use App\Interfaces\HTTP\Controllers\AttendanceController;
+use App\Interfaces\HTTP\Controllers\CourseController;
+use App\Interfaces\HTTP\Controllers\ChapterController;
+use App\Interfaces\HTTP\Controllers\LectureController;
 
 /*
 |--------------------------------------------------------------------------
@@ -13,6 +16,14 @@ use App\Interfaces\HTTP\Controllers\AttendanceController;
 */
 
 Route::prefix('v1')->group(function () {
+
+    /*
+    |--------------------------------------------------------------------------
+    | Courses (Public Read)
+    |--------------------------------------------------------------------------
+    */
+    Route::get('courses', [CourseController::class, 'index']);
+    Route::get('courses/{course}', [CourseController::class, 'show']);
 
     /* ─────────────────────────────────────────
     |  Auth (Public)
@@ -44,7 +55,7 @@ Route::prefix('v1')->group(function () {
         });
 
         /* ── Admin Management ── */
-        Route::prefix('admin')->group(function () {
+        Route::prefix('admin')->middleware('ensure.admin')->group(function () {
             Route::get('stats',                        [\App\Interfaces\HTTP\Controllers\DashboardController::class, 'stats']);
             Route::get('users',                        [\App\Interfaces\HTTP\Controllers\UserManagementController::class, 'index']);
             Route::put('users/{user}',                 [\App\Interfaces\HTTP\Controllers\UserManagementController::class, 'update']);
@@ -64,19 +75,35 @@ Route::prefix('v1')->group(function () {
         });
 
         /* ── Courses, Chapters, Lectures ── */
-        Route::apiResource('courses', \App\Interfaces\HTTP\Controllers\CourseController::class);
-        Route::apiResource('courses.chapters', \App\Interfaces\HTTP\Controllers\ChapterController::class)->shallow();
-        Route::apiResource('chapters.lectures', \App\Interfaces\HTTP\Controllers\LectureController::class)->shallow();
-        Route::post('lectures/{lecture}/progress', [\App\Interfaces\HTTP\Controllers\LectureController::class, 'trackProgress']);
+        // Courses (write actions protected; read routes are public above)
+        Route::post('courses', [CourseController::class, 'store']);
+        Route::match(['put', 'patch'], 'courses/{course}', [CourseController::class, 'update']);
+        Route::delete('courses/{course}', [CourseController::class, 'destroy']);
+
+        // Chapters
+        Route::get('courses/{course}/chapters', [ChapterController::class, 'index']);
+        Route::post('courses/{course}/chapters', [ChapterController::class, 'store']);
+        Route::get('chapters/{chapter}', [ChapterController::class, 'show']);
+        Route::match(['put', 'patch'], 'chapters/{chapter}', [ChapterController::class, 'update']);
+        Route::delete('chapters/{chapter}', [ChapterController::class, 'destroy']);
+
+        // Lectures
+        Route::get('chapters/{chapter}/lectures', [LectureController::class, 'index']);
+        Route::post('chapters/{chapter}/lectures', [LectureController::class, 'store']);
+        Route::get('lectures/{lecture}', [LectureController::class, 'show']);
+        Route::match(['put', 'patch'], 'lectures/{lecture}', [LectureController::class, 'update']);
+        Route::delete('lectures/{lecture}', [LectureController::class, 'destroy']);
+        Route::post('lectures/{lecture}/progress', [LectureController::class, 'trackProgress']);
 
         /* ── Payments ── */
         Route::prefix('payments')->group(function () {
             Route::get('/', [\App\Interfaces\HTTP\Controllers\PaymentController::class, 'index']);
             Route::post('/', [\App\Interfaces\HTTP\Controllers\PaymentController::class, 'store']);
+            Route::get('course/{course}', [\App\Interfaces\HTTP\Controllers\PaymentController::class, 'latestForCourse']);
         });
 
         /* ── Admin Payments ── */
-        Route::prefix('admin/payments')->group(function () {
+        Route::prefix('admin/payments')->middleware('ensure.admin')->group(function () {
             Route::get('/', [\App\Interfaces\HTTP\Controllers\AdminPaymentController::class, 'index']);
             Route::post('{id}/approve', [\App\Interfaces\HTTP\Controllers\AdminPaymentController::class, 'approve']);
             Route::post('{id}/reject', [\App\Interfaces\HTTP\Controllers\AdminPaymentController::class, 'reject']);

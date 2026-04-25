@@ -100,7 +100,7 @@ class PaymentFlowTest extends TestCase
         $this->assertDatabaseHas('enrollments', [
             'user_id' => $student->id,
             'course_id' => $course->id,
-            'status' => 'approved'
+            'status' => 'active'
         ]);
     }
 
@@ -162,5 +162,61 @@ class PaymentFlowTest extends TestCase
         $listener->handle($event);
 
         $this->assertEquals(1, Enrollment::where('user_id', $student->id)->where('course_id', $course->id)->count());
+    }
+
+    public function test_approve_already_approved_payment_is_idempotent(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $student = User::factory()->create(['role' => 'student']);
+        $instructorUser = User::factory()->create(['role' => 'instructor']);
+        $instructor = Instructor::create(['user_id' => $instructorUser->id, 'status' => 'active']);
+        
+        $course = Course::create([
+            'title' => 'Test Course Idempotent',
+            'slug' => 'test-course-idempotent-' . \Illuminate\Support\Str::random(5),
+            'instructor_id' => $instructor->id
+        ]);
+        
+        $payment = Payment::create([
+            'user_id' => $student->id,
+            'course_id' => $course->id,
+            'amount' => 100,
+            'status' => 'approved', // already approved
+            'reference_code' => 'PAY-IDEMPO'
+        ]);
+
+        $response = $this->actingAs($admin)
+            ->postJson("/api/v1/admin/payments/{$payment->id}/approve");
+
+        $response->assertStatus(400);
+        $response->assertJsonFragment(['message' => 'Payment is already approved.']);
+    }
+
+    public function test_cannot_approve_rejected_payment(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $student = User::factory()->create(['role' => 'student']);
+        $instructorUser = User::factory()->create(['role' => 'instructor']);
+        $instructor = Instructor::create(['user_id' => $instructorUser->id, 'status' => 'active']);
+        
+        $course = Course::create([
+            'title' => 'Test Course Rejected',
+            'slug' => 'test-course-rejected-' . \Illuminate\Support\Str::random(5),
+            'instructor_id' => $instructor->id
+        ]);
+        
+        $payment = Payment::create([
+            'user_id' => $student->id,
+            'course_id' => $course->id,
+            'amount' => 100,
+            'status' => 'rejected', // rejected status
+            'reference_code' => 'PAY-REJECTED'
+        ]);
+
+        $response = $this->actingAs($admin)
+            ->postJson("/api/v1/admin/payments/{$payment->id}/approve");
+
+        $response->assertStatus(400);
+        $response->assertJsonFragment(['message' => 'Invalid payment state']);
     }
 }

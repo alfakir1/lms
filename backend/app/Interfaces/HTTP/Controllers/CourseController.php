@@ -24,6 +24,17 @@ class CourseController extends Controller
         
         $query = Course::with(['chapters.lectures', 'instructor.user']);
 
+        if ($request->filled('search')) {
+            $search = $request->input('search');
+            $query->where(function ($q) use ($search) {
+                $q->where('title', 'like', "%{$search}%")
+                  ->orWhereHas('instructor.user', function ($uq) use ($search) {
+                      $uq->where('name', 'like', "%{$search}%")
+                         ->orWhere('email', 'like', "%{$search}%");
+                  });
+            });
+        }
+
         if ($user && $user->isRole('instructor')) {
             $courses = $query->where('instructor_id', $user->instructor->id)->paginate($perPage);
         } else {

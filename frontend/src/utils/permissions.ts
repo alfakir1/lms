@@ -16,7 +16,6 @@ export const RolePermissions: Record<string, Permission[]> = {
     'manage_courses',
     'view_reports',
     'process_payments',
-    'register_students',
     'grade_assignments',
     'view_certificates',
     'system_settings'
@@ -25,16 +24,11 @@ export const RolePermissions: Record<string, Permission[]> = {
     'manage_users',
     'manage_courses',
     'view_reports',
-    'process_payments',
-    'register_students'
+    'process_payments'
   ],
   instructor: [
     'manage_own_courses',
     'grade_assignments'
-  ],
-  reception: [
-    'register_students',
-    'process_payments'
   ],
   student: [
     'submit_assignments',

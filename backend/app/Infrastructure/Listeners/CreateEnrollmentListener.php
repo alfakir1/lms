@@ -28,7 +28,8 @@ class CreateEnrollmentListener implements ShouldQueue
                 'user_id' => $payment->user_id,
                 'course_id' => $payment->course_id,
             ], [
-                'status' => 'approved',
+                'status' => 'active',
+                'payment_status' => 'paid',
                 'enrolled_at' => now(),
             ]);
 

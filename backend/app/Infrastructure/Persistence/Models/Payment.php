@@ -9,6 +9,8 @@ class Payment extends Model
 {
     use HasFactory;
 
+    protected $appends = ['proof_url'];
+
     protected $fillable = [
         'user_id', 
         'course_id', 
@@ -25,6 +27,16 @@ class Payment extends Model
         'reviewed_at' => 'datetime',
         'amount' => 'decimal:2',
     ];
+
+    public function getProofUrlAttribute(): ?string
+    {
+        if (! $this->proof_image) {
+            return null;
+        }
+
+        // Uses APP_URL to generate an absolute URL when configured.
+        return asset('storage/' . ltrim($this->proof_image, '/'));
+    }
 
     public function user()
     {

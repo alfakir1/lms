@@ -1,167 +1,181 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { Users, BookOpen, DollarSign, UserCheck, CreditCard, Loader2 } from 'lucide-react';
-import api from '../../api/axios';
+import { Users, BookOpen, DollarSign, UserCheck, CreditCard, Activity } from 'lucide-react';
+import { adminService } from '../../services/adminService';
+import { Card, CardContent } from '../../components/ui/Card';
+import { ErrorMessage, LoadingSpinner } from '../../components/ui/Feedback';
 
 const AdminDashboard: React.FC = () => {
-  // Fetch real data from Backend with mock fallback
-  const { data: stats, isLoading, error } = useQuery({
+  const { data: stats, isLoading, error, refetch } = useQuery({
     queryKey: ['admin-stats'],
-    queryFn: async () => {
-      const response = await api.get('/admin/stats');
-      return response.data.data;
-    }
+    queryFn: () => adminService.getStats(),
   });
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <span className="ml-2 text-text font-medium">Loading Dashboard Statistics...</span>
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <LoadingSpinner text="Loading dashboard data..." />
       </div>
     );
   }
 
   if (error || !stats) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4 text-center">
-        <h2 className="text-2xl font-bold text-red-600 mb-2">Error Loading Dashboard</h2>
-        <p className="text-gray-600 mb-4">You may not have the required permissions or the API is unavailable.</p>
-        <Link to="/" className="text-primary hover:underline">Return to Home</Link>
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+        <div className="max-w-md w-full">
+          <ErrorMessage 
+            title="Unable to load dashboard" 
+            message="Check your permissions or internet connection." 
+            onRetry={() => refetch()} 
+          />
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="min-h-screen bg-slate-50 py-10">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        
         {/* Header */}
-        <div className="mb-8 p-8 glass rounded-2xl relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-transparent pointer-events-none"></div>
-          <h1 className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-primary-dark to-primary mb-2 relative z-10">Admin Dashboard</h1>
-          <p className="text-slate-600 dark:text-slate-400 relative z-10 text-lg">Manage your LMS platform and monitor system performance</p>
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-slate-900 mb-2">Admin Dashboard</h1>
+          <p className="text-slate-600">Platform overview and management.</p>
         </div>
 
-        {/* Stats Cards */}
+        {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <div className="glass rounded-xl p-6 group hover:-translate-y-1 transition-all duration-300 hover:shadow-lg hover:shadow-indigo-500/10">
-            <div className="flex items-center">
-              <div className="p-3 bg-indigo-100 rounded-lg">
-                <Users className="h-6 w-6 text-indigo-600" />
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center">
+                <div className="p-3 bg-primary-50 rounded-xl text-primary-600">
+                  <Users className="h-6 w-6" />
+                </div>
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-slate-500">Total Users</p>
+                  <p className="text-2xl font-bold text-slate-900">{stats.total_users?.toLocaleString() || 0}</p>
+                </div>
               </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-500 uppercase tracking-wider">Total Users</p>
-                <p className="text-2xl font-black text-slate-800">{stats.total_users.toLocaleString()}</p>
-              </div>
-            </div>
-          </div>
+            </CardContent>
+          </Card>
 
-          <div className="glass rounded-xl p-6 group hover:-translate-y-1 transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/10">
-            <div className="flex items-center">
-              <div className="p-3 bg-blue-100 rounded-lg">
-                <BookOpen className="h-6 w-6 text-blue-600" />
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center">
+                <div className="p-3 bg-sky-50 rounded-xl text-sky-600">
+                  <BookOpen className="h-6 w-6" />
+                </div>
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-slate-500">Total Courses</p>
+                  <p className="text-2xl font-bold text-slate-900">{stats.total_courses || 0}</p>
+                </div>
               </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-500 uppercase tracking-wider">Total Courses</p>
-                <p className="text-2xl font-black text-slate-800">{stats.total_courses}</p>
-              </div>
-            </div>
-          </div>
+            </CardContent>
+          </Card>
 
-          <div className="glass rounded-xl p-6 group hover:-translate-y-1 transition-all duration-300 hover:shadow-lg hover:shadow-emerald-500/10">
-            <div className="flex items-center">
-              <div className="p-3 bg-emerald-100 rounded-lg">
-                <DollarSign className="h-6 w-6 text-emerald-600" />
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center">
+                <div className="p-3 bg-secondary-50 rounded-xl text-secondary-600">
+                  <DollarSign className="h-6 w-6" />
+                </div>
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-slate-500">Total Revenue</p>
+                  <p className="text-2xl font-bold text-slate-900">${(stats.total_revenue || 0).toLocaleString()}</p>
+                </div>
               </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-500 uppercase tracking-wider">Total Revenue</p>
-                <p className="text-2xl font-black text-slate-800">${stats.total_revenue.toLocaleString()}</p>
-              </div>
-            </div>
-          </div>
+            </CardContent>
+          </Card>
 
-          <div className="glass rounded-xl p-6 group hover:-translate-y-1 transition-all duration-300 hover:shadow-lg hover:shadow-amber-500/10">
-            <div className="flex items-center">
-              <div className="p-3 bg-amber-100 rounded-lg">
-                <UserCheck className="h-6 w-6 text-amber-600" />
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center">
+                <div className="p-3 bg-amber-50 rounded-xl text-amber-600">
+                  <UserCheck className="h-6 w-6" />
+                </div>
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-slate-500">Active Students</p>
+                  <p className="text-2xl font-bold text-slate-900">{stats.active_students?.toLocaleString() || 0}</p>
+                </div>
               </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-500 uppercase tracking-wider">Students</p>
-                <p className="text-2xl font-black text-slate-800">{stats.active_students.toLocaleString()}</p>
-              </div>
-            </div>
-          </div>
+            </CardContent>
+          </Card>
         </div>
 
         <div className="grid lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 space-y-8">
+            
             {/* Quick Actions */}
-            <div className="glass rounded-2xl p-8">
-              <h2 className="text-2xl font-bold text-text mb-6 flex items-center gap-2">
-                <span className="w-1.5 h-6 bg-primary rounded-full"></span>
-                Quick Actions
-              </h2>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
-                <Link to="/admin/users" className="glass flex flex-col items-center p-6 rounded-xl hover:bg-white/50 dark:hover:bg-slate-800/50 hover:shadow-md hover:-translate-y-1 transition-all duration-300 group">
-                  <div className="p-3 bg-indigo-100 dark:bg-indigo-900/30 rounded-full mb-4 group-hover:scale-110 transition-transform">
-                    <Users className="h-6 w-6 text-indigo-600 dark:text-indigo-400" />
-                  </div>
-                  <span className="text-sm font-bold text-text">Manage Users</span>
-                </Link>
-                <Link to="/admin/courses" className="glass flex flex-col items-center p-6 rounded-xl hover:bg-white/50 dark:hover:bg-slate-800/50 hover:shadow-md hover:-translate-y-1 transition-all duration-300 group">
-                  <div className="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-full mb-4 group-hover:scale-110 transition-transform">
-                    <BookOpen className="h-6 w-6 text-blue-600 dark:text-blue-400" />
-                  </div>
-                  <span className="text-sm font-bold text-text">Manage Courses</span>
-                </Link>
-                <Link to="/admin/payments" className="glass flex flex-col items-center p-6 rounded-xl hover:bg-white/50 dark:hover:bg-slate-800/50 hover:shadow-md hover:-translate-y-1 transition-all duration-300 group">
-                  <div className="p-3 bg-emerald-100 dark:bg-emerald-900/30 rounded-full mb-4 group-hover:scale-110 transition-transform">
-                    <CreditCard className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
-                  </div>
-                  <span className="text-sm font-bold text-text">Payments</span>
-                </Link>
-              </div>
-            </div>
+            <Card>
+              <CardContent className="p-6">
+                <h2 className="text-xl font-bold text-slate-900 mb-6">Quick Actions</h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <Link to="/admin/payments" className="flex items-center p-4 border border-slate-200 rounded-xl hover:border-primary-200 hover:bg-slate-50 transition group">
+                    <div className="p-3 bg-slate-100 rounded-lg group-hover:bg-primary-50 group-hover:text-primary-600 transition">
+                      <CreditCard className="h-6 w-6" />
+                    </div>
+                    <div className="ml-4">
+                      <span className="block font-bold text-slate-900">Review Payments</span>
+                      <span className="text-sm text-slate-500">Manage pending approvals</span>
+                    </div>
+                  </Link>
+                  <Link to="/courses" className="flex items-center p-4 border border-slate-200 rounded-xl hover:border-primary-200 hover:bg-slate-50 transition group">
+                    <div className="p-3 bg-slate-100 rounded-lg group-hover:bg-primary-50 group-hover:text-primary-600 transition">
+                      <BookOpen className="h-6 w-6" />
+                    </div>
+                    <div className="ml-4">
+                      <span className="block font-bold text-slate-900">View Courses</span>
+                      <span className="text-sm text-slate-500">Browse platform catalog</span>
+                    </div>
+                  </Link>
+                </div>
+              </CardContent>
+            </Card>
 
             {/* Recent Activities */}
-            <div className="glass rounded-2xl p-8">
-              <h2 className="text-2xl font-bold text-text mb-6 flex items-center gap-2">
-                <span className="w-1.5 h-6 bg-secondary rounded-full"></span>
-                Recent Activities
-              </h2>
-              <div className="space-y-4">
-                {stats.recent_activities.length > 0 ? stats.recent_activities.map((activity: any) => (
-                  <div key={activity.id} className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg">
-                    <div className="p-2 bg-white rounded-lg border border-gray-100">
-                      <Users className="h-4 w-4 text-indigo-600" />
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-text text-sm font-medium">{activity.message}</p>
-                      <p className="text-gray-500 text-xs mt-1">{activity.time}</p>
-                    </div>
+            <Card>
+              <CardContent className="p-6">
+                <h2 className="text-xl font-bold text-slate-900 mb-6 flex items-center gap-2">
+                  <Activity className="h-5 w-5 text-primary-600" />
+                  Recent Activity
+                </h2>
+                
+                {(!stats.recent_activities || stats.recent_activities.length === 0) ? (
+                  <p className="text-slate-500 text-sm text-center py-8">No recent activities found.</p>
+                ) : (
+                  <div className="space-y-4">
+                    {stats.recent_activities.map((activity: any) => (
+                      <div key={activity.id} className="flex items-start gap-4 p-4 bg-slate-50 rounded-xl border border-slate-100">
+                        <div className="p-2 bg-white rounded-lg border border-slate-200 shadow-sm mt-1">
+                          <Users className="h-4 w-4 text-slate-600" />
+                        </div>
+                        <div>
+                          <p className="text-slate-900 font-medium">{activity.message}</p>
+                          <p className="text-slate-500 text-sm mt-1">{activity.time}</p>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                )) : (
-                  <p className="text-gray-500 text-sm text-center py-4">No recent activities found.</p>
                 )}
-              </div>
-            </div>
+              </CardContent>
+            </Card>
           </div>
 
           {/* Sidebar */}
           <div className="space-y-8">
-            <div className="glass rounded-2xl p-8">
-              <h2 className="text-2xl font-bold text-text mb-6">System Status</h2>
-              <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg mb-4">
-                <div className="flex items-center">
-                  <div className="w-2 h-2 bg-amber-400 rounded-full mr-3 animate-pulse"></div>
+            <Card>
+              <CardContent className="p-6">
+                <h2 className="font-bold text-slate-900 mb-4">Pending Attention</h2>
+                <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start gap-3">
+                  <div className="w-2 h-2 bg-amber-500 rounded-full mt-2 animate-pulse"></div>
                   <div>
-                    <p className="text-sm font-bold text-amber-900">{stats.pending_enrollments} Pending Enrollments</p>
-                    <p className="text-xs text-amber-700">Require approval attention</p>
+                    <p className="font-bold text-amber-900">{stats.pending_enrollments || 0} Enrollments</p>
+                    <p className="text-sm text-amber-800 mt-1">Payments awaiting your review.</p>
                   </div>
                 </div>
-              </div>
-            </div>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </div>

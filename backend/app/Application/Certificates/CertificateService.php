@@ -16,7 +16,7 @@ class CertificateService
      */
     public function isEligible(Student $student, Course $course): bool
     {
-        $enrollment = Enrollment::where('student_id', $student->id)
+        $enrollment = Enrollment::where('user_id', $student->user_id)
             ->where('course_id', $course->id)
             ->where('status', 'completed')
             ->first();

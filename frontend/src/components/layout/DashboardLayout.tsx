@@ -1,15 +1,24 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { useTranslation } from 'react-i18next';
-import ThemeToggle from '../ui/ThemeToggle';
-import LanguageSwitcher from '../ui/LanguageSwitcher';
 import {
-  LayoutDashboard, BookOpen, Users, CreditCard, BarChart2,
-  GraduationCap, FileText, Award, ClipboardList, UserCheck,
-  Calendar, FileSpreadsheet, LogOut, Menu, X, ChevronRight,
-  Settings, TrendingUp, Bell
+  LayoutDashboard,
+  BookOpen,
+  CreditCard,
+  LogOut,
+  Menu,
+  X,
+  Bell,
+  GraduationCap,
+  Moon,
+  Sun,
+  Globe,
+  Users,
+  Video
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import { useTheme } from '../../contexts/ThemeContext';
+import { useLanguage } from '../../contexts/LanguageContext';
 
 interface NavItem {
   label: string;
@@ -19,57 +28,25 @@ interface NavItem {
 
 const navByRole: Record<string, NavItem[]> = {
   student: [
-    { label: 'Dashboard',    path: '/student/dashboard',    icon: LayoutDashboard },
-    { label: 'My Courses',   path: '/student/courses',      icon: BookOpen },
-    { label: 'Assignments',  path: '/student/assignments',  icon: FileText },
-    { label: 'Certificates', path: '/student/certificates', icon: Award },
+    { label: 'nav.dashboard', path: '/student/dashboard', icon: LayoutDashboard },
+    { label: 'student.myCourses', path: '/student/courses', icon: BookOpen },
+    { label: 'admin.payments', path: '/student/payments', icon: CreditCard },
   ],
   instructor: [
-    { label: 'Dashboard',    path: '/instructor/dashboard', icon: LayoutDashboard },
-    { label: 'My Courses',   path: '/instructor/courses',   icon: BookOpen },
-    { label: 'Assignments',  path: '/instructor/assignments', icon: ClipboardList },
-    { label: 'My Students',  path: '/instructor/students',  icon: Users },
-    { label: 'Attendance',   path: '/instructor/attendance', icon: Calendar },
-    { label: 'Grades Sheet', path: '/instructor/grades',    icon: FileSpreadsheet },
-    { label: 'Analytics',    path: '/instructor/analytics', icon: TrendingUp },
-  ],
-  reception: [
-    { label: 'Dashboard',       path: '/reception/dashboard', icon: LayoutDashboard },
-    { label: 'Register Student',path: '/reception/register',  icon: UserCheck },
-    { label: 'Students',        path: '/reception/students',  icon: Users },
-    { label: 'Courses',         path: '/reception/courses',   icon: BookOpen },
-    { label: 'Payments',        path: '/reception/payments',  icon: CreditCard },
+    { label: 'nav.dashboard', path: '/instructor/dashboard', icon: LayoutDashboard },
+    { label: 'instructor.manageCourses', path: '/instructor/courses', icon: BookOpen },
+    { label: 'Manage Lectures', path: '/instructor/lectures', icon: Video },
   ],
   admin: [
-    { label: 'Dashboard',   path: '/admin/dashboard', icon: LayoutDashboard },
-    { label: 'Users',       path: '/admin/users',     icon: Users },
-    { label: 'Courses',     path: '/admin/courses',   icon: BookOpen },
-    { label: 'Payments',    path: '/admin/payments',  icon: CreditCard },
-    { label: 'Reports',     path: '/admin/reports',   icon: BarChart2 },
+    { label: 'nav.dashboard', path: '/admin/dashboard', icon: LayoutDashboard },
+    { label: 'admin.manageUsers', path: '/admin/users', icon: Users },
+    { label: 'admin.payments', path: '/admin/payments', icon: CreditCard },
   ],
   super_admin: [
-    { label: 'Dashboard',   path: '/admin/dashboard', icon: LayoutDashboard },
-    { label: 'Users',       path: '/admin/users',     icon: Users },
-    { label: 'Courses',     path: '/admin/courses',   icon: BookOpen },
-    { label: 'Payments',    path: '/admin/payments',  icon: CreditCard },
-    { label: 'Reports',     path: '/admin/reports',   icon: BarChart2 },
+    { label: 'nav.dashboard', path: '/admin/dashboard', icon: LayoutDashboard },
+    { label: 'admin.manageUsers', path: '/admin/users', icon: Users },
+    { label: 'admin.payments', path: '/admin/payments', icon: CreditCard },
   ],
-};
-
-const roleColors: Record<string, string> = {
-  student:    'from-blue-600 to-indigo-600',
-  instructor: 'from-emerald-600 to-teal-600',
-  reception:  'from-violet-600 to-purple-600',
-  admin:      'from-rose-600 to-pink-600',
-  super_admin:'from-amber-500 to-orange-600',
-};
-
-const roleLabels: Record<string, string> = {
-  student:    'Student Portal',
-  instructor: 'Instructor Portal',
-  reception:  'Reception Portal',
-  admin:      'Admin Portal',
-  super_admin:'Super Admin',
 };
 
 interface Props {
@@ -78,6 +55,8 @@ interface Props {
 
 const DashboardLayout: React.FC<Props> = ({ children }) => {
   const { user, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
+  const { language, changeLanguage } = useLanguage();
   const { t } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
@@ -85,8 +64,6 @@ const DashboardLayout: React.FC<Props> = ({ children }) => {
 
   const role = user?.role || 'student';
   const navItems = navByRole[role] || navByRole.student;
-  const gradient = roleColors[role] || roleColors.student;
-  const portalLabel = roleLabels[role] || 'Portal';
 
   const handleLogout = () => {
     logout();
@@ -94,32 +71,30 @@ const DashboardLayout: React.FC<Props> = ({ children }) => {
   };
 
   const SidebarContent = () => (
-    <div className="flex flex-col h-full">
-      {/* Logo / Brand */}
-      <div className={`bg-gradient-to-br ${gradient} p-6 text-white`}>
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-10 h-10 bg-white/20 rounded-2xl flex items-center justify-center font-black text-xl">
-            4
+    <div className="flex flex-col h-full bg-slate-900 text-slate-300 dark:bg-slate-950 border-r border-transparent dark:border-slate-800">
+      {/* Brand */}
+      <div className="p-6">
+        <Link to="/" className="flex items-center gap-3 text-white mb-8">
+          <div className="bg-primary-600 p-2 rounded-lg">
+            <GraduationCap className="h-5 w-5" />
           </div>
-          <div>
-            <div className="font-black text-sm tracking-wider uppercase">Four Academy</div>
-            <div className="text-[10px] opacity-75 uppercase tracking-widest">{portalLabel}</div>
-          </div>
-        </div>
-        {/* User card */}
-        <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-3 flex items-center gap-3">
-          <div className="w-9 h-9 bg-white/20 rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0">
+          <span className="font-bold text-lg tracking-tight">Four Academy</span>
+        </Link>
+        
+        {/* User Info */}
+        <div className="flex items-center gap-3 bg-slate-800/50 p-3 rounded-xl border border-slate-700/50">
+          <div className="w-10 h-10 bg-primary-600/20 text-primary-400 rounded-lg flex items-center justify-center font-bold">
             {user?.name?.charAt(0) || 'U'}
           </div>
-          <div className="min-w-0">
-            <p className="font-bold text-sm truncate">{user?.name}</p>
-            <p className="text-[10px] opacity-70 truncate">{user?.email}</p>
+          <div className="min-w-0 flex-1">
+            <div className="text-sm font-bold text-white truncate">{user?.name}</div>
+            <div className="text-xs text-slate-400 truncate capitalize">{role.replace('_', ' ')}</div>
           </div>
         </div>
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
+      <nav className="flex-1 px-4 space-y-1 overflow-y-auto mt-2">
         {navItems.map((item) => {
           const isActive = location.pathname === item.path;
           const Icon = item.icon;
@@ -129,43 +104,37 @@ const DashboardLayout: React.FC<Props> = ({ children }) => {
               to={item.path}
               onClick={() => setSidebarOpen(false)}
               className={`
-                flex items-center gap-3 px-4 py-3 rounded-2xl font-semibold text-sm
-                transition-all duration-200 group
+                flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors
                 ${isActive
-                  ? `bg-gradient-to-r ${gradient} text-white shadow-lg`
-                  : 'text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-slate-800 hover:text-neutral-900 dark:hover:text-white'
+                  ? 'bg-primary-600 text-white shadow-glow-primary'
+                  : 'hover:bg-slate-800 hover:text-white dark:hover:bg-slate-900'
                 }
               `}
             >
-              <Icon size={18} className={isActive ? 'text-white' : 'text-neutral-400 group-hover:text-neutral-600 dark:group-hover:text-white'} />
-              <span className="flex-1">{item.label}</span>
-              {isActive && <ChevronRight size={14} className="opacity-60" />}
+              <Icon className={`h-5 w-5 ${isActive ? 'text-white' : 'text-slate-400'}`} />
+              {t(item.label)}
             </Link>
           );
         })}
       </nav>
 
-      {/* Bottom actions */}
-      <div className="p-4 border-t border-neutral-100 dark:border-slate-800 space-y-2">
-        <div className="flex items-center gap-2 px-4 py-2">
-          <LanguageSwitcher />
-          <ThemeToggle />
-        </div>
+      {/* Footer Actions */}
+      <div className="p-4 mt-auto">
         <button
           onClick={handleLogout}
-          className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-semibold text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all"
+          className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-slate-400 hover:bg-slate-800 dark:hover:bg-slate-900 hover:text-white transition-colors"
         >
-          <LogOut size={18} />
-          {t('auth.logout', 'Logout')}
+          <LogOut className="h-5 w-5" />
+          {t('nav.logout')}
         </button>
       </div>
     </div>
   );
 
   return (
-    <div className="flex min-h-screen bg-neutral-50 dark:bg-slate-950">
+    <div className="flex min-h-screen bg-slate-50 dark:bg-slate-900 transition-colors duration-300">
       {/* Desktop Sidebar */}
-      <aside className="hidden lg:flex flex-col w-64 flex-shrink-0 bg-white dark:bg-slate-900 border-r border-neutral-100 dark:border-slate-800 shadow-sm">
+      <aside className="hidden lg:flex flex-col w-64 fixed inset-y-0 z-10 ltr:left-0 rtl:right-0">
         <SidebarContent />
       </aside>
 
@@ -177,40 +146,54 @@ const DashboardLayout: React.FC<Props> = ({ children }) => {
         />
       )}
 
-      {/* Mobile Sidebar Drawer */}
+      {/* Mobile Sidebar */}
       <aside className={`
-        fixed inset-y-0 left-0 z-50 w-72 bg-white dark:bg-slate-900 shadow-2xl
-        transform transition-transform duration-300 lg:hidden
-        ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+        fixed inset-y-0 ltr:left-0 rtl:right-0 z-50 w-72 transform transition-transform duration-300 lg:hidden
+        ${sidebarOpen ? 'translate-x-0' : 'ltr:-translate-x-full rtl:translate-x-full'}
       `}>
-        <button
-          onClick={() => setSidebarOpen(false)}
-          className="absolute top-4 right-4 p-2 rounded-xl hover:bg-neutral-100 dark:hover:bg-slate-800"
-        >
-          <X size={20} className="text-neutral-500" />
-        </button>
+        <div className="absolute top-4 right-4 z-50 lg:hidden">
+          <button
+            onClick={() => setSidebarOpen(false)}
+            className="p-2 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
         <SidebarContent />
       </aside>
 
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col min-w-0">
-        {/* Mobile Topbar */}
-        <header className="lg:hidden flex items-center justify-between px-4 py-3 bg-white dark:bg-slate-900 border-b border-neutral-100 dark:border-slate-800 shadow-sm sticky top-0 z-30">
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col ltr:lg:pl-64 rtl:lg:pr-64 min-w-0">
+        {/* Mobile Header */}
+        <header className="lg:hidden flex items-center justify-between px-4 py-4 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 sticky top-0 z-30 transition-colors">
           <button
             onClick={() => setSidebarOpen(true)}
-            className="p-2 rounded-xl hover:bg-neutral-100 dark:hover:bg-slate-800 transition-colors"
+            className="p-2 -mx-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg"
           >
-            <Menu size={22} className="text-neutral-700 dark:text-white" />
+            <Menu className="h-6 w-6" />
           </button>
-          <div className="flex items-center gap-2 font-black text-neutral-900 dark:text-white">
-            <div className={`w-7 h-7 bg-gradient-to-br ${gradient} rounded-lg flex items-center justify-center text-white text-sm font-black`}>
-              4
-            </div>
-            Four Academy
+          <div className="font-bold text-slate-900 dark:text-white">Four Academy</div>
+          <div className="flex items-center gap-1">
+            <button onClick={() => changeLanguage(language === 'ar' ? 'en' : 'ar')} className="p-2 text-slate-600 dark:text-slate-400">
+              <Globe className="h-5 w-5" />
+            </button>
+            <button onClick={toggleTheme} className="p-2 text-slate-600 dark:text-slate-400">
+              {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+            </button>
           </div>
-          <div className="flex items-center gap-2">
-            <Bell size={18} className="text-neutral-500" />
-          </div>
+        </header>
+
+        {/* Desktop Header */}
+        <header className="hidden lg:flex items-center justify-end px-8 py-4 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 sticky top-0 z-20 gap-3 transition-colors">
+          <button onClick={() => changeLanguage(language === 'ar' ? 'en' : 'ar')} className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 bg-slate-50 dark:bg-slate-800 rounded-full border border-slate-200 dark:border-slate-700 transition-colors">
+            <Globe className="h-5 w-5" />
+          </button>
+          <button onClick={toggleTheme} className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 bg-slate-50 dark:bg-slate-800 rounded-full border border-slate-200 dark:border-slate-700 transition-colors">
+            {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+          </button>
+          <button className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 bg-slate-50 dark:bg-slate-800 rounded-full border border-slate-200 dark:border-slate-700 transition-colors">
+            <Bell className="h-5 w-5" />
+          </button>
         </header>
 
         {/* Page Content */}

@@ -2,12 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
-use Illuminate\Foundation\Validation\ValidatesRequests;
+use Illuminate\Support\Str;
 
 abstract class Controller
 {
-    use AuthorizesRequests, ValidatesRequests;
+    use \Illuminate\Foundation\Auth\Access\AuthorizesRequests,
+        \Illuminate\Foundation\Validation\ValidatesRequests;
 
     protected function apiResponse($status, $data = [], $message = '', $code = 200)
     {
@@ -15,6 +15,10 @@ abstract class Controller
             'status' => $status,
             'data' => $data,
             'message' => $message,
+            'meta' => [
+                'timestamp' => now()->toIso8601String(),
+                'request_id' => Str::uuid()->toString(),
+            ]
         ], $code);
     }
 }

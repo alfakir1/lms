@@ -7,6 +7,7 @@ use App\Infrastructure\Persistence\Models\Course;
 use App\Infrastructure\Persistence\Models\Enrollment;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\DB;
 
 class EnrollmentController extends Controller
 {
@@ -71,6 +72,34 @@ class EnrollmentController extends Controller
             ->where('user_id', $user->id)
             ->latest()
             ->get();
+
+        $courseIds = $enrollments->pluck('course_id')->unique()->values();
+
+        // Total lectures per course
+        $totals = DB::table('lectures')
+            ->join('chapters', 'lectures.chapter_id', '=', 'chapters.id')
+            ->whereIn('chapters.course_id', $courseIds)
+            ->select('chapters.course_id', DB::raw('COUNT(lectures.id) as total'))
+            ->groupBy('chapters.course_id')
+            ->pluck('total', 'chapters.course_id');
+
+        // Completed lectures per course (by completed_at)
+        $completed = DB::table('lecture_progress')
+            ->join('lectures', 'lecture_progress.lecture_id', '=', 'lectures.id')
+            ->join('chapters', 'lectures.chapter_id', '=', 'chapters.id')
+            ->where('lecture_progress.user_id', $user->id)
+            ->whereNotNull('lecture_progress.completed_at')
+            ->whereIn('chapters.course_id', $courseIds)
+            ->select('chapters.course_id', DB::raw('COUNT(lecture_progress.id) as completed'))
+            ->groupBy('chapters.course_id')
+            ->pluck('completed', 'chapters.course_id');
+
+        $enrollments = $enrollments->map(function ($enrollment) use ($totals, $completed) {
+            $total = (int) ($totals[$enrollment->course_id] ?? 0);
+            $done = (int) ($completed[$enrollment->course_id] ?? 0);
+            $enrollment->progress_percent = $total > 0 ? (int) round(($done / $total) * 100) : 0;
+            return $enrollment;
+        });
 
         return $this->apiResponse('success', $enrollments);
     }

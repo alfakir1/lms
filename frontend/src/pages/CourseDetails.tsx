@@ -1,301 +1,423 @@
 import React, { useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import api from '../api/axios';
-import { Star, Clock, CheckCircle, Play, User, Calendar, Loader2 } from 'lucide-react';
+import { Link, useNavigate, useParams } from 'react-router-dom';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  BookOpen,
+  Calendar,
+  CheckCircle,
+  CreditCard,
+  Lock,
+  Play,
+  Upload,
+  User,
+  X,
+  FileText
+} from 'lucide-react';
+import { courseService } from '../services/courseService';
+import { enrollmentService } from '../services/enrollmentService';
+import { paymentService, type PaymentStatus } from '../services/paymentService';
+import { useAuth } from '../contexts/AuthContext';
+import { useToast } from '../contexts/ToastContext';
+import Button from '../components/ui/Button';
+import { Card } from '../components/ui/Card';
+import { ErrorMessage, LoadingSpinner } from '../components/ui/Feedback';
+import type { Lecture } from '../types';
+import { useTranslation } from 'react-i18next';
+
+const PaymentStatusPanel = ({ status }: { status: PaymentStatus }) => {
+  const { t } = useTranslation();
+  const statusMap: Record<PaymentStatus, { title: string; body: string; className: string }> = {
+    pending: {
+      title: 'Waiting for Review',
+      body: 'Your payment proof has been submitted and is currently waiting for admin review.',
+      className: 'bg-amber-50 text-amber-900 border-amber-200',
+    },
+    under_review: {
+      title: 'Under Review',
+      body: 'Our team is currently reviewing your payment proof. This should not take long.',
+      className: 'bg-primary-50 text-primary-900 border-primary-200',
+    },
+    approved: {
+      title: 'Access Granted',
+      body: 'Your payment has been approved! You now have full access to this course.',
+      className: 'bg-secondary-50 text-secondary-900 border-secondary-200',
+    },
+    rejected: {
+      title: 'Try Again',
+      body: 'Your previous payment proof could not be verified. Please upload a new document.',
+      className: 'bg-rose-50 text-rose-900 border-rose-200',
+    },
+  };
+
+  const item = statusMap[status];
+
+  return (
+    <div className={`rounded-xl border p-5 ${item.className}`}>
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center gap-2 font-bold text-sm">
+          <CreditCard className="h-5 w-5" />
+          {t('payment.status', 'Payment Status')}
+        </div>
+        <span className="bg-white/60 px-2.5 py-1 rounded text-xs font-bold uppercase tracking-wide text-slate-900">
+          {item.title}
+        </span>
+      </div>
+      <p className="text-sm mt-2 leading-relaxed text-slate-900">{item.body}</p>
+    </div>
+  );
+};
 
 const CourseDetails: React.FC = () => {
+  const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [enrollMsg, setEnrollMsg] = useState('');
+  const { isAuthenticated } = useAuth();
+  const { showError, showSuccess } = useToast();
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [proofFile, setProofFile] = useState<File | null>(null);
 
-  const { data: course, isLoading, error } = useQuery({
+  const { data: course, isLoading, error, refetch } = useQuery({
     queryKey: ['course', id],
-    queryFn: async () => {
-      const response = await api.get(`/courses/${id}`);
-      return response.data;
-    }
+    queryFn: () => courseService.getById(id!),
+    enabled: Boolean(id),
   });
 
-  const enrollMutation = useMutation({
-    mutationFn: async () => {
-      return await api.post(`/enrollments/courses/${id}`);
+  const { data: enrollments } = useQuery({
+    queryKey: ['my-enrollments'],
+    queryFn: () => enrollmentService.getMyEnrollments(),
+    enabled: isAuthenticated,
+    refetchInterval: (query) => {
+      const active = query.state.data?.some((item) => String(item.course_id) === String(id) && item.status === 'active');
+      return active ? false : 3000;
     },
-    onSuccess: () => {
-      setEnrollMsg('Enrollment request submitted successfully!');
-      queryClient.invalidateQueries({ queryKey: ['course', id] });
-    },
-    onError: (err: any) => {
-      setEnrollMsg(err.response?.data?.message || 'Enrollment failed.');
-    }
   });
+
+  const { data: latestPayment } = useQuery({
+    queryKey: ['course-payment', id],
+    queryFn: () => paymentService.getLatestForCourse(id!),
+    enabled: isAuthenticated && Boolean(id),
+    refetchInterval: (query) => {
+      const payment = query.state.data;
+      if (!payment) return false;
+      return payment.status === 'pending' || payment.status === 'under_review' ? 5000 : false;
+    },
+  });
+
+  const isEnrolled = Boolean(
+    enrollments?.find((item) => String(item.course_id) === String(id) && item.status === 'active' && item.payment_status === 'paid')
+  );
+
+  const paymentMutation = useMutation({
+    mutationFn: (payload: { courseId: number; file: File }) =>
+      paymentService.create({ course_id: payload.courseId, proof_file: payload.file }),
+    onSuccess: () => {
+      showSuccess('Payment submitted successfully.');
+      setShowPaymentModal(false);
+      setProofFile(null);
+      queryClient.invalidateQueries({ queryKey: ['course-payment', id] });
+      queryClient.invalidateQueries({ queryKey: ['my-payments'] });
+    },
+    onError: () => {
+      showError('Failed to submit payment. Please try again later.');
+    },
+  });
+
+  const handleOpenLecture = (lectureId: number) => {
+    if (!isAuthenticated) {
+      navigate('/login', { state: { from: `/courses/${id}` } });
+      return;
+    }
+    if (!isEnrolled) {
+      showError('Please enroll in the course to access this lecture.');
+      return;
+    }
+    navigate(`/student/courses/${id}/learn?lecture=${lectureId}`);
+  };
+
+  const handleOpenPayment = () => {
+    if (!isAuthenticated) {
+      navigate('/login', { state: { from: `/courses/${id}` } });
+      return;
+    }
+    setShowPaymentModal(true);
+  };
+
+  const handleSubmitPayment = () => {
+    if (!id || !proofFile) {
+      showError('Please select a file to upload.');
+      return;
+    }
+    paymentMutation.mutate({ courseId: Number(id), file: proofFile });
+  };
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <span className="ml-2 text-text font-medium">Loading Course Details...</span>
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center transition-colors duration-300">
+        <LoadingSpinner text={t('common.loading', 'Loading...')} />
       </div>
     );
   }
 
   if (error || !course) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4">
-        <h2 className="text-2xl font-bold text-red-600 mb-2">Error Loading Course</h2>
-        <p className="text-gray-600 mb-4">The course you are looking for may not exist or an error occurred.</p>
-        <Link to="/courses" className="text-primary hover:underline">Back to All Courses</Link>
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 px-4 py-16 flex justify-center items-center transition-colors duration-300">
+        <div className="w-full max-w-lg">
+          <ErrorMessage 
+            title={t('common.noData', 'Course Not Found')} 
+            message={t('common.noData', 'We could not load the details for this course.')} 
+            onRetry={() => refetch()} 
+          />
+          <div className="mt-8 flex justify-center">
+            <Link to="/courses">
+              <Button variant="outline">{t('courses.backToCatalog', 'Back to Catalog')}</Button>
+            </Link>
+          </div>
+        </div>
       </div>
     );
   }
 
-  const handleEnroll = () => {
-    enrollMutation.mutate();
-  };
+  const chapters = course.chapters || [];
+  const lectureCount = chapters.reduce((count, chapter) => count + (chapter.lectures?.length || 0), 0);
+  const paymentStatus = latestPayment?.status || null;
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Course Header */}
-      <div className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="grid lg:grid-cols-3 gap-8">
-            {/* Course Info */}
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 pb-20 transition-colors duration-300">
+      {/* Premium Hero Header Section */}
+      <section className="bg-slate-900 text-white border-b border-slate-800 relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-r from-primary-900/40 to-slate-900 z-0"></div>
+        <div className="absolute top-0 right-0 w-1/2 h-full opacity-30 mix-blend-overlay">
+          <img 
+            src={`https://source.unsplash.com/random/1200x800?education,technology&sig=${course.id}`} 
+            alt="Course background"
+            className="w-full h-full object-cover object-center mask-image-l"
+          />
+          <div className="absolute inset-0 bg-gradient-to-l from-transparent to-slate-900"></div>
+        </div>
+        
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 relative z-10">
+          <div className="grid lg:grid-cols-3 gap-12 items-center">
             <div className="lg:col-span-2">
-              <div className="mb-4">
-                <span className="inline-block px-3 py-1 text-sm font-semibold bg-primary text-white rounded-full mb-2">
-                  {course.category || 'Course'}
-                </span>
-                <span className={`inline-block ml-2 px-3 py-1 text-sm font-semibold rounded-full ${
-                  course.level === 'Beginner' ? 'bg-green-100 text-green-800' :
-                  course.level === 'Intermediate' ? 'bg-yellow-100 text-yellow-800' :
-                  'bg-red-100 text-red-800'
-                }`}>
-                  {course.level || 'All Levels'}
-                </span>
+              <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md text-white px-3 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider mb-6 border border-white/20">
+                <BookOpen className="h-4 w-4 text-primary-400" />
+                {course.status}
               </div>
-
-              <h1 className="text-3xl font-bold text-text mb-4">{course.title}</h1>
-
-              <p className="text-lg text-gray-600 mb-6">{course.description}</p>
-
-              <div className="flex flex-wrap items-center gap-6 mb-6">
-                <div className="flex items-center">
-                  <Star className="h-5 w-5 text-yellow-400 fill-current" />
-                  <span className="text-text font-semibold ml-1">{course.rating || 'N/A'}</span>
-                  <span className="text-gray-600 ml-1">({course.students_count || 0} students)</span>
+              <h1 className="text-4xl md:text-5xl font-display font-black text-white mb-6 leading-tight text-balance">
+                {course.title}
+              </h1>
+              <p className="text-lg md:text-xl text-slate-300 mb-8 leading-relaxed max-w-3xl">
+                {course.description || 'No description available for this course.'}
+              </p>
+              
+              <div className="flex flex-wrap gap-6 text-sm text-slate-300 font-medium bg-white/5 p-4 rounded-2xl backdrop-blur-sm border border-white/10 w-fit">
+                <div className="flex items-center gap-2">
+                  <User className="h-5 w-5 text-secondary-400" />
+                  <span className="text-white">{course.instructor?.user?.name || 'Expert Instructor'}</span>
                 </div>
-                <div className="flex items-center">
-                  <Clock className="h-5 w-5 text-gray-400" />
-                  <span className="text-gray-600 ml-1">{course.duration || 'Flexible'}</span>
+                <div className="w-px h-5 bg-white/20 hidden sm:block"></div>
+                <div className="flex items-center gap-2">
+                  <FileText className="h-5 w-5 text-primary-400" />
+                  <span className="text-white">{lectureCount} Lectures</span>
                 </div>
-                <div className="flex items-center">
-                  <User className="h-5 w-5 text-gray-400" />
-                  <span className="text-gray-600 ml-1">Created by {course.instructor?.user?.name || 'Instructor'}</span>
-                </div>
-                <div className="flex items-center">
-                  <Calendar className="h-5 w-5 text-gray-400" />
-                  <span className="text-gray-600 ml-1">Last updated {new Date(course.updated_at).toLocaleDateString()}</span>
+                <div className="w-px h-5 bg-white/20 hidden sm:block"></div>
+                <div className="flex items-center gap-2">
+                  <Calendar className="h-5 w-5 text-amber-400" />
+                  <span className="text-white">Updated {new Date(course.updated_at).toLocaleDateString()}</span>
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+      </section>
 
-            {/* Enrollment Card */}
-            <div className="lg:col-span-1">
-              <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-lg sticky top-6">
-                <div className="text-center mb-6">
-                  <div className="text-4xl font-bold text-accent mb-2">${course.price}</div>
-                  {course.originalPrice > course.price && (
-                    <div className="text-lg text-gray-500 line-through">${course.originalPrice}</div>
-                  )}
+      {/* Main Content Layout */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="grid lg:grid-cols-3 gap-10 items-start">
+          
+          {/* Left Column - Curriculum */}
+          <div className="lg:col-span-2 space-y-8 lg:-mt-24 relative z-20">
+            <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-soft border border-slate-100 dark:border-slate-800 overflow-hidden transition-colors duration-300">
+              <div className="p-8 border-b border-slate-100 dark:border-slate-800">
+                <h2 className="text-2xl font-display font-bold text-slate-900 dark:text-white">{t('courses.content', 'Course Content')}</h2>
+              </div>
+              
+              {chapters.length === 0 ? (
+                <div className="p-12 text-center text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-800/50">
+                  <BookOpen className="h-12 w-12 text-slate-300 dark:text-slate-600 mx-auto mb-4" />
+                  <p className="text-lg font-medium text-slate-700 dark:text-slate-300 mb-1">{t('common.comingSoon', 'Coming Soon')}</p>
+                  <p>{t('common.noData', 'Course material is currently being prepared.')}</p>
                 </div>
-
-                {enrollMsg && (
-                  <div className={`mb-4 p-3 rounded-lg text-sm ${enrollMsg.includes('success') ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
-                    {enrollMsg}
-                  </div>
-                )}
-
-                {!course.is_enrolled ? (
-                  <button
-                    onClick={handleEnroll}
-                    disabled={enrollMutation.isPending}
-                    className="w-full bg-secondary text-white py-3 px-6 rounded-lg font-semibold hover:bg-blue-700 transition-colors mb-4 flex items-center justify-center disabled:opacity-50"
-                  >
-                    {enrollMutation.isPending ? <Loader2 className="animate-spin h-5 w-5" /> : 'Enroll Now'}
-                  </button>
-                ) : (
-                  <Link
-                    to={`/student/courses/${course.id}/learn`}
-                    className="w-full bg-accent text-white py-3 px-6 rounded-lg font-semibold hover:bg-orange-600 transition-colors mb-4 text-center block"
-                  >
-                    Start Learning
-                  </Link>
-                )}
-
-                <div className="space-y-3">
-                  {(course.features || [
-                    'Lifetime access to course materials',
-                    'Certificate of completion',
-                    'Mobile and desktop access'
-                  ]).map((feature: string, index: number) => (
-                    <div key={index} className="flex items-center">
-                      <CheckCircle className="h-5 w-5 text-green-500 mr-3 flex-shrink-0" />
-                      <span className="text-sm text-text">{feature}</span>
+              ) : (
+                <div className="divide-y divide-slate-100 dark:divide-slate-800">
+                  {chapters.map((chapter) => (
+                    <div key={chapter.id} className="group">
+                      <div className="bg-slate-50/80 dark:bg-slate-800/50 px-8 py-5 flex justify-between items-center group-hover:bg-primary-50/30 dark:group-hover:bg-primary-900/10 transition-colors">
+                        <h3 className="font-bold text-slate-900 dark:text-white">{chapter.title}</h3>
+                        <span className="text-sm font-medium text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-800 px-2.5 py-1 rounded-md border border-slate-200 dark:border-slate-700">
+                          {chapter.lectures?.length || 0} {t('courses.lectures', 'lectures')}
+                        </span>
+                      </div>
+                      <div className="divide-y divide-slate-50 dark:divide-slate-800/50 bg-white dark:bg-slate-900">
+                        {(chapter.lectures || []).map((lecture: Lecture) => (
+                          <div 
+                            key={lecture.id} 
+                            onClick={() => handleOpenLecture(lecture.id)}
+                            className={`px-8 py-4 flex items-center justify-between transition-all ${
+                              isEnrolled ? 'hover:bg-slate-50 dark:hover:bg-slate-800 hover:ltr:pl-10 hover:rtl:pr-10 cursor-pointer' : 'opacity-70 cursor-not-allowed'
+                            }`}
+                          >
+                            <div className="flex items-center gap-4">
+                              <div className={`p-2.5 rounded-xl transition-colors ${isEnrolled ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400 group-hover:bg-primary-100 dark:group-hover:bg-primary-900/40' : 'bg-slate-100 dark:bg-slate-800 text-slate-400'}`}>
+                                {isEnrolled ? <Play className="h-4 w-4" /> : <Lock className="h-4 w-4" />}
+                              </div>
+                              <div>
+                                <div className={`font-medium transition-colors ${isEnrolled ? 'text-slate-900 dark:text-white group-hover:text-primary-700 dark:group-hover:text-primary-300' : 'text-slate-700 dark:text-slate-400'}`}>
+                                  {lecture.title}
+                                </div>
+                                <div className="text-sm text-slate-500 dark:text-slate-400 capitalize flex items-center gap-1.5 mt-0.5">
+                                  {lecture.content_type === 'video' ? <Play className="h-3 w-3" /> : <FileText className="h-3 w-3" />}
+                                  {lecture.content_type}
+                                </div>
+                              </div>
+                            </div>
+                            <div className="text-sm text-slate-500 dark:text-slate-400 font-medium bg-slate-50 dark:bg-slate-800 px-2 py-1 rounded">
+                              {lecture.duration ? `${lecture.duration} min` : '-'}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   ))}
                 </div>
-              </div>
+              )}
             </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Course Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid lg:grid-cols-3 gap-8">
-          {/* Main Content */}
-          <div className="lg:col-span-2 space-y-8">
-            {/* What You'll Learn */}
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <h2 className="text-2xl font-bold text-text mb-4">What You'll Learn</h2>
-              <div className="grid md:grid-cols-2 gap-4">
-                <div className="flex items-start">
-                  <CheckCircle className="h-5 w-5 text-green-500 mr-3 mt-0.5 flex-shrink-0" />
-                  <span className="text-text">Build responsive websites using HTML and CSS</span>
-                </div>
-                <div className="flex items-start">
-                  <CheckCircle className="h-5 w-5 text-green-500 mr-3 mt-0.5 flex-shrink-0" />
-                  <span className="text-text">Create interactive web pages with JavaScript</span>
-                </div>
-                <div className="flex items-start">
-                  <CheckCircle className="h-5 w-5 text-green-500 mr-3 mt-0.5 flex-shrink-0" />
-                  <span className="text-text">Understand modern web development practices</span>
-                </div>
-                <div className="flex items-start">
-                  <CheckCircle className="h-5 w-5 text-green-500 mr-3 mt-0.5 flex-shrink-0" />
-                  <span className="text-text">Deploy websites to the internet</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Course Content */}
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <h2 className="text-2xl font-bold text-text mb-4">Course Content</h2>
-              <div className="space-y-4">
-                {(course.chapters || []).map((chapter: any, sectionIndex: number) => (
-                  <div key={chapter.id || sectionIndex} className="border border-gray-200 rounded-lg">
-                    <div className="flex items-center justify-between p-4 bg-gray-50 rounded-t-lg">
-                      <h3 className="font-semibold text-text">{chapter.title}</h3>
-                      <span className="text-sm text-gray-600">{chapter.lectures?.length || 0} lessons</span>
-                    </div>
-                    <div className="divide-y divide-gray-100">
-                      {(chapter.lectures || []).map((lecture: any, lectureIndex: number) => (
-                        <div key={lecture.id || lectureIndex} className="flex items-center justify-between p-4 hover:bg-gray-50">
-                          <div className="flex items-center">
-                            <Play className="h-4 w-4 text-gray-400 mr-3" />
-                            <span className="text-text">{lecture.title}</span>
-                          </div>
-                          <span className="text-sm text-gray-600">{Math.floor(lecture.duration / 60)} min</span>
-                        </div>
-                      ))}
-                    </div>
+            
+            {/* Instructor Card */}
+            <Card className="border-0 shadow-soft overflow-hidden dark:bg-slate-900 transition-colors duration-300">
+              <div className="p-8">
+                <h3 className="text-xl font-display font-bold text-slate-900 dark:text-white mb-6">{t('courses.instructor', 'About the Instructor')}</h3>
+                <div className="flex items-start gap-5">
+                  <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-primary-100 to-secondary-100 dark:from-primary-900/50 dark:to-secondary-900/50 text-primary-700 dark:text-primary-300 flex items-center justify-center text-2xl font-black shadow-sm shrink-0">
+                    {course.instructor?.user?.name?.charAt(0) || 'E'}
                   </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Requirements */}
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <h2 className="text-2xl font-bold text-text mb-4">Requirements</h2>
-              <ul className="space-y-2">
-                <li className="flex items-start">
-                  <span className="text-text">• {course.requirements || 'Basic computer skills and internet access.'}</span>
-                </li>
-              </ul>
-            </div>
-
-            {/* Description */}
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <h2 className="text-2xl font-bold text-text mb-4">Description</h2>
-              <div className="prose max-w-none">
-                <p className="text-text whitespace-pre-line">{course.long_description || course.description}</p>
-              </div>
-            </div>
-
-            {/* Instructor */}
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <h2 className="text-2xl font-bold text-text mb-4">Your Instructor</h2>
-              <div className="flex items-start space-x-4">
-                <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold text-xl">
-                  {course.instructor?.user?.name?.charAt(0) || 'I'}
-                </div>
-                <div className="flex-1">
-                  <h3 className="text-xl font-semibold text-text">{course.instructor?.user?.name || 'Instructor Name'}</h3>
-                  <p className="text-gray-600 mb-2">{course.instructor?.title || 'Expert Instructor'}</p>
-                  <p className="text-text mb-4">{course.instructor?.bio || 'Professional instructor with years of expertise.'}</p>
+                  <div>
+                    <div className="text-lg font-bold text-slate-900 dark:text-white mb-1">{course.instructor?.user?.name || 'Expert Instructor'}</div>
+                    <div className="text-sm font-medium text-primary-600 dark:text-primary-400 mb-3">{t('courses.author', 'Course Author')}</div>
+                    <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
+                      {t('common.noData', 'No bio available.')}
+                    </p>
+                  </div>
                 </div>
               </div>
-            </div>
+            </Card>
+          </div>
 
-            {/* Reviews */}
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <h2 className="text-2xl font-bold text-text mb-4">Student Reviews</h2>
-              <div className="space-y-4">
-                {course.reviews.map((review) => (
-                  <div key={review.id} className="border-b border-gray-100 pb-4 last:border-b-0">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center">
-                        <span className="font-semibold text-text mr-2">{review.user}</span>
-                        <div className="flex items-center">
-                          {[...Array(5)].map((_, i) => (
-                            <Star
-                              key={i}
-                              className={`h-4 w-4 ${
-                                i < review.rating ? 'text-yellow-400 fill-current' : 'text-gray-300'
-                              }`}
-                            />
-                          ))}
-                        </div>
+          {/* Right Column - Pricing Card */}
+          <div className="lg:-mt-32 relative z-30">
+            <Card className="p-1 border-0 shadow-xl shadow-slate-200/50 dark:shadow-none bg-white/50 dark:bg-slate-800/50 backdrop-blur-xl ring-1 ring-slate-200 dark:ring-slate-700 sticky top-24 rounded-2xl overflow-hidden transition-colors duration-300">
+              <div className="bg-white dark:bg-slate-900 rounded-[14px] p-6">
+                <div className="text-sm font-bold text-slate-500 dark:text-slate-400 tracking-wider uppercase mb-2">{t('courses.investment', 'Investment')}</div>
+                <div className="text-5xl font-display font-black text-slate-900 dark:text-white mb-6 flex items-baseline gap-1">
+                  {Number(course.price) > 0 ? `$${Number(course.price).toFixed(2)}` : t('common.free', 'Free')}
+                </div>
+
+                <div className="space-y-5">
+                  {isEnrolled ? (
+                    <div className="bg-secondary-50 dark:bg-secondary-900/20 text-secondary-900 dark:text-secondary-100 border border-secondary-200 dark:border-secondary-800 p-5 rounded-xl flex items-start gap-3">
+                      <CheckCircle className="h-6 w-6 text-secondary-600 dark:text-secondary-400 shrink-0 mt-0.5" />
+                      <div>
+                        <div className="font-bold text-lg">{t('courses.readyToLearn', 'Ready to Learn')}</div>
+                        <div className="text-sm mt-1 text-secondary-700 dark:text-secondary-300 leading-relaxed">{t('courses.accessGranted', 'You have full lifetime access to this course.')}</div>
                       </div>
-                      <span className="text-sm text-gray-600">{review.date}</span>
                     </div>
-                    <p className="text-text">{review.comment}</p>
-                  </div>
-                ))}
+                  ) : paymentStatus ? (
+                    <PaymentStatusPanel status={paymentStatus} />
+                  ) : (
+                    <div className="bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 p-5 rounded-xl flex items-start gap-3">
+                      <Lock className="h-6 w-6 text-slate-400 dark:text-slate-500 shrink-0 mt-0.5" />
+                      <div>
+                        <div className="font-bold text-lg text-slate-900 dark:text-white">{t('courses.enrollmentRequired', 'Enrollment Required')}</div>
+                        <div className="text-sm mt-1 text-slate-600 dark:text-slate-400 leading-relaxed">{t('courses.secureSpot', 'Secure your spot by submitting your payment.')}</div>
+                      </div>
+                    </div>
+                  )}
+
+                  {isEnrolled ? (
+                    <Link to={`/student/courses/${course.id}/learn`} className="block">
+                      <Button className="w-full h-14 text-lg font-bold shadow-glow-secondary bg-secondary-600 hover:bg-secondary-700 text-white">
+                        <Play className="h-6 w-6 ltr:mr-2 rtl:ml-2 fill-current" /> {t('courses.startLearning', 'Start Learning')}
+                      </Button>
+                    </Link>
+                  ) : (
+                    <Button 
+                      className="w-full h-14 text-lg font-bold shadow-glow-primary text-white" 
+                      onClick={handleOpenPayment}
+                      disabled={paymentMutation.isPending || paymentStatus === 'pending' || paymentStatus === 'under_review'}
+                    >
+                      <Upload className="h-5 w-5 ltr:mr-2 rtl:ml-2" />
+                      {paymentStatus === 'rejected' ? t('common.tryAgain', 'Try Again') : t('courses.enrollNow', 'Enroll Now')}
+                    </Button>
+                  )}
+                  
+                  {!isEnrolled && (
+                    <p className="text-center text-xs font-medium text-slate-400 pt-2">
+                      {t('courses.securePayment', 'Secure payment verification process')}
+                    </p>
+                  )}
+                </div>
               </div>
-            </div>
+            </Card>
           </div>
 
-          {/* Sidebar */}
-          <div className="lg:col-span-1">
-            <div className="bg-white rounded-lg shadow-sm p-6 sticky top-6">
-              <h3 className="text-lg font-semibold text-text mb-4">Course Features</h3>
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-text">Duration</span>
-                  <span className="font-semibold">{course.duration}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-text">Level</span>
-                  <span className="font-semibold">{course.level}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-text">Language</span>
-                  <span className="font-semibold">{course.language}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-text">Students</span>
-                  <span className="font-semibold">{course.students.toLocaleString()}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-text">Last Updated</span>
-                  <span className="font-semibold">{course.lastUpdated}</span>
-                </div>
-              </div>
+        </div>
+      </section>
+
+      {/* Payment Modal */}
+      {showPaymentModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-md p-8 relative animate-in zoom-in-95 border border-slate-200 dark:border-slate-800">
+            <button
+              onClick={() => setShowPaymentModal(false)}
+              className="absolute ltr:right-4 rtl:left-4 top-4 p-2 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-700 rounded-full transition"
+            >
+              <X className="h-5 w-5" />
+            </button>
+            
+            <div className="w-12 h-12 bg-primary-50 dark:bg-primary-900/20 rounded-xl flex items-center justify-center mb-5">
+              <CreditCard className="h-6 w-6 text-primary-600 dark:text-primary-400" />
             </div>
+            
+            <h3 className="text-2xl font-display font-bold text-slate-900 dark:text-white mb-2">{t('payment.uploadProof', 'Upload Proof')}</h3>
+            <p className="text-slate-500 dark:text-slate-400 mb-8 leading-relaxed">
+              {t('payment.uploadInstructions', 'Upload a clear image or PDF of your payment receipt. Once verified, you will instantly gain access.')}
+            </p>
+
+            <label className="block border-2 border-dashed border-primary-200 dark:border-primary-800 rounded-xl p-8 bg-primary-50/50 dark:bg-primary-900/10 text-center mb-8 hover:bg-primary-50 dark:hover:bg-primary-900/20 hover:border-primary-300 dark:hover:border-primary-700 transition cursor-pointer relative group">
+              <input
+                type="file"
+                accept=".pdf,image/*"
+                onChange={(event) => setProofFile(event.target.files?.[0] || null)}
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+              />
+              <Upload className="h-10 w-10 text-primary-400 dark:text-primary-500 mx-auto mb-4 group-hover:-translate-y-1 transition-transform" />
+              <div className="text-base font-bold text-slate-900 dark:text-white mb-1">
+                {proofFile ? proofFile.name : t('payment.clickToUpload', 'Click or drag file to upload')}
+              </div>
+              <div className="text-sm font-medium text-slate-500 dark:text-slate-400">{t('payment.fileLimits', 'PDF, JPG, PNG up to 10MB')}</div>
+            </label>
+
+            <Button 
+              className="w-full h-12 text-base font-bold text-white" 
+              onClick={handleSubmitPayment}
+              isLoading={paymentMutation.isPending}
+              disabled={!proofFile}
+            >
+              {t('payment.submitProof', 'Submit Proof')}
+            </Button>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };

@@ -17,22 +17,28 @@ class CreateLecture
 
     public function execute(array $data, int $chapterId, $videoFile = null): Lecture
     {
-        $videoPath = null;
+        $contentType = $data['type'] ?? $data['content_type'] ?? 'video'; // video, text, pdf/document
+        if ($contentType === 'pdf') {
+            $contentType = 'document';
+        }
+
+        $contentUrl = null;
         if ($videoFile) {
-            // Upload to Local/Firebase
-            $path = 'lectures/videos/' . Str::uuid() . '.' . $videoFile->getClientOriginalExtension();
-            $videoPath = $this->storageService->uploadFile($path, file_get_contents($videoFile->getRealPath()));
+            $folder = $contentType === 'document' ? 'lectures/docs' : 'lectures/videos';
+            $path = $folder . '/' . Str::uuid() . '.' . $videoFile->getClientOriginalExtension();
+            $contentUrl = $this->storageService->uploadFile($path, file_get_contents($videoFile->getRealPath()));
         }
 
         return Lecture::create([
             'chapter_id' => $chapterId,
             'title' => $data['title'],
-            'type' => $data['type'] ?? 'video', // video, text, pdf
-            'content' => $data['content'] ?? null,
-            'video_url' => $videoPath, // we save the path, and generate secure URL at runtime
-            'duration' => $data['duration'] ?? 0,
-            'is_free' => $data['is_free'] ?? false,
-            'order_index' => $data['order_index'] ?? 0,
+            'slug' => $data['slug'] ?? null,
+            'content_type' => $contentType,
+            'content_url' => $contentUrl,
+            // DB stores duration as integer minutes
+            'duration' => isset($data['duration']) ? (int) $data['duration'] : null,
+            'order_index' => isset($data['order_index']) ? (int) $data['order_index'] : 0,
+            'status' => $data['status'] ?? 'active',
         ]);
     }
 }

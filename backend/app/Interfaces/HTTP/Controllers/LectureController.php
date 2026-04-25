@@ -8,6 +8,7 @@ use App\Application\Courses\CreateLecture;
 use App\Application\Courses\TrackLectureProgress;
 use App\Infrastructure\Persistence\Models\Chapter;
 use App\Infrastructure\Persistence\Models\Lecture;
+use App\Infrastructure\Persistence\Models\LectureProgress;
 use App\Application\Interfaces\StorageServiceInterface;
 use Illuminate\Support\Facades\Auth;
 
@@ -33,17 +34,26 @@ class LectureController extends Controller
 
         $request->validate([
             'title' => 'required|string|max:255',
-            'type' => 'required|in:video,text,pdf',
-            'video_file' => 'nullable|mimes:mp4,mov,avi|max:500000',
+            'type' => 'required|in:video,text,pdf,document',
+            'duration' => 'nullable|integer|min:0',
+            'order_index' => 'nullable|integer|min:0',
+            'content_file' => 'nullable|file|mimes:mp4,mov,avi,pdf|max:500000',
         ]);
 
         $lecture = $this->createLectureUseCase->execute(
-            $request->except('video_file'),
+            $request->except('content_file'),
             $chapter->id,
-            $request->file('video_file')
+            $request->file('content_file')
         );
 
         return $this->apiResponse('success', $lecture, 'Lecture created successfully', 201);
+    }
+
+    public function index(Chapter $chapter)
+    {
+        $this->authorize('view', $chapter->course);
+        $lectures = $chapter->lectures()->orderBy('order_index')->get();
+        return $this->apiResponse('success', $lectures);
     }
 
     public function show(Lecture $lecture)
@@ -51,11 +61,38 @@ class LectureController extends Controller
         $this->authorize('view', $lecture);
         
         $lectureArray = $lecture->toArray();
-        if ($lecture->video_url) {
-            $lectureArray['secure_video_url'] = $this->storageService->generateSecureUrl($lecture->video_url);
+        if ($lecture->content_url) {
+            $lectureArray['secure_content_url'] = $this->storageService->generateSecureUrl($lecture->content_url);
         }
 
+        $progress = LectureProgress::where('user_id', Auth::id())
+            ->where('lecture_id', $lecture->id)
+            ->first();
+        $lectureArray['progress'] = $progress;
+
         return $this->apiResponse('success', $lectureArray);
+    }
+
+    public function update(Request $request, Lecture $lecture)
+    {
+        $this->authorize('update', $lecture);
+
+        $data = $request->validate([
+            'title' => 'sometimes|string|max:255',
+            'duration' => 'sometimes|nullable|integer|min:0',
+            'order_index' => 'sometimes|integer|min:0',
+            'status' => 'sometimes|string',
+        ]);
+
+        $lecture->update($data);
+        return $this->apiResponse('success', $lecture, 'Lecture updated successfully');
+    }
+
+    public function destroy(Lecture $lecture)
+    {
+        $this->authorize('delete', $lecture);
+        $lecture->delete();
+        return $this->apiResponse('success', null, 'Lecture deleted');
     }
 
     public function trackProgress(Request $request, Lecture $lecture)
