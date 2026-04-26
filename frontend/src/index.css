@@ -1,0 +1,61 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800;900&family=Noto+Sans+Arabic:wght@300;400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-slate-50 text-slate-800 antialiased selection:bg-primary/20 selection:text-primary transition-colors duration-300;
+  }
+
+  [dir="rtl"] {
+    font-family: 'Noto Sans Arabic', sans-serif;
+  }
+
+  [dir="ltr"] {
+    font-family: 'Inter', sans-serif;
+  }
+
+  /* Headings typography mapping */
+  h1, h2, h3, h4, h5, h6 {
+    @apply tracking-tight font-bold;
+  }
+
+  [dir="ltr"] h1, [dir="ltr"] h2, [dir="ltr"] h3, [dir="ltr"] h4, [dir="ltr"] h5, [dir="ltr"] h6 {
+    font-family: 'Outfit', sans-serif;
+  }
+}
+
+@layer components {
+  /* Enhanced Premium Glassmorphism */
+  .glass {
+    @apply bg-white/70 backdrop-blur-xl border border-white/40 shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all duration-300;
+  }
+  .glass:hover {
+    @apply shadow-[0_8px_30px_rgb(0,0,0,0.08)] bg-white/80;
+  }
+
+  /* Premium Primary Button with inner glow and gradient */
+  .btn-primary {
+    @apply relative overflow-hidden bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 text-white font-semibold py-2.5 px-6 rounded-xl transition-all duration-300 active:scale-[0.98] shadow-[0_4px_14px_0_rgba(8,145,178,0.39)] hover:shadow-[0_6px_20px_rgba(8,145,178,0.23)] flex items-center justify-center gap-2;
+  }
+  .btn-primary::after {
+    content: '';
+    @apply absolute inset-0 rounded-xl border border-white/20 pointer-events-none;
+  }
+
+  /* Premium Secondary Button */
+  .btn-secondary {
+    @apply relative overflow-hidden bg-gradient-to-r from-secondary-500 to-secondary-600 hover:from-secondary-600 hover:to-secondary-700 text-white font-semibold py-2.5 px-6 rounded-xl transition-all duration-300 active:scale-[0.98] shadow-[0_4px_14px_0_rgba(16,185,129,0.39)] hover:shadow-[0_6px_20px_rgba(16,185,129,0.23)] flex items-center justify-center gap-2;
+  }
+  .btn-secondary::after {
+    content: '';
+    @apply absolute inset-0 rounded-xl border border-white/20 pointer-events-none;
+  }
+
+  /* Modern Premium Input Fields */
+  .input-field {
+    @apply w-full px-4 py-3 bg-slate-50 border border-slate-200/80 rounded-xl focus:bg-white focus:ring-4 focus:ring-primary/10 focus:border-primary-500 outline-none transition-all duration-300 shadow-sm hover:border-slate-300 placeholder:text-slate-400 text-slate-800;
+  }
+}
