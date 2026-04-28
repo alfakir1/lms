@@ -1,114 +1,105 @@
 <?php
 
+use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\DashboardController;
+use App\Http\Controllers\Api\UserController;
+use App\Http\Controllers\Api\CourseController;
+use App\Http\Controllers\Api\EnrollmentController;
+use App\Http\Controllers\Api\AssignmentController;
+use App\Http\Controllers\Api\SubmissionController;
+use App\Http\Controllers\Api\GradeController;
+use App\Http\Controllers\Api\PaymentController;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use App\Interfaces\HTTP\Controllers\AuthController;
-use App\Interfaces\HTTP\Controllers\EnrollmentController;
-use App\Interfaces\HTTP\Controllers\AttendanceController;
-use App\Interfaces\HTTP\Controllers\CourseController;
-use App\Interfaces\HTTP\Controllers\ChapterController;
-use App\Interfaces\HTTP\Controllers\LectureController;
 
-/*
-|--------------------------------------------------------------------------
-| LMS API Routes
-| Base URL: /api/v1
-|--------------------------------------------------------------------------
-*/
+/* ══════════════════════════════════════════
+   PUBLIC
+══════════════════════════════════════════ */
+Route::post('/login', [AuthController::class, 'login'])->name('login');
 
-Route::prefix('v1')->group(function () {
+// Courses — public read
+Route::get('/courses',          [CourseController::class, 'index']);
+Route::get('/courses/{course}', [CourseController::class, 'show']);
 
-    /*
-    |--------------------------------------------------------------------------
-    | Courses (Public Read)
-    |--------------------------------------------------------------------------
-    */
-    Route::get('courses', [CourseController::class, 'index']);
-    Route::get('courses/{course}', [CourseController::class, 'show']);
+/* ══════════════════════════════════════════
+   ALL AUTHENTICATED USERS
+══════════════════════════════════════════ */
+Route::middleware('auth:sanctum')->group(function () {
 
-    /* ─────────────────────────────────────────
-    |  Auth (Public)
-    ───────────────────────────────────────── */
-    Route::prefix('auth')->group(function () {
-        Route::post('register',  [AuthController::class, 'register']);
-        Route::post('login',     [AuthController::class, 'login']);
+    Route::get('/user',    [AuthController::class, 'user']);
+    Route::post('/logout', [AuthController::class, 'logout']);
+    Route::get('/stats',   [DashboardController::class, 'stats']);
+
+    // Certificates
+    Route::get('/certificates', [\App\Http\Controllers\Api\CertificateController::class, 'index']);
+    Route::get('/certificates/{certificate}', [\App\Http\Controllers\Api\CertificateController::class, 'show']);
+
+    // User profile view
+    Route::get('/users/{user}', [UserController::class, 'show']);
+
+    // Payments — read filtered by role inside controller
+    Route::get('/payments', [PaymentController::class, 'index']);
+
+    // Receipt stub
+    Route::get('/payments/{payment}/receipt', function ($payment) {
+        $p = \App\Models\Payment::with(['student.user', 'course'])->findOrFail($payment);
+        return response()->json(['success' => true, 'data' => [
+            'transaction_id' => $p->transaction_id,
+            'student_name'   => $p->student?->user?->name,
+            'course_title'   => $p->course?->title,
+            'amount'         => $p->amount,
+            'method'         => $p->method,
+            'paid_at'        => $p->paid_at,
+        ]]);
     });
 
-    /* ─────────────────────────────────────────
-    |  Protected Routes (Sanctum)
-    ───────────────────────────────────────── */
-    Route::middleware('auth:sanctum')->group(function () {
+    /* ── Admin only ── */
+    Route::middleware('role:admin')->group(function () {
+        Route::get('/users',              [UserController::class, 'index']);
+        Route::delete('/users/{user}',    [UserController::class, 'destroy']);
+        Route::post('/payments/{id}/approve', [PaymentController::class, 'approve']);
+    });
 
-        // Auth utilities
-        Route::prefix('auth')->group(function () {
-            Route::post('logout',              [AuthController::class, 'logout']);
-            Route::get('me',                   [AuthController::class, 'me']);
-            Route::post('update-fingerprint',  [AuthController::class, 'updateFingerprint']);
-        });
+    /* ── Admin + Instructor ── */
+    Route::middleware('role:admin,instructor')->group(function () {
+        Route::post('/courses',              [CourseController::class, 'store']);
+        Route::put('/courses/{course}',      [CourseController::class, 'update']);
+        Route::delete('/courses/{course}',   [CourseController::class, 'destroy']);
 
-        /* ── Enrollments ── */
-        Route::prefix('enrollments')->group(function () {
-            Route::get('my',                           [EnrollmentController::class, 'myEnrollments']);
-            Route::post('courses/{course}',            [EnrollmentController::class, 'enroll']);
-            Route::get('pending',                      [EnrollmentController::class, 'pending']);
-            Route::post('{enrollment}/approve',        [EnrollmentController::class, 'approve']);
-            Route::post('{enrollment}/ban',            [EnrollmentController::class, 'ban']);
-        });
+        Route::post('/assignments',             [AssignmentController::class, 'store']);
+        Route::put('/assignments/{assignment}', [AssignmentController::class, 'update']);
+        Route::delete('/assignments/{assignment}', [AssignmentController::class, 'destroy']);
 
-        /* ── Admin Management ── */
-        Route::prefix('admin')->middleware('ensure.admin')->group(function () {
-            Route::get('stats',                        [\App\Interfaces\HTTP\Controllers\DashboardController::class, 'stats']);
-            Route::get('users',                        [\App\Interfaces\HTTP\Controllers\UserManagementController::class, 'index']);
-            Route::put('users/{user}',                 [\App\Interfaces\HTTP\Controllers\UserManagementController::class, 'update']);
-        });
+        Route::post('/grades', [GradeController::class, 'store']);
+    });
 
-        /* ── Smart QR Attendance ── */
-        Route::prefix('attendance')->group(function () {
-            // Instructor actions
-            Route::post('sessions/courses/{course}/start',  [AttendanceController::class, 'startSession']);
-            Route::post('sessions/{session}/close',         [AttendanceController::class, 'closeSession']);
-            Route::post('sessions/{session}/manual',        [AttendanceController::class, 'recordManual']);
-            Route::get('sessions/{session}/report',         [AttendanceController::class, 'sessionReport']);
+    /* ── Admin + Reception ── */
+    Route::middleware('role:admin,reception')->group(function () {
+        Route::get('/users',                     [UserController::class, 'index']);
+        Route::post('/users',                    [UserController::class, 'store']);
+        Route::put('/users/{user}',              [UserController::class, 'update']);
+        Route::post('/payments',                 [PaymentController::class, 'store']);
+    });
 
-            // Student actions
-            Route::post('sessions/{session}/request-token', [AttendanceController::class, 'requestToken']);
-            Route::post('scan',                             [AttendanceController::class, 'scanToken']);
-        });
+    /* ── Admin + Instructor + Reception ── */
+    Route::middleware('role:admin,instructor,reception')->group(function () {
+        Route::get('/enrollments', [EnrollmentController::class, 'index']);
+        Route::get('/attendance',  [\App\Http\Controllers\Api\AttendanceController::class, 'index']);
+        Route::post('/attendance', [\App\Http\Controllers\Api\AttendanceController::class, 'store']);
+    });
 
-        /* ── Courses, Chapters, Lectures ── */
-        // Courses (write actions protected; read routes are public above)
-        Route::post('courses', [CourseController::class, 'store']);
-        Route::match(['put', 'patch'], 'courses/{course}', [CourseController::class, 'update']);
-        Route::delete('courses/{course}', [CourseController::class, 'destroy']);
+    /* ── Instructor + Student ── */
+    Route::middleware('role:admin,instructor,student')->group(function () {
+        Route::get('/assignments',                              [AssignmentController::class, 'index']);
+        Route::get('/assignments/{assignment}',                 [AssignmentController::class, 'show']);
+        Route::get('/assignments/{assignment}/submissions',     [SubmissionController::class, 'index']);
+        Route::put('/submissions/{submission}/grade',           [SubmissionController::class, 'grade']);
+        Route::get('/grades',                                   [GradeController::class, 'index']);
+    });
 
-        // Chapters
-        Route::get('courses/{course}/chapters', [ChapterController::class, 'index']);
-        Route::post('courses/{course}/chapters', [ChapterController::class, 'store']);
-        Route::get('chapters/{chapter}', [ChapterController::class, 'show']);
-        Route::match(['put', 'patch'], 'chapters/{chapter}', [ChapterController::class, 'update']);
-        Route::delete('chapters/{chapter}', [ChapterController::class, 'destroy']);
-
-        // Lectures
-        Route::get('chapters/{chapter}/lectures', [LectureController::class, 'index']);
-        Route::post('chapters/{chapter}/lectures', [LectureController::class, 'store']);
-        Route::get('lectures/{lecture}', [LectureController::class, 'show']);
-        Route::match(['put', 'patch'], 'lectures/{lecture}', [LectureController::class, 'update']);
-        Route::delete('lectures/{lecture}', [LectureController::class, 'destroy']);
-        Route::post('lectures/{lecture}/progress', [LectureController::class, 'trackProgress']);
-
-        /* ── Payments ── */
-        Route::prefix('payments')->group(function () {
-            Route::get('/', [\App\Interfaces\HTTP\Controllers\PaymentController::class, 'index']);
-            Route::post('/', [\App\Interfaces\HTTP\Controllers\PaymentController::class, 'store']);
-            Route::get('course/{course}', [\App\Interfaces\HTTP\Controllers\PaymentController::class, 'latestForCourse']);
-        });
-
-        /* ── Admin Payments ── */
-        Route::prefix('admin/payments')->middleware('ensure.admin')->group(function () {
-            Route::get('/', [\App\Interfaces\HTTP\Controllers\AdminPaymentController::class, 'index']);
-            Route::post('{id}/approve', [\App\Interfaces\HTTP\Controllers\AdminPaymentController::class, 'approve']);
-            Route::post('{id}/reject', [\App\Interfaces\HTTP\Controllers\AdminPaymentController::class, 'reject']);
-        });
-
-    }); // end auth:sanctum
-
-}); // end v1
+    /* ── Student only ── */
+    Route::middleware('role:student')->group(function () {
+        Route::post('/enrollments', [EnrollmentController::class, 'store']);
+        Route::post('/submissions', [SubmissionController::class, 'store']);
+    });
+});

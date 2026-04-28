@@ -1,107 +1,94 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { AuthProvider } from './contexts/AuthContext';
-import { ThemeProvider } from './contexts/ThemeContext';
-import { LanguageProvider } from './contexts/LanguageContext';
-import { ToastProvider } from './contexts/ToastContext';
-import ProtectedRoute from './components/ProtectedRoute';
+import { Routes, Route } from 'react-router-dom';
+import Login from './pages/Login.tsx';
+import NotFound from './pages/NotFound.tsx';
+import AdminDashboard from './pages/admin/AdminDashboard.tsx';
+import InstructorDashboard from './pages/instructor/InstructorDashboard.tsx';
+import StudentDashboard from './pages/student/StudentDashboard.tsx';
+import ReceptionDashboard from './pages/reception/ReceptionDashboard.tsx';
+import StudentRegistration from './pages/reception/StudentRegistration.tsx';
+import Users from './pages/admin/Users.tsx';
+import CoursesList from './pages/CoursesList.tsx';
+import CourseDetails from './pages/CourseDetails.tsx';
+import CoursePlayer from './pages/CoursePlayer.tsx';
+import Assignments from './pages/Assignments.tsx';
+import SubmissionPage from './pages/SubmissionPage.tsx';
+import GradesPage from './pages/GradesPage.tsx';
+import PaymentsPage from './pages/PaymentsPage.tsx';
+import AttendancePage from './pages/Attendance.tsx';
+import CertificatesPage from './pages/CertificatesPage.tsx';
+import EnrollmentsPage from './pages/EnrollmentsPage.tsx';
+import ProfilePage from './pages/ProfilePage.tsx';
+import ProtectedRoute from './routes/ProtectedRoute';
+import DashboardLayout from './layouts/DashboardLayout';
 
-// Layout Components
-import Header from './components/layout/Header';
-import Footer from './components/layout/Footer';
-import DashboardLayout from './components/layout/DashboardLayout';
 
-// Public Pages
-import Home from './pages/Home';
-import Courses from './pages/Courses';
-import CourseDetails from './pages/CourseDetails';
-import Login from './pages/Login';
-import Register from './pages/Register';
+// No RootRedirect used anymore
 
-// Instructor Pages
-import InstructorDashboard from './pages/instructor/InstructorDashboard';
-import InstructorCourses from './pages/instructor/InstructorCourses';
-import InstructorLectures from './pages/instructor/InstructorLectures';
-import InstructorAttendance from './pages/instructor/InstructorAttendance';
+import HomePage from './pages/public/HomePage.tsx';
 
-// Student Pages
-import StudentDashboard from './pages/student/StudentDashboard';
-import MyCourses from './pages/student/MyCourses';
-import CoursePlayer from './pages/student/CoursePlayer';
-import StudentPayments from './pages/student/StudentPayments';
-import StudentAttendance from './pages/student/StudentAttendance';
+// RBAC shorthand helpers
+const ADMIN        = ['admin'] as const;
+const ADMIN_REC    = ['admin', 'reception'] as const;
+const INST_STD     = ['instructor', 'student'] as const;
+const ADMIN_REC_STD = ['admin', 'reception', 'student'] as const;
+const ALL_ROLES    = ['admin', 'instructor', 'student', 'reception'] as const;
+const REC_ONLY     = ['reception'] as const;
+const STD_ONLY     = ['student'] as const;
+const INST_ONLY    = ['instructor'] as const;
 
-// Admin Pages
-import AdminDashboard from './pages/admin/AdminDashboard';
-import AdminUsers from './pages/admin/AdminUsers';
-import Payments from './pages/admin/Payments';
-
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 5 * 60 * 1000, // 5 minutes
-      retry: 1,
-      refetchOnWindowFocus: false,
-    },
-  },
-});
-
-// Helper: wrap a component in DashboardLayout + ProtectedRoute
-const DashboardRoute = ({
-  element,
-  roles,
-}: {
-  element: React.ReactNode;
-  roles: string[];
-}) => (
-  <ProtectedRoute roles={roles}>
-    <DashboardLayout>{element}</DashboardLayout>
-  </ProtectedRoute>
+const guard = (roles: readonly string[], el: React.ReactNode) => (
+  <ProtectedRoute allowedRoles={roles as any}>{el}</ProtectedRoute>
 );
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <ThemeProvider>
-        <LanguageProvider>
-          <AuthProvider>
-            <ToastProvider>
-              <Router>
-                <Routes>
-                  {/* Public Routes (with Header + Footer) */}
-                  <Route path="/" element={<><Header /><Home /><Footer /></>} />
-                  <Route path="/courses" element={<><Header /><Courses /><Footer /></>} />
-                  <Route path="/courses/:id" element={<><Header /><CourseDetails /><Footer /></>} />
-                  <Route path="/login" element={<Login />} />
-                  <Route path="/register" element={<Register />} />
+    <Routes>
+      {/* ─── Public ─── */}
+      <Route path="/login" element={<Login />} />
+      <Route path="/" element={<HomePage />} />
 
-                  {/* Student Routes */}
-                  <Route path="/student/dashboard" element={<DashboardRoute roles={['student']} element={<StudentDashboard />} />} />
-                  <Route path="/student/courses" element={<DashboardRoute roles={['student']} element={<MyCourses />} />} />
-                  <Route path="/student/courses/:courseId/learn" element={<DashboardRoute roles={['student']} element={<CoursePlayer />} />} />
-                  <Route path="/student/payments" element={<DashboardRoute roles={['student']} element={<StudentPayments />} />} />
-                  <Route path="/student/attendance" element={<DashboardRoute roles={['student']} element={<StudentAttendance />} />} />
+      {/* ─── Protected — dashboard layout ─── */}
+      <Route element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
 
-                  {/* Instructor Routes */}
-                  <Route path="/instructor/dashboard" element={<DashboardRoute roles={['instructor', 'admin', 'super_admin']} element={<InstructorDashboard />} />} />
-                  <Route path="/instructor/courses" element={<DashboardRoute roles={['instructor', 'admin', 'super_admin']} element={<InstructorCourses />} />} />
-                  <Route path="/instructor/lectures" element={<DashboardRoute roles={['instructor', 'admin', 'super_admin']} element={<InstructorLectures />} />} />
-                  <Route path="/instructor/attendance" element={<DashboardRoute roles={['instructor', 'admin', 'super_admin']} element={<InstructorAttendance />} />} />
+        {/* ── Role-specific dashboards ── */}
+        <Route path="/admin/dashboard"      element={guard(ADMIN,     <AdminDashboard />)} />
+        <Route path="/instructor/dashboard" element={guard(INST_ONLY, <InstructorDashboard />)} />
+        <Route path="/student/dashboard"    element={guard(STD_ONLY,  <StudentDashboard />)} />
+        <Route path="/reception/dashboard"  element={guard(REC_ONLY,  <ReceptionDashboard />)} />
 
-                  {/* Admin Routes */}
-                  <Route path="/admin/dashboard" element={<DashboardRoute roles={['admin', 'super_admin']} element={<AdminDashboard />} />} />
-                  <Route path="/admin/users" element={<DashboardRoute roles={['admin', 'super_admin']} element={<AdminUsers />} />} />
-                  <Route path="/admin/payments" element={<DashboardRoute roles={['admin', 'super_admin']} element={<Payments />} />} />
+        {/* ── Courses — all roles can VIEW, only admin/instructor can manage (enforced in UI & backend) ── */}
+        <Route path="/courses"           element={guard(ALL_ROLES,  <CoursesList />)} />
+        <Route path="/courses/:id"       element={guard(ALL_ROLES,  <CourseDetails />)} />
+        <Route path="/enrollments"       element={guard(['admin', 'instructor', 'reception'] as any, <EnrollmentsPage />)} />
+        <Route path="/courses/:id/play"  element={guard(INST_STD,   <CoursePlayer />)} />
 
-                  <Route path="*" element={<Navigate to="/courses" replace />} />
-                </Routes>
-              </Router>
-            </ToastProvider>
-          </AuthProvider>
-        </LanguageProvider>
-      </ThemeProvider>
-    </QueryClientProvider>
+
+        {/* ── Assignments — instructor creates, student submits ── */}
+        <Route path="/assignments"            element={guard(INST_STD,  <Assignments />)} />
+        <Route path="/assignments/:id/submit" element={guard(STD_ONLY,  <SubmissionPage />)} />
+
+        {/* ── Grades — instructor & student only ── */}
+        <Route path="/grades" element={guard(INST_STD, <GradesPage />)} />
+
+        {/* ── Payments — admin, reception, student (student sees own payments only) ── */}
+        <Route path="/payments" element={guard(ADMIN_REC_STD, <PaymentsPage />)} />
+
+        {/* ── Attendance — instructor manages, reception views ── */}
+        <Route path="/attendance" element={guard(['instructor', 'reception'] as any, <AttendancePage />)} />
+
+        {/* ── User Management — admin full, reception (students only, enforced in backend) ── */}
+        <Route path="/users" element={guard(ADMIN_REC, <Users />)} />
+
+        {/* ── Reception-specific: full student registration + receipt workflow ── */}
+        <Route path="/register-student" element={guard(ADMIN_REC, <StudentRegistration />)} />
+        <Route path="/certificates" element={guard(['admin', 'instructor', 'reception'] as any, <CertificatesPage />)} />
+        <Route path="/profile" element={guard(ALL_ROLES, <ProfilePage />)} />
+      </Route>
+
+      {/* ─── 404 ─── */}
+      <Route path="*" element={<NotFound />} />
+    </Routes>
   );
 }
 

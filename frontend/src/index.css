@@ -1,86 +1,134 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;700;800;900&display=swap');
-@import "tailwindcss";
-@custom-variant dark (&:is(.dark *));
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800;900&family=Tajawal:wght@300;400;500;700;800;900&display=swap');
 
-@theme {
-  --font-sans: "Inter", "system-ui", "sans-serif";
-  --font-display: "Outfit", "Inter", "system-ui", "sans-serif";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-  --color-primary-50: #ecfeff;
-  --color-primary-100: #cffafe;
-  --color-primary-200: #a5f3fc;
-  --color-primary-300: #67e8f9;
-  --color-primary-400: #22d3ee;
-  --color-primary-500: #06b6d4;
-  --color-primary-600: #0891b2;
-  --color-primary-700: #0e7490;
-  --color-primary-800: #155e75;
-  --color-primary-900: #164e63;
-  --color-primary: #0891b2;
+:root {
+  /* Premium Light Palette */
+  --primary: 199 89% 36%;    /* #0891b2 - Cyan 600 */
+  --primary-foreground: 0 0% 100%;
+  
+  --secondary: 161 72% 40%;  /* #10b981 - Emerald 500 */
+  --secondary-foreground: 0 0% 100%;
+  
+  --accent: 38 92% 50%;      /* #f59e0b - Amber 500 */
+  
+  --background: 210 40% 98%; /* Slate 50 */
+  --foreground: 222 47% 11%; /* Slate 950 */
+  
+  --card: 0 0% 100%;
+  --card-foreground: 222 47% 11%;
+  
+  --popover: 0 0% 100%;
+  --popover-foreground: 222 47% 11%;
+  
+  --border: 214 32% 91%;     /* Slate 200 */
+  --input: 214 32% 91%;
+  --ring: 199 89% 36%;
+  
+  --muted: 210 40% 96.1%;
+  --muted-foreground: 215.4 16.3% 46.9%;
+  
+  --radius: 0.75rem;
+}
 
-  --color-secondary-50: #ecfdf5;
-  --color-secondary-100: #d1fae5;
-  --color-secondary-200: #a7f3d0;
-  --color-secondary-300: #6ee7b7;
-  --color-secondary-400: #34d399;
-  --color-secondary-500: #10b981;
-  --color-secondary-600: #059669;
-  --color-secondary-700: #047857;
-  --color-secondary-800: #065f46;
-  --color-secondary-900: #064e3b;
-  --color-secondary: #10b981;
-
-  --shadow-glass: 0 8px 32px 0 rgba(0, 0, 0, 0.05);
-  --shadow-glow-primary: 0 0 20px rgba(8, 145, 178, 0.3);
-  --shadow-glow-secondary: 0 0 20px rgba(16, 185, 129, 0.3);
-  --shadow-soft: 0 10px 40px -10px rgba(0,0,0,0.08);
-
-  --animate-float: float 6s ease-in-out infinite;
-  --animate-pulse-slow: pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+.dark {
+  /* Premium Dark Palette (Deep Slate/Ocean) */
+  --background: 222 47% 6%;   /* Very deep slate */
+  --foreground: 210 40% 98%;
+  
+  --card: 222 47% 10%;       /* Slightly lighter deep slate */
+  --card-foreground: 210 40% 98%;
+  
+  --popover: 222 47% 8%;
+  --popover-foreground: 210 40% 98%;
+  
+  --primary: 199 89% 48%;    /* Slightly brighter cyan */
+  --primary-foreground: 222 47% 11%;
+  
+  --secondary: 161 72% 45%;
+  --secondary-foreground: 222 47% 11%;
+  
+  --muted: 217.2 32.6% 17.5%;
+  --muted-foreground: 215 20.2% 65.1%;
+  
+  --accent: 217.2 32.6% 17.5%;
+  --accent-foreground: 210 40% 98%;
+  
+  --border: 217.2 32.6% 17.5%;
+  --input: 217.2 32.6% 17.5%;
+  --ring: 199 89% 48%;
 }
 
 @layer base {
-  html {
-    min-height: 100svh;
-    display: flex;
-    flex-direction: column;
-    box-sizing: border-box;
-    @apply bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-50 transition-colors duration-300;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
+  * {
+    /* Borders are handled via explicit classes to avoid circular dependency issues in some environments */
+  }
+  body {
+    @apply bg-background text-foreground antialiased selection:bg-primary/20 selection:text-primary transition-colors duration-500;
+    font-feature-settings: "rlig" 1, "calt" 1;
   }
 
-  body {
-    margin: 0;
-    min-height: 100vh;
+  [dir="rtl"] {
+    font-family: 'Tajawal', sans-serif;
+  }
+
+  [dir="ltr"] {
+    font-family: 'Inter', sans-serif;
   }
 
   h1, h2, h3, h4, h5, h6 {
-    font-family: var(--font-display);
-    font-weight: 700;
-    @apply text-slate-900 dark:text-white transition-colors duration-300;
-    margin: 0;
-    letter-spacing: -0.02em;
+    @apply tracking-tight font-extrabold;
   }
 
-  @keyframes float {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-10px); }
+  [dir="ltr"] h1, [dir="ltr"] h2, [dir="ltr"] h3, [dir="ltr"] h4, [dir="ltr"] h5, [dir="ltr"] h6 {
+    font-family: 'Outfit', sans-serif;
   }
 }
 
 @layer components {
-  .glass-panel {
-    @apply bg-white/70 backdrop-blur-xl border border-white/50 dark:bg-slate-900/70 dark:border-slate-800/50;
-    box-shadow: var(--shadow-glass);
+  .glass {
+    @apply bg-card/60 backdrop-blur-xl border border-white/10 shadow-xl transition-all duration-300;
   }
   
-  .text-gradient {
-    @apply bg-clip-text text-transparent bg-gradient-to-r from-primary-600 to-secondary-500;
+  .premium-card {
+    @apply bg-card border border-border shadow-sm rounded-[var(--radius)] overflow-hidden hover:shadow-md transition-all duration-300;
+  }
+
+  .btn-primary {
+    @apply bg-primary text-primary-foreground hover:bg-primary/90 font-bold py-2.5 px-6 rounded-[var(--radius)] transition-all duration-300 active:scale-95 shadow-lg shadow-primary/20 flex items-center justify-center gap-2;
+  }
+
+  .btn-secondary {
+    @apply bg-secondary text-secondary-foreground hover:bg-secondary/90 font-bold py-2.5 px-6 rounded-[var(--radius)] transition-all duration-300 active:scale-95 shadow-lg shadow-secondary/20 flex items-center justify-center gap-2;
+  }
+
+  .input-field {
+    @apply w-full px-4 py-3 bg-muted/50 border border-input rounded-[var(--radius)] focus:bg-card focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all duration-300 placeholder:text-muted-foreground text-foreground;
+  }
+  
+  /* Scrollbar styles */
+  ::-webkit-scrollbar {
+    @apply w-1.5;
+  }
+  ::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-muted-foreground/20 rounded-full hover:bg-muted-foreground/30;
   }
 }
 
-/* Ensure smooth direction transition for RTL */
-html {
-  transition: direction 0s;
+.dark .glass {
+  @apply bg-black/40 border-white/5;
 }
+
+/* RTL Specifics */
+[dir="rtl"] .sidebar-icon {
+  @apply ml-3 mr-0;
+}
+[dir="ltr"] .sidebar-icon {
+  @apply mr-3 ml-0;
+}
+@media print { .print-hide { display: none !important; } body { background: white !important; margin: 0; padding: 0; } }

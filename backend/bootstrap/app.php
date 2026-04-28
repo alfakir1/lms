@@ -12,9 +12,13 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->statefulApi();
         $middleware->alias([
-            'ensure.admin' => \App\Http\Middleware\EnsureAdmin::class,
-            'ensure.instructor' => \App\Http\Middleware\EnsureInstructor::class,
+            'role' => \App\Http\Middleware\RoleMiddleware::class,
+        ]);
+        
+        $middleware->api(prepend: [
+            \Illuminate\Http\Middleware\HandleCors::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
