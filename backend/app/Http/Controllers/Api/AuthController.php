@@ -49,15 +49,19 @@ class AuthController extends Controller
                 'login_id' => $user->login_id,
                 'email' => $user->email,
                 'role' => $user->role,
+                'instructor' => $user->instructor ? ['id' => $user->instructor->id] : null,
+                'student' => $user->student ? ['id' => $user->student->id] : null,
             ],
+
             'redirect_to' => $dashboard
         ]);
     }
 
     public function user(Request $request)
     {
-        return response()->json($request->user());
+        return response()->json($request->user()->load(['instructor', 'student']));
     }
+
 
     public function logout(Request $request)
     {

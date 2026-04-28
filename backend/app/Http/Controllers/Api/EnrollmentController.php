@@ -22,6 +22,11 @@ class EnrollmentController extends Controller
             });
         }
 
+        if ($request->has('course_id')) {
+            $query->where('course_id', $request->course_id);
+        }
+
+
         return response()->json([
             'success' => true,
             'data' => $query->get()

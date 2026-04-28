@@ -31,7 +31,8 @@ const CoursesList: React.FC = () => {
     );
   };
 
-  const canManageCourses = user?.role === 'admin' || user?.role === 'instructor';
+  const canAddCourse = user?.role === 'admin';
+
 
   return (
     <div className="space-y-8">
@@ -41,11 +42,12 @@ const CoursesList: React.FC = () => {
           <p className="text-slate-500">اكتشف مجموعتنا الواسعة من الكورسات التعليمية.</p>
         </div>
         <div className="flex gap-2">
-          {canManageCourses && (
+          {canAddCourse && (
             <Button icon={<Plus className="w-4 h-4"/>} onClick={() => setIsModalOpen(true)}>
               إضافة كورس
             </Button>
           )}
+
           <div className="relative hidden md:block">
             <Search className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
             <input type="text" placeholder="بحث عن كورس..." className="pr-10 pl-4 py-2 bg-white border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-primary/20" />

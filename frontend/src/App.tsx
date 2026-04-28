@@ -17,8 +17,11 @@ import GradesPage from './pages/GradesPage.tsx';
 import PaymentsPage from './pages/PaymentsPage.tsx';
 import AttendancePage from './pages/Attendance.tsx';
 import CertificatesPage from './pages/CertificatesPage.tsx';
+import EnrollmentsPage from './pages/EnrollmentsPage.tsx';
+import ProfilePage from './pages/ProfilePage.tsx';
 import ProtectedRoute from './routes/ProtectedRoute';
 import DashboardLayout from './layouts/DashboardLayout';
+
 
 // No RootRedirect used anymore
 
@@ -57,7 +60,9 @@ function App() {
         {/* ── Courses — all roles can VIEW, only admin/instructor can manage (enforced in UI & backend) ── */}
         <Route path="/courses"           element={guard(ALL_ROLES,  <CoursesList />)} />
         <Route path="/courses/:id"       element={guard(ALL_ROLES,  <CourseDetails />)} />
+        <Route path="/enrollments"       element={guard(['admin', 'instructor', 'reception'] as any, <EnrollmentsPage />)} />
         <Route path="/courses/:id/play"  element={guard(INST_STD,   <CoursePlayer />)} />
+
 
         {/* ── Assignments — instructor creates, student submits ── */}
         <Route path="/assignments"            element={guard(INST_STD,  <Assignments />)} />
@@ -78,6 +83,7 @@ function App() {
         {/* ── Reception-specific: full student registration + receipt workflow ── */}
         <Route path="/register-student" element={guard(ADMIN_REC, <StudentRegistration />)} />
         <Route path="/certificates" element={guard(['admin', 'instructor', 'reception'] as any, <CertificatesPage />)} />
+        <Route path="/profile" element={guard(ALL_ROLES, <ProfilePage />)} />
       </Route>
 
       {/* ─── 404 ─── */}

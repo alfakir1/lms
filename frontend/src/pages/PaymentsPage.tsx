@@ -14,6 +14,14 @@ interface PaymentWithMeta extends Payment {
 const PaymentsPage: React.FC = () => {
   const { user } = useAuth();
   const [search, setSearch] = useState('');
+  const [printingPayment, setPrintingPayment] = useState<PaymentWithMeta | null>(null);
+
+  const handlePrint = (payment: PaymentWithMeta) => {
+    setPrintingPayment(payment);
+    setTimeout(() => {
+      window.print();
+    }, 500);
+  };
 
   const { data: payments = [], isLoading } = useQuery<PaymentWithMeta[]>({
     queryKey: ['payments'],
@@ -47,7 +55,7 @@ const PaymentsPage: React.FC = () => {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 print-hide">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
@@ -152,10 +160,10 @@ const PaymentsPage: React.FC = () => {
                         </span>
                       </td>
                       <td className="px-6 py-4">
-                        <Link to="/register-student"
-                          className="flex items-center gap-1 text-primary hover:underline text-xs font-bold">
+                        <button onClick={() => handlePrint(payment)}
+                          className="flex items-center gap-1 text-primary hover:underline text-xs font-bold bg-transparent border-none cursor-pointer">
                           <Receipt className="w-4 h-4" /> إيصال
-                        </Link>
+                        </button>
                       </td>
                     </motion.tr>
                   );
@@ -176,6 +184,84 @@ const PaymentsPage: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Printable Receipt Area */}
+      {printingPayment && (
+        <div id="print-receipt-area" className="hidden print:flex fixed inset-0 bg-white z-[9999] justify-center items-start pt-10">
+          <div className="w-[80mm] min-h-[120mm] bg-white text-slate-900 border border-gray-200 p-4 font-mono text-[10px]">
+            
+            {/* Header */}
+            <div className="text-center pb-4 border-b-2 border-dashed border-gray-300">
+               <div className="w-12 h-12 bg-slate-900 text-white rounded-full flex items-center justify-center mx-auto mb-2">
+                 <span className="font-black text-xl">4A</span>
+               </div>
+               <h1 className="font-black text-[14px]">FOUR A ACADEMY</h1>
+               <p className="text-slate-500 mt-1 uppercase text-[8px] tracking-wider">Official Payment Receipt</p>
+            </div>
+            
+            {/* Meta */}
+            <div className="py-4 space-y-2 border-b-2 border-dashed border-gray-300">
+               <div className="flex justify-between">
+                 <span className="text-slate-500">Receipt No:</span>
+                 <span className="font-bold">{printingPayment.transaction_id || `RC-${printingPayment.id}`}</span>
+               </div>
+               <div className="flex justify-between">
+                 <span className="text-slate-500">Date:</span>
+                 <span className="font-bold">{new Date(printingPayment.payment_date || new Date()).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: '2-digit', hour: '2-digit', minute: '2-digit' })}</span>
+               </div>
+               <div className="flex justify-between">
+                 <span className="text-slate-500">Cashier:</span>
+                 <span className="font-bold uppercase">{user?.name}</span>
+               </div>
+            </div>
+            
+            {/* Details */}
+            <div className="py-4 space-y-4 border-b-2 border-dashed border-gray-300">
+               <div>
+                 <p className="text-slate-500 mb-1">Student Details:</p>
+                 <p className="font-black text-[12px]">{printingPayment.student?.user?.name || 'Walk-in Student'}</p>
+                 <p className="text-slate-500 text-[8px]">ID: {printingPayment.student?.id || 'N/A'}</p>
+               </div>
+               
+               <div>
+                 <p className="text-slate-500 mb-1">Payment For:</p>
+                 <div className="flex justify-between items-start">
+                   <p className="font-bold max-w-[50mm] leading-tight">{(printingPayment as any).course?.title || 'General Fee'}</p>
+                   <p className="font-black">${printingPayment.amount}</p>
+                 </div>
+               </div>
+            </div>
+            
+            {/* Total */}
+            <div className="py-4">
+               <div className="flex justify-between items-center bg-slate-50 p-2 rounded">
+                 <span className="font-black text-[14px]">TOTAL PAID</span>
+                 <span className="font-black text-[16px]">${printingPayment.amount}</span>
+               </div>
+               <div className="flex justify-between mt-2 text-[8px] text-slate-500">
+                 <span>Method: <strong className="text-slate-900 uppercase">{printingPayment.payment_method || 'CASH'}</strong></span>
+                 <span>Status: <strong className="text-slate-900 uppercase">{printingPayment.status}</strong></span>
+               </div>
+            </div>
+            
+            {/* Footer */}
+            <div className="text-center pt-6 mt-6 border-t-2 border-dashed border-gray-300">
+               <p className="font-bold mb-1">Thank you for your payment!</p>
+               <p className="text-[8px] text-slate-400">Keep this receipt for your records.</p>
+            </div>
+            
+          </div>
+        </div>
+      )}
+
+      <style>{`
+        @media print {
+          body > *:not(#print-receipt-area) { display: none !important; }
+          .print-hide { display: none !important; }
+          #print-receipt-area { display: flex !important; }
+          @page { margin: 0; }
+        }
+      `}</style>
     </div>
   );
 };

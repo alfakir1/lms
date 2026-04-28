@@ -1,7 +1,8 @@
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { PlayCircle, Clock, Star, CheckCircle, Users, Layout } from 'lucide-react';
+import { PlayCircle, Clock, Star, CheckCircle, Users, Layout, Mail } from 'lucide-react';
 import { useCourse, useEnroll } from '../hooks/useCourses';
+import { useEnrollments } from '../hooks/useEnrollments';
 import { useAuth } from '../context/AuthContext';
 import Button from '../components/ui/Button';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
@@ -12,6 +13,7 @@ const CourseDetails: React.FC = () => {
   const { user } = useAuth();
   
   const { data: course, isLoading } = useCourse(Number(id));
+  const { data: enrollments } = useEnrollments(Number(id));
   const enrollMutation = useEnroll();
 
   if (isLoading) return <LoadingSpinner />;
@@ -25,6 +27,8 @@ const CourseDetails: React.FC = () => {
       alert('حدث خطأ أثناء التسجيل. قد تكون مسجلاً بالفعل.');
     }
   };
+
+  const isInstructorOrAdmin = user?.role === 'admin' || (user?.role === 'instructor' && course.instructor_id === user.instructor?.id);
 
   return (
     <div className="space-y-8 -mt-6 -mx-6">
@@ -47,7 +51,7 @@ const CourseDetails: React.FC = () => {
             <div className="flex flex-wrap items-center justify-center md:justify-start gap-6 text-sm font-medium text-slate-300">
               <span className="flex items-center gap-2"><Layout className="w-5 h-5 text-slate-500" /> {course.lessons?.length || 0} درس</span>
               <span className="flex items-center gap-2"><Clock className="w-5 h-5 text-slate-500" /> 12 ساعة</span>
-              <span className="flex items-center gap-2"><Users className="w-5 h-5 text-slate-500" /> 84 طالب</span>
+              <span className="flex items-center gap-2"><Users className="w-5 h-5 text-slate-500" /> {enrollments?.length || 0} طالب</span>
             </div>
           </div>
         </div>
@@ -73,6 +77,57 @@ const CourseDetails: React.FC = () => {
               {!course.lessons?.length && <p className="text-slate-500 text-sm">لم يتم إضافة دروس بعد.</p>}
             </div>
           </div>
+
+          {isInstructorOrAdmin && (
+            <div className="bg-white p-8 rounded-3xl border border-slate-100 shadow-sm">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-bold text-slate-900">الطلاب المسجلين</h2>
+                <Users className="text-slate-400 w-6 h-6" />
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-right">
+                  <thead>
+                    <tr className="border-b border-slate-50">
+                      <th className="pb-4 text-xs font-bold text-slate-400 uppercase">اسم الطالب</th>
+                      <th className="pb-4 text-xs font-bold text-slate-400 uppercase text-center">حالة الدفع</th>
+                      <th className="pb-4 text-xs font-bold text-slate-400 uppercase text-left">التواصل</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-50">
+                    {enrollments?.map((enrollment) => (
+                      <tr key={enrollment.id} className="group">
+                        <td className="py-4">
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-xs font-bold text-slate-500">
+                              {enrollment.student?.user?.name?.[0]}
+                            </div>
+                            <span className="text-sm font-semibold text-slate-700">{enrollment.student?.user?.name}</span>
+                          </div>
+                        </td>
+                        <td className="py-4 text-center">
+                          <span className={`px-2 py-1 rounded-lg text-[10px] font-bold ${
+                            enrollment.payment_status === 'paid' ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'
+                          }`}>
+                            {enrollment.payment_status === 'paid' ? 'مدفوع' : 'غير مدفوع'}
+                          </span>
+                        </td>
+                        <td className="py-4 text-left">
+                          <a href={`mailto:${enrollment.student?.user?.email}`} className="inline-flex p-2 bg-slate-50 rounded-lg text-slate-400 hover:bg-primary/10 hover:text-primary transition-colors">
+                            <Mail className="w-4 h-4" />
+                          </a>
+                        </td>
+                      </tr>
+                    ))}
+                    {enrollments?.length === 0 && (
+                      <tr>
+                        <td colSpan={3} className="py-8 text-center text-slate-400 text-sm italic">لا يوجد طلاب مسجلين بعد.</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="space-y-6">
@@ -112,3 +167,4 @@ const CourseDetails: React.FC = () => {
 };
 
 export default CourseDetails;
+

@@ -29,19 +29,30 @@ class AssignmentController extends Controller
         return response()->json($query->get());
     }
 
+    public function show(Assignment $assignment)
+    {
+        return response()->json($assignment->load('course'));
+    }
+
     public function store(Request $request)
     {
         if ($request->user()->role !== 'instructor') abort(403);
 
-        $validated = $request->validate([
-            'course_id' => 'required|exists:courses,id',
-            'title' => 'required|string|max:255',
+        $request->validate([
+            'course_id'   => 'required|exists:courses,id',
+            'title'       => 'required|string|max:255',
             'description' => 'required|string',
-            'due_date' => 'required|date',
-            'total_points' => 'required|integer',
+            'due_date'    => 'required|date',
+            'max_grade'   => 'required|integer|min:1',
         ]);
 
-        $assignment = Assignment::create($validated);
+        $assignment = Assignment::create([
+            'course_id'   => $request->course_id,
+            'title'       => $request->title,
+            'description' => $request->description,
+            'deadline'    => $request->due_date, // map due_date → deadline
+        ]);
+
         return response()->json($assignment, 201);
     }
 }

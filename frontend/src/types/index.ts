@@ -6,9 +6,12 @@ export interface User {
   email: string;
   login_id: string;
   role: UserRole;
+  instructor?: { id: number };
+  student?: { id: number };
   created_at: string;
   updated_at: string;
 }
+
 
 export interface Course {
   id: number;

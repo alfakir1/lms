@@ -10,10 +10,11 @@ class CourseController extends Controller
 {
     public function index(Request $request)
     {
-        $user = $request->user();
+        $user = auth('sanctum')->user();
         $query = Course::with('instructor.user');
 
-        if ($user->role === 'instructor') {
+
+        if ($user && $user->role === 'instructor') {
             // Instructor sees only their courses
             $query->where('instructor_id', $user->instructor->id ?? 0);
         }
@@ -27,9 +28,10 @@ class CourseController extends Controller
     public function store(Request $request)
     {
         $user = $request->user();
-        if (!in_array($user->role, ['admin', 'instructor'])) {
-            abort(403, 'Unauthorized.');
+        if ($user->role !== 'admin') {
+            abort(403, 'Unauthorized. Only admins can create courses.');
         }
+
 
         $rules = [
             'title' => 'required|string|max:255',

@@ -1,5 +1,6 @@
 /** @type {import('tailwindcss').Config} */
 export default {
+  darkMode: 'class',
   content: [
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
@@ -7,62 +8,67 @@ export default {
   theme: {
     extend: {
       colors: {
+        border: "hsl(var(--border))",
+        input: "hsl(var(--input))",
+        ring: "hsl(var(--ring))",
+        background: "hsl(var(--background))",
+        foreground: "hsl(var(--foreground))",
         primary: {
-          DEFAULT: '#0891b2',
-          50: '#ecfeff',
-          100: '#cffafe',
-          200: '#a5f3fc',
-          300: '#67e8f9',
-          400: '#22d3ee',
-          500: '#06b6d4',
-          600: '#0891b2',
-          700: '#0e7490',
-          800: '#155e75',
-          900: '#164e63',
+          DEFAULT: "hsl(var(--primary))",
+          foreground: "hsl(var(--primary-foreground))",
         },
         secondary: {
-          DEFAULT: '#10b981',
-          50: '#ecfdf5',
-          100: '#d1fae5',
-          200: '#a7f3d0',
-          300: '#6ee7b7',
-          400: '#34d399',
-          500: '#10b981',
-          600: '#059669',
-          700: '#047857',
-          800: '#065f46',
-          900: '#064e3b',
+          DEFAULT: "hsl(var(--secondary))",
+          foreground: "hsl(var(--secondary-foreground))",
         },
-        accent: '#f59e0b',
-        dark:   '#0f172a',
+        destructive: {
+          DEFAULT: "hsl(var(--destructive, 0 84.2% 60.2%))",
+          foreground: "hsl(var(--destructive-foreground, 0 0% 98%))",
+        },
+        muted: {
+          DEFAULT: "hsl(var(--muted))",
+          foreground: "hsl(var(--muted-foreground))",
+        },
+        accent: {
+          DEFAULT: "hsl(var(--accent))",
+          foreground: "hsl(var(--accent-foreground, 222.2 47.4% 11.2%))",
+        },
+        popover: {
+          DEFAULT: "hsl(var(--popover))",
+          foreground: "hsl(var(--popover-foreground))",
+        },
+        card: {
+          DEFAULT: "hsl(var(--card))",
+          foreground: "hsl(var(--card-foreground))",
+        },
+      },
+      borderRadius: {
+        lg: "var(--radius)",
+        md: "calc(var(--radius) - 2px)",
+        sm: "calc(var(--radius) - 4px)",
       },
       fontFamily: {
-        sans:   ['Inter', 'sans-serif'],
-        arabic: ['Noto Sans Arabic', 'sans-serif'],
-        heading: ['Outfit', 'sans-serif'],
+        sans: ["Inter", "sans-serif"],
+        arabic: ["Tajawal", "sans-serif"],
+        heading: ["Outfit", "sans-serif"],
       },
       animation: {
-        'fade-in':   'fadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-        'slide-up':  'slideUp 0.5s cubic-bezier(0.4, 0, 0.2, 1)',
-        'shake':     'shake 0.4s ease-in-out',
-        'float':     'float 6s ease-in-out infinite',
-        'pulse-glow':'pulseGlow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+        'fade-in': 'fadeIn 0.5s ease-out',
+        'slide-up': 'slideUp 0.6s ease-out',
+        'bounce-soft': 'bounceSoft 2s infinite',
       },
       keyframes: {
-        fadeIn:  { from: { opacity: '0' }, to: { opacity: '1' } },
-        slideUp: { from: { opacity: '0', transform: 'translateY(20px)' }, to: { opacity: '1', transform: 'translateY(0)' } },
-        shake:   {
-          '0%,100%': { transform: 'translateX(0)' },
-          '20%,60%': { transform: 'translateX(-5px)' },
-          '40%,80%': { transform: 'translateX(5px)' },
+        fadeIn: {
+          '0%': { opacity: '0' },
+          '100%': { opacity: '1' },
         },
-        float: {
+        slideUp: {
+          '0%': { transform: 'translateY(20px)', opacity: '0' },
+          '100%': { transform: 'translateY(0)', opacity: '1' },
+        },
+        bounceSoft: {
           '0%, 100%': { transform: 'translateY(0)' },
-          '50%': { transform: 'translateY(-10px)' },
-        },
-        pulseGlow: {
-          '0%, 100%': { opacity: '1', filter: 'drop-shadow(0 0 10px rgba(8, 145, 178, 0.5))' },
-          '50%': { opacity: '.8', filter: 'drop-shadow(0 0 20px rgba(8, 145, 178, 0.8))' },
+          '50%': { transform: 'translateY(-5px)' },
         }
       },
     },

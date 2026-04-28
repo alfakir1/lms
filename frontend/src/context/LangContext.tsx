@@ -14,6 +14,7 @@ const translations: Record<Lang, Record<string, string>> = {
   ar: {
     dashboard: 'لوحة التحكم',
     courses: 'الكورسات',
+    enrollments: 'الطلاب المسجلين',
     assignments: 'المهام',
     grades: 'الدرجات',
     payments: 'المدفوعات',
@@ -35,10 +36,21 @@ const translations: Record<Lang, Record<string, string>> = {
     enrolled: 'مسجّل',
     enroll: 'تسجيل',
     back: 'رجوع',
+    academy_tagline: 'أكاديمية متكاملة',
+    login_welcome: 'مرحباً بك مجدداً! سجل دخولك للمتابعة',
+    total_users: 'إجمالي المستخدمين',
+    active_courses: 'الكورسات الفعالة',
+    total_revenue: 'إجمالي الإيرادات',
+    total_enrollments: 'عمليات التسجيل',
+    feat_title_1: 'نخبة من المدربين',
+    feat_title_2: 'مناهج حديثة',
+    feat_title_3: 'تدريب عملي',
+    feat_title_4: 'شهادات معتمدة',
   },
   en: {
     dashboard: 'Dashboard',
     courses: 'Courses',
+    enrollments: 'Enrolled Students',
     assignments: 'Assignments',
     grades: 'Grades',
     payments: 'Payments',
@@ -60,6 +72,16 @@ const translations: Record<Lang, Record<string, string>> = {
     enrolled: 'Enrolled',
     enroll: 'Enroll',
     back: 'Back',
+    academy_tagline: 'Integrated Academy',
+    login_welcome: 'Welcome back! Login to continue',
+    total_users: 'Total Users',
+    active_courses: 'Active Courses',
+    total_revenue: 'Total Revenue',
+    total_enrollments: 'Total Enrollments',
+    feat_title_1: 'Expert Trainers',
+    feat_title_2: 'Modern Curricula',
+    feat_title_3: 'Practical Training',
+    feat_title_4: 'Verified Certificates',
   },
 };
 
@@ -73,7 +95,7 @@ export const LangProvider: React.FC<{ children: React.ReactNode }> = ({ children
     document.documentElement.dir  = dir;
     document.documentElement.lang = lang;
     document.documentElement.style.fontFamily =
-      lang === 'ar' ? "'Noto Sans Arabic', sans-serif" : "'Inter', sans-serif";
+      lang === 'ar' ? "'Tajawal', sans-serif" : "'Inter', sans-serif";
     localStorage.setItem('lang', lang);
   }, [lang, dir]);
 

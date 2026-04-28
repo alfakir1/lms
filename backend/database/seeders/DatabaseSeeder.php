@@ -22,7 +22,7 @@ class DatabaseSeeder extends Seeder
             'name' => 'System Admin',
             'login_id' => 'admin01',
             'email' => 'admin@lms.com',
-            'password' => Hash::make('password'),
+            'password' => 'password',
             'role' => 'admin',
         ]);
 
@@ -31,7 +31,7 @@ class DatabaseSeeder extends Seeder
             'name' => 'Dr. Ahmed',
             'login_id' => 'inst01',
             'email' => 'ahmed@lms.com',
-            'password' => Hash::make('password'),
+            'password' => 'password',
             'role' => 'instructor',
         ]);
         Instructor::create([
@@ -44,7 +44,7 @@ class DatabaseSeeder extends Seeder
             'name' => 'Ali Student',
             'login_id' => 'std01',
             'email' => 'ali@lms.com',
-            'password' => Hash::make('password'),
+            'password' => 'password',
             'role' => 'student',
         ]);
         Student::create([
@@ -57,8 +57,50 @@ class DatabaseSeeder extends Seeder
             'name' => 'Sara Reception',
             'login_id' => 'rec01',
             'email' => 'sara@lms.com',
-            'password' => Hash::make('password'),
+            'password' => 'password',
             'role' => 'reception',
         ]);
+
+        $course1 = \App\Models\Course::create([
+            'title' => 'أساسيات البرمجة بلغة PHP',
+            'description' => 'دورة تدريبية تغطي أساسيات لغة PHP والتعامل مع قواعد البيانات.',
+            'price' => 50.00,
+            'instructor_id' => $instructorUser->instructor->id,
+            'status' => 'active',
+        ]);
+
+        \App\Models\Lesson::create([
+            'course_id' => $course1->id,
+            'title' => 'مقدمة عن PHP',
+            'order' => 1,
+            'video_url' => 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+        ]);
+
+        $course2 = \App\Models\Course::create([
+            'title' => 'تطوير واجهات المستخدم باستخدام React',
+            'description' => 'تعلم بناء تطبيقات ويب حديثة وتفاعلية باستخدام React.',
+            'price' => 75.00,
+            'instructor_id' => $instructorUser->instructor->id,
+            'status' => 'active',
+        ]);
+
+        \App\Models\Lesson::create([
+            'course_id' => $course2->id,
+            'title' => 'مقدمة عن React',
+            'order' => 1,
+            'video_url' => 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+        ]);
+
+        // 6. Enrollments for testing
+        $studentUser = \App\Models\User::where('role', 'student')->first();
+        if ($studentUser) {
+            \App\Models\Enrollment::create([
+                'course_id' => $course1->id,
+                'student_id' => $studentUser->student->id,
+                'status' => 'active',
+                'payment_status' => 'paid',
+            ]);
+        }
     }
 }
+

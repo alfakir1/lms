@@ -21,11 +21,38 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
     const storedToken = localStorage.getItem('token');
-    if (storedUser && storedToken) {
-      setUser(JSON.parse(storedUser));
-      setToken(storedToken);
+    if (storedUser && storedToken && storedUser !== 'undefined' && storedUser !== 'null') {
+      try {
+        const parsed = JSON.parse(storedUser);
+        if (parsed && typeof parsed === 'object' && parsed.id) {
+          setUser(parsed);
+          setToken(storedToken);
+        } else {
+          // Corrupt data — clear it
+          localStorage.removeItem('user');
+          localStorage.removeItem('token');
+        }
+      } catch {
+        // Invalid JSON — clear localStorage to recover
+        localStorage.removeItem('user');
+        localStorage.removeItem('token');
+      }
+    } else if (storedUser === 'undefined' || storedUser === 'null') {
+      // Clean up invalid entries left by previous bugs
+      localStorage.removeItem('user');
+      localStorage.removeItem('token');
     }
     setIsLoading(false);
+
+    const handleAuthExpired = () => {
+      setUser(null);
+      setToken(null);
+      localStorage.removeItem('user');
+      localStorage.removeItem('token');
+    };
+
+    window.addEventListener('auth:expired', handleAuthExpired);
+    return () => window.removeEventListener('auth:expired', handleAuthExpired);
   }, []);
 
   const login = async (login: string, password: string) => {

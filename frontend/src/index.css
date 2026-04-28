@@ -1,25 +1,85 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800;900&family=Noto+Sans+Arabic:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800;900&family=Tajawal:wght@300;400;500;700;800;900&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  /* Premium Light Palette */
+  --primary: 199 89% 36%;    /* #0891b2 - Cyan 600 */
+  --primary-foreground: 0 0% 100%;
+  
+  --secondary: 161 72% 40%;  /* #10b981 - Emerald 500 */
+  --secondary-foreground: 0 0% 100%;
+  
+  --accent: 38 92% 50%;      /* #f59e0b - Amber 500 */
+  
+  --background: 210 40% 98%; /* Slate 50 */
+  --foreground: 222 47% 11%; /* Slate 950 */
+  
+  --card: 0 0% 100%;
+  --card-foreground: 222 47% 11%;
+  
+  --popover: 0 0% 100%;
+  --popover-foreground: 222 47% 11%;
+  
+  --border: 214 32% 91%;     /* Slate 200 */
+  --input: 214 32% 91%;
+  --ring: 199 89% 36%;
+  
+  --muted: 210 40% 96.1%;
+  --muted-foreground: 215.4 16.3% 46.9%;
+  
+  --radius: 0.75rem;
+}
+
+.dark {
+  /* Premium Dark Palette (Deep Slate/Ocean) */
+  --background: 222 47% 6%;   /* Very deep slate */
+  --foreground: 210 40% 98%;
+  
+  --card: 222 47% 10%;       /* Slightly lighter deep slate */
+  --card-foreground: 210 40% 98%;
+  
+  --popover: 222 47% 8%;
+  --popover-foreground: 210 40% 98%;
+  
+  --primary: 199 89% 48%;    /* Slightly brighter cyan */
+  --primary-foreground: 222 47% 11%;
+  
+  --secondary: 161 72% 45%;
+  --secondary-foreground: 222 47% 11%;
+  
+  --muted: 217.2 32.6% 17.5%;
+  --muted-foreground: 215 20.2% 65.1%;
+  
+  --accent: 217.2 32.6% 17.5%;
+  --accent-foreground: 210 40% 98%;
+  
+  --border: 217.2 32.6% 17.5%;
+  --input: 217.2 32.6% 17.5%;
+  --ring: 199 89% 48%;
+}
+
 @layer base {
+  * {
+    /* Borders are handled via explicit classes to avoid circular dependency issues in some environments */
+  }
   body {
-    @apply bg-slate-50 text-slate-800 antialiased selection:bg-primary/20 selection:text-primary transition-colors duration-300;
+    @apply bg-background text-foreground antialiased selection:bg-primary/20 selection:text-primary transition-colors duration-500;
+    font-feature-settings: "rlig" 1, "calt" 1;
   }
 
   [dir="rtl"] {
-    font-family: 'Noto Sans Arabic', sans-serif;
+    font-family: 'Tajawal', sans-serif;
   }
 
   [dir="ltr"] {
     font-family: 'Inter', sans-serif;
   }
 
-  /* Headings typography mapping */
   h1, h2, h3, h4, h5, h6 {
-    @apply tracking-tight font-bold;
+    @apply tracking-tight font-extrabold;
   }
 
   [dir="ltr"] h1, [dir="ltr"] h2, [dir="ltr"] h3, [dir="ltr"] h4, [dir="ltr"] h5, [dir="ltr"] h6 {
@@ -28,34 +88,47 @@
 }
 
 @layer components {
-  /* Enhanced Premium Glassmorphism */
   .glass {
-    @apply bg-white/70 backdrop-blur-xl border border-white/40 shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all duration-300;
+    @apply bg-card/60 backdrop-blur-xl border border-white/10 shadow-xl transition-all duration-300;
   }
-  .glass:hover {
-    @apply shadow-[0_8px_30px_rgb(0,0,0,0.08)] bg-white/80;
+  
+  .premium-card {
+    @apply bg-card border border-border shadow-sm rounded-[var(--radius)] overflow-hidden hover:shadow-md transition-all duration-300;
   }
 
-  /* Premium Primary Button with inner glow and gradient */
   .btn-primary {
-    @apply relative overflow-hidden bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 text-white font-semibold py-2.5 px-6 rounded-xl transition-all duration-300 active:scale-[0.98] shadow-[0_4px_14px_0_rgba(8,145,178,0.39)] hover:shadow-[0_6px_20px_rgba(8,145,178,0.23)] flex items-center justify-center gap-2;
-  }
-  .btn-primary::after {
-    content: '';
-    @apply absolute inset-0 rounded-xl border border-white/20 pointer-events-none;
+    @apply bg-primary text-primary-foreground hover:bg-primary/90 font-bold py-2.5 px-6 rounded-[var(--radius)] transition-all duration-300 active:scale-95 shadow-lg shadow-primary/20 flex items-center justify-center gap-2;
   }
 
-  /* Premium Secondary Button */
   .btn-secondary {
-    @apply relative overflow-hidden bg-gradient-to-r from-secondary-500 to-secondary-600 hover:from-secondary-600 hover:to-secondary-700 text-white font-semibold py-2.5 px-6 rounded-xl transition-all duration-300 active:scale-[0.98] shadow-[0_4px_14px_0_rgba(16,185,129,0.39)] hover:shadow-[0_6px_20px_rgba(16,185,129,0.23)] flex items-center justify-center gap-2;
-  }
-  .btn-secondary::after {
-    content: '';
-    @apply absolute inset-0 rounded-xl border border-white/20 pointer-events-none;
+    @apply bg-secondary text-secondary-foreground hover:bg-secondary/90 font-bold py-2.5 px-6 rounded-[var(--radius)] transition-all duration-300 active:scale-95 shadow-lg shadow-secondary/20 flex items-center justify-center gap-2;
   }
 
-  /* Modern Premium Input Fields */
   .input-field {
-    @apply w-full px-4 py-3 bg-slate-50 border border-slate-200/80 rounded-xl focus:bg-white focus:ring-4 focus:ring-primary/10 focus:border-primary-500 outline-none transition-all duration-300 shadow-sm hover:border-slate-300 placeholder:text-slate-400 text-slate-800;
+    @apply w-full px-4 py-3 bg-muted/50 border border-input rounded-[var(--radius)] focus:bg-card focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all duration-300 placeholder:text-muted-foreground text-foreground;
+  }
+  
+  /* Scrollbar styles */
+  ::-webkit-scrollbar {
+    @apply w-1.5;
+  }
+  ::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-muted-foreground/20 rounded-full hover:bg-muted-foreground/30;
   }
 }
+
+.dark .glass {
+  @apply bg-black/40 border-white/5;
+}
+
+/* RTL Specifics */
+[dir="rtl"] .sidebar-icon {
+  @apply ml-3 mr-0;
+}
+[dir="ltr"] .sidebar-icon {
+  @apply mr-3 ml-0;
+}
+@media print { .print-hide { display: none !important; } body { background: white !important; margin: 0; padding: 0; } }
