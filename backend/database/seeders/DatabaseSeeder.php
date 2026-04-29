@@ -10,7 +10,7 @@ use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
 {
-    
+
 
     /**
      * Seed the application's database.
@@ -92,9 +92,9 @@ class DatabaseSeeder extends Seeder
         ]);
 
         // 6. Enrollments for testing
-        $studentUser = \App\Models\User::where('role', 'student')->first();
+        $studentUser = User::where('role', 'student')->first();
         if ($studentUser) {
-            \App\Models\Enrollment::create([
+            Enrollment::create([
                 'course_id' => $course1->id,
                 'student_id' => $studentUser->student->id,
                 'status' => 'active',

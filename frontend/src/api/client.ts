@@ -12,7 +12,8 @@ const api = axios.create({
 
 // CSRF Handling for Laravel Sanctum
 export const getCsrfCookie = () => {
-  return api.get('/sanctum/csrf-cookie', { baseURL: '/' });
+  const backendRoot = (import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000/api').replace(/\/api$/, '');
+  return api.get('/sanctum/csrf-cookie', { baseURL: backendRoot });
 };
 
 // Add a request interceptor to attach the token if available
