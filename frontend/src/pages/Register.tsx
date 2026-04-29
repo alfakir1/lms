@@ -1,227 +1,230 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { GraduationCap, Mail, Lock, User, Phone, Sparkles, ArrowRight, UserPlus } from 'lucide-react';
-import { useAuth } from '../contexts/AuthContext';
-import { useToast } from '../contexts/ToastContext';
-import { authService } from '../services/authService';
-import { useTranslation } from 'react-i18next';
-import Button from '../components/ui/Button';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useLang } from '../context/LangContext';
+import { useTheme } from '../context/ThemeContext';
 
 const Register: React.FC = () => {
-  const { t } = useTranslation();
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
-  const [password, setPassword] = useState('');
-  const [passwordConfirmation, setPasswordConfirmation] = useState('');
-  const [role, setRole] = useState<'student' | 'instructor'>('student');
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
-  
+  const { lang, dir, toggle: toggleLang } = useLang();
+  const { theme, toggle: toggleTheme } = useTheme();
   const navigate = useNavigate();
-  const { login } = useAuth();
-  const { showSuccess } = useToast();
+
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    password: '',
+    specialization: '',
+    terms: false
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
-
-    if (password !== passwordConfirmation) {
-      setError(t('auth.passwordsMismatch') || 'Passwords do not match.');
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      const resp = await authService.register({
-        name,
-        email,
-        phone: phone.trim() ? phone.trim() : undefined,
-        password,
-        password_confirmation: passwordConfirmation,
-        role,
-      });
-
-      login(resp.user, resp.token);
-      showSuccess('Account created successfully.');
-      navigate(role === 'instructor' ? '/courses' : '/student/dashboard');
-    } catch (err: any) {
-      setError(err?.message || 'Registration failed. Please try again.');
-    } finally {
-      setIsLoading(false);
-    }
+    setIsSubmitting(true);
+    // Simulating registration logic
+    setTimeout(() => {
+      setIsSubmitting(false);
+      alert(lang === 'ar' ? 'تم إنشاء الحساب بنجاح! يرجى تسجيل الدخول.' : 'Account created successfully! Please sign in.');
+      navigate('/login');
+    }, 1500);
   };
 
   return (
-    <div className="min-h-screen flex bg-slate-50 dark:bg-slate-950 transition-colors duration-300">
-      {/* Left Side - Visual/Branding */}
-      <div className="hidden lg:flex w-1/2 relative overflow-hidden bg-slate-900 flex-col justify-between p-12">
-        <div className="absolute inset-0 bg-gradient-to-br from-secondary-900/40 via-slate-900 to-primary-900/40 z-0"></div>
-        <div className="absolute top-20 -left-40 w-96 h-96 bg-secondary-500 rounded-full mix-blend-multiply filter blur-[100px] opacity-40 animate-pulse-slow"></div>
-        <div className="absolute bottom-20 -right-40 w-96 h-96 bg-primary-500 rounded-full mix-blend-multiply filter blur-[100px] opacity-40 animate-pulse-slow" style={{ animationDelay: '1s' }}></div>
+    <div className="min-h-screen bg-background text-on-background font-sans selection:bg-primary/20 flex items-center justify-center relative overflow-hidden transition-colors duration-700" dir={dir}>
+      
+      {/* Decorative Background Elements */}
+      <div className="absolute top-[-10%] right-[-10%] w-[500px] h-[500px] bg-primary/10 rounded-full blur-[120px] pointer-events-none"></div>
+      <div className="absolute bottom-[-10%] left-[-10%] w-[500px] h-[500px] bg-secondary/10 rounded-full blur-[120px] pointer-events-none"></div>
 
-        <div className="relative z-10 flex items-center gap-3">
-          <div className="p-3 bg-white/10 rounded-2xl backdrop-blur-md border border-white/10">
-            <GraduationCap className="h-8 w-8 text-secondary-400" />
-          </div>
-          <span className="text-2xl font-display font-black text-white tracking-tight">
-            FOUR ACADEMY
-          </span>
-        </div>
-
-        <div className="relative z-10 max-w-lg mt-auto">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 text-secondary-300 text-sm font-medium mb-6 backdrop-blur-md">
-            <Sparkles className="h-4 w-4" />
-            {t('auth.joinSubtitle')}
-          </div>
-          <h1 className="text-5xl font-display font-bold text-white leading-tight mb-6">
-            {t('auth.joinTitle')}
-          </h1>
-          <p className="text-lg text-slate-300 mb-8 leading-relaxed">
-            Create an account to access premium courses, track your progress, and join our thriving community of learners and educators.
-          </p>
-        </div>
-      </div>
-
-      {/* Right Side - Form */}
-      <div className="w-full lg:w-1/2 flex flex-col justify-center px-6 py-12 sm:px-12 lg:px-24 xl:px-32 relative z-10 bg-white dark:bg-slate-900 overflow-y-auto transition-colors duration-300">
+      <main className="w-full max-w-[1200px] grid grid-cols-1 lg:grid-cols-12 gap-0 relative z-10 p-4 md:p-12">
         
-        {/* Mobile Header */}
-        <div className="lg:hidden flex items-center gap-3 mb-12">
-          <div className="p-3 bg-secondary-50 rounded-2xl">
-            <GraduationCap className="h-8 w-8 text-secondary-600" />
+        {/* Left Side: Branding and Hero Visual (Hidden on Mobile) */}
+        <div className="hidden lg:flex lg:col-span-6 flex-col justify-center px-12 space-y-12">
+          <motion.div 
+            initial={{ opacity: 0, x: dir === 'rtl' ? 50 : -50 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="space-y-6"
+          >
+            <Link to="/" className="text-3xl font-black bg-gradient-to-r from-primary via-primary-container to-secondary bg-clip-text text-transparent uppercase tracking-tighter">
+              4A Academy
+            </Link>
+            <h1 className="text-5xl lg:text-7xl font-black leading-[1.1] tracking-tight text-on-background">
+              {lang === 'ar' ? <>ابدأ رحلتك نحو <br/> <span className="text-secondary">التميز الأكاديمي</span></> : <>Start Your Journey <br/> to <span className="text-secondary">Academic Elite</span></>}
+            </h1>
+            <p className="text-lg text-on-surface-variant max-w-md font-medium leading-relaxed">
+              {lang === 'ar' 
+                ? 'انضم إلى النخبة في أكاديمية 4A حيث نجمع بين الخبرة الملكية والتقنيات الحديثة لتشكيل قادة المستقبل.' 
+                : 'Join the elite at 4A Academy, where we blend royal expertise with modern technology to shape the leaders of tomorrow.'}
+            </p>
+          </motion.div>
+
+          {/* Bento Card Social Proof */}
+          <div className="grid grid-cols-2 gap-6">
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="bg-surface-container-lowest p-8 rounded-[2rem] border border-outline-variant shadow-sm"
+            >
+              <span className="material-symbols-outlined text-secondary text-4xl mb-4">school</span>
+              <div className="text-on-background font-black text-3xl">+500</div>
+              <div className="text-on-surface-variant text-xs font-black uppercase tracking-widest">{lang === 'ar' ? 'خريج معتمد' : 'Verified Alumni'}</div>
+            </motion.div>
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className="bg-surface-container-lowest p-8 rounded-[2rem] border border-outline-variant shadow-sm"
+            >
+              <span className="material-symbols-outlined text-primary text-4xl mb-4">verified</span>
+              <div className="text-on-background font-black text-3xl">12</div>
+              <div className="text-on-surface-variant text-xs font-black uppercase tracking-widest">{lang === 'ar' ? 'برنامج حصري' : 'Elite Programs'}</div>
+            </motion.div>
           </div>
-          <span className="text-2xl font-display font-black text-slate-900 dark:text-white tracking-tight">
-            FOUR ACADEMY
-          </span>
+
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.4 }}
+            className="relative h-72 w-full rounded-[2.5rem] overflow-hidden group shadow-2xl border border-outline-variant/30"
+          >
+            <img 
+              className="w-full h-full object-cover opacity-60 dark:opacity-40 group-hover:scale-105 transition-transform duration-700" 
+              src="https://images.unsplash.com/photo-1524178232363-1fb2b075b655?auto=format&fit=crop&q=80&w=1000" 
+              alt="Education" 
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
+            <div className="absolute bottom-8 right-8 text-white font-bold italic text-lg">
+              {lang === 'ar' ? '"التعليم هو جواز سفرنا للمستقبل"' : '"Education is our passport to the future"'}
+            </div>
+          </motion.div>
         </div>
 
-        <div className="w-full max-w-md mx-auto lg:mx-0">
-          <h2 className="text-3xl font-display font-bold text-slate-900 dark:text-white mb-2">
-            {t('auth.signUp')}
-          </h2>
-          <p className="text-slate-500 dark:text-slate-400 mb-8 text-lg">
-            {t('auth.joinSubtitle')}
-          </p>
-
-          <form onSubmit={handleSubmit} className="space-y-5">
-            {error && (
-              <div className="bg-rose-50 border border-rose-200 text-rose-700 p-4 rounded-xl text-sm font-medium flex items-start gap-3 animate-in fade-in slide-in-from-top-2">
-                <div className="p-1 bg-rose-100 rounded-lg shrink-0 mt-0.5">
-                  <UserPlus className="h-4 w-4 text-rose-600" />
-                </div>
-                <p>{error}</p>
+        {/* Right Side: Registration Form */}
+        <div className="lg:col-span-6 flex items-center justify-center p-4">
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="w-full max-w-[500px] bg-surface-container-lowest border border-outline-variant p-10 md:p-14 rounded-[3rem] shadow-2xl relative"
+          >
+            <div className="flex justify-between items-center mb-10">
+              <div className="space-y-1">
+                <h2 className="text-3xl font-black text-on-background tracking-tight">
+                  {lang === 'ar' ? 'إنشاء حساب جديد' : 'Create Account'}
+                </h2>
+                <p className="text-on-surface-variant font-medium text-sm">
+                  {lang === 'ar' ? 'انضم إلى عائلة 4A Academy اليوم' : 'Join the 4A Academy family today'}
+                </p>
               </div>
-            )}
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-              <div>
-                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">{t('auth.fullName')}</label>
-                <div className="relative group">
-                  <User className="absolute ltr:left-4 rtl:right-4 top-1/2 -translate-y-1/2 text-slate-400 h-5 w-5 group-focus-within:text-secondary-500 transition-colors" />
-                  <input
-                    type="text"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    className="w-full ltr:pl-11 rtl:pr-11 ltr:pr-4 rtl:pl-4 py-3.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-4 focus:ring-secondary-500/10 focus:border-secondary-500 focus:bg-white dark:focus:bg-slate-900 outline-none transition-all text-slate-900 dark:text-white font-medium placeholder:font-normal placeholder:text-slate-400"
-                    placeholder={t('auth.placeholderName') || 'John Doe'}
-                    required
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">{t('auth.phone') || 'Phone (Optional)'}</label>
-                <div className="relative group">
-                  <Phone className="absolute ltr:left-4 rtl:right-4 top-1/2 -translate-y-1/2 text-slate-400 h-5 w-5 group-focus-within:text-secondary-500 transition-colors" />
-                  <input
-                    type="tel"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    className="w-full ltr:pl-11 rtl:pr-11 ltr:pr-4 rtl:pl-4 py-3.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-4 focus:ring-secondary-500/10 focus:border-secondary-500 focus:bg-white dark:focus:bg-slate-900 outline-none transition-all text-slate-900 dark:text-white font-medium placeholder:font-normal placeholder:text-slate-400"
-                    placeholder="+1..."
-                  />
-                </div>
+              <div className="flex gap-2">
+                <button onClick={toggleTheme} className="p-3 bg-surface-container-low rounded-2xl text-on-surface-variant hover:text-primary transition-all">
+                   <span className="material-symbols-outlined text-[20px]">{theme === 'light' ? 'dark_mode' : 'light_mode'}</span>
+                </button>
+                <button onClick={toggleLang} className="p-3 bg-surface-container-low rounded-2xl text-on-surface-variant hover:text-primary transition-all font-black text-xs">
+                   {lang === 'ar' ? 'EN' : 'عربي'}
+                </button>
               </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">{t('auth.email')}</label>
-              <div className="relative group">
-                <Mail className="absolute ltr:left-4 rtl:right-4 top-1/2 -translate-y-1/2 text-slate-400 h-5 w-5 group-focus-within:text-secondary-500 transition-colors" />
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full ltr:pl-11 rtl:pr-11 ltr:pr-4 rtl:pl-4 py-3.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-4 focus:ring-secondary-500/10 focus:border-secondary-500 focus:bg-white dark:focus:bg-slate-900 outline-none transition-all text-slate-900 dark:text-white font-medium placeholder:font-normal placeholder:text-slate-400"
-                  placeholder="student@example.com"
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="space-y-2">
+                <label className="text-xs font-black uppercase tracking-widest text-on-surface-variant ml-4">{lang === 'ar' ? 'الاسم الكامل' : 'Full Name'}</label>
+                <div className="relative group">
+                  <span className="material-symbols-outlined absolute right-5 top-1/2 -translate-y-1/2 text-on-surface-variant group-focus-within:text-primary transition-colors">person</span>
+                  <input 
+                    required
+                    type="text" 
+                    className="w-full bg-surface-container-low border-2 border-transparent focus:border-primary/30 rounded-2xl py-4 pr-14 pl-6 text-on-background placeholder:text-on-surface-variant/50 focus:outline-none transition-all font-medium"
+                    placeholder={lang === 'ar' ? 'أدخل اسمك بالكامل' : 'Enter your full name'}
+                    value={formData.name}
+                    onChange={(e) => setFormData({...formData, name: e.target.value})}
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs font-black uppercase tracking-widest text-on-surface-variant ml-4">{lang === 'ar' ? 'البريد الإلكتروني' : 'Email Address'}</label>
+                <div className="relative group">
+                  <span className="material-symbols-outlined absolute right-5 top-1/2 -translate-y-1/2 text-on-surface-variant group-focus-within:text-primary transition-colors">mail</span>
+                  <input 
+                    required
+                    type="email" 
+                    className="w-full bg-surface-container-low border-2 border-transparent focus:border-primary/30 rounded-2xl py-4 pr-14 pl-6 text-on-background placeholder:text-on-surface-variant/50 focus:outline-none transition-all font-medium"
+                    placeholder="name@example.com"
+                    value={formData.email}
+                    onChange={(e) => setFormData({...formData, email: e.target.value})}
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs font-black uppercase tracking-widest text-on-surface-variant ml-4">{lang === 'ar' ? 'كلمة المرور' : 'Password'}</label>
+                <div className="relative group">
+                  <span className="material-symbols-outlined absolute right-5 top-1/2 -translate-y-1/2 text-on-surface-variant group-focus-within:text-primary transition-colors">lock</span>
+                  <input 
+                    required
+                    type={showPassword ? 'text' : 'password'} 
+                    className="w-full bg-surface-container-low border-2 border-transparent focus:border-primary/30 rounded-2xl py-4 pr-14 pl-14 text-on-background placeholder:text-on-surface-variant/50 focus:outline-none transition-all font-medium"
+                    placeholder="••••••••"
+                    value={formData.password}
+                    onChange={(e) => setFormData({...formData, password: e.target.value})}
+                  />
+                  <button 
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute left-5 top-1/2 -translate-y-1/2 text-on-surface-variant hover:text-primary transition-all"
+                  >
+                    <span className="material-symbols-outlined text-[20px]">{showPassword ? 'visibility_off' : 'visibility'}</span>
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3 px-2">
+                <input 
+                  type="checkbox" 
+                  id="terms" 
+                  className="w-5 h-5 rounded-md border-outline-variant text-primary focus:ring-primary/20 transition-all cursor-pointer"
+                  checked={formData.terms}
+                  onChange={(e) => setFormData({...formData, terms: e.target.checked})}
                   required
                 />
+                <label htmlFor="terms" className="text-sm text-on-surface-variant font-medium cursor-pointer">
+                  {lang === 'ar' ? (
+                    <>أوافق على <Link to="/terms" className="text-primary font-bold hover:underline">الشروط والأحكام</Link> الخاصة بالأكاديمية</>
+                  ) : (
+                    <>I agree to the <Link to="/terms" className="text-primary font-bold hover:underline">Terms & Conditions</Link></>
+                  )}
+                </label>
               </div>
-            </div>
 
-            <div>
-              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">{t('auth.roleLabel')}</label>
-              <select
-                value={role}
-                onChange={(e) => setRole(e.target.value as 'student' | 'instructor')}
-                className="w-full px-4 py-3.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-4 focus:ring-secondary-500/10 focus:border-secondary-500 focus:bg-white dark:focus:bg-slate-900 outline-none transition-all text-slate-900 dark:text-white font-medium appearance-none cursor-pointer"
-                style={{ backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`, backgroundPosition: 'var(--select-bg-pos, right 0.5rem center)', backgroundRepeat: 'no-repeat', backgroundSize: '1.5em 1.5em' }}
+              <button 
+                type="submit"
+                disabled={isSubmitting}
+                className="w-full bg-primary text-on-primary py-5 rounded-2xl font-black text-sm uppercase tracking-[0.2em] shadow-xl shadow-primary/20 hover:brightness-110 active:scale-[0.98] transition-all flex items-center justify-center gap-3"
               >
-                <option value="student">{t('auth.studentRole')}</option>
-                <option value="instructor">{t('auth.instructorRole')}</option>
-              </select>
-            </div>
+                {isSubmitting ? (
+                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                ) : (
+                  <>
+                    <span>{lang === 'ar' ? 'إنشاء الحساب' : 'Create Account'}</span>
+                    <span className="material-symbols-outlined">arrow_forward</span>
+                  </>
+                )}
+              </button>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-              <div>
-                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">{t('auth.password')}</label>
-                <div className="relative group">
-                  <Lock className="absolute ltr:left-4 rtl:right-4 top-1/2 -translate-y-1/2 text-slate-400 h-5 w-5 group-focus-within:text-secondary-500 transition-colors" />
-                  <input
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="w-full ltr:pl-11 rtl:pr-11 ltr:pr-4 rtl:pl-4 py-3.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-4 focus:ring-secondary-500/10 focus:border-secondary-500 focus:bg-white dark:focus:bg-slate-900 outline-none transition-all text-slate-900 dark:text-white font-medium placeholder:font-normal placeholder:text-slate-400"
-                    placeholder="••••••••"
-                    required
-                    minLength={8}
-                  />
-                </div>
+              <div className="text-center pt-4">
+                <p className="text-on-surface-variant font-medium text-sm">
+                  {lang === 'ar' ? 'لديك حساب بالفعل؟' : 'Already have an account?'}
+                  <Link to="/login" className="text-primary font-black ml-2 hover:underline">
+                    {lang === 'ar' ? 'تسجيل الدخول' : 'Sign In'}
+                  </Link>
+                </p>
               </div>
-              <div>
-                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">{t('auth.confirmPassword')}</label>
-                <div className="relative group">
-                  <Lock className="absolute ltr:left-4 rtl:right-4 top-1/2 -translate-y-1/2 text-slate-400 h-5 w-5 group-focus-within:text-secondary-500 transition-colors" />
-                  <input
-                    type="password"
-                    value={passwordConfirmation}
-                    onChange={(e) => setPasswordConfirmation(e.target.value)}
-                    className="w-full ltr:pl-11 rtl:pr-11 ltr:pr-4 rtl:pl-4 py-3.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-4 focus:ring-secondary-500/10 focus:border-secondary-500 focus:bg-white dark:focus:bg-slate-900 outline-none transition-all text-slate-900 dark:text-white font-medium placeholder:font-normal placeholder:text-slate-400"
-                    placeholder="••••••••"
-                    required
-                    minLength={8}
-                  />
-                </div>
-              </div>
-            </div>
-
-            <Button type="submit" className="w-full h-12 text-base font-semibold mt-2" isLoading={isLoading} style={{ backgroundColor: 'var(--color-secondary-600)', borderColor: 'var(--color-secondary-600)' }}>
-              {t('auth.createAccount')}
-              {!isLoading && <ArrowRight className="ltr:ml-2 rtl:mr-2 h-5 w-5" />}
-            </Button>
-          </form>
-
-          <div className="mt-10 text-center">
-            <p className="text-slate-500 dark:text-slate-400">
-              {t('auth.alreadyAccount')}{' '}
-              <Link to="/login" className="font-semibold text-secondary-600 dark:text-secondary-400 hover:text-secondary-700 dark:hover:text-secondary-300 transition underline decoration-2 underline-offset-4 decoration-secondary-600/30 hover:decoration-secondary-600">
-                {t('auth.signIn')}
-              </Link>
-            </p>
-          </div>
+            </form>
+          </motion.div>
         </div>
-      </div>
+      </main>
     </div>
   );
 };

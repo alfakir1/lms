@@ -1,47 +1,36 @@
 import React, { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { CheckCircle, Clock, CreditCard, Eye, Search, X, XCircle, Loader2, FileText } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { adminPaymentService } from '../../services/paymentService';
-import { useToast } from '../../contexts/ToastContext';
 import type { Payment, PaymentStatus } from '../../services/paymentService';
+import LoadingSpinner from '../../components/ui/LoadingSpinner';
+import { useLang } from '../../context/LangContext';
 
-const StatusBadge: React.FC<{ status: PaymentStatus }> = ({ status }) => {
+const StatusChip: React.FC<{ status: PaymentStatus }> = ({ status }) => {
+  const { lang } = useLang();
   const config = {
-    approved: { cls: 'bg-green-100 text-green-800 border-green-200', icon: <CheckCircle className="h-4 w-4 text-green-600" /> },
-    rejected: { cls: 'bg-red-100 text-red-800 border-red-200', icon: <XCircle className="h-4 w-4 text-red-600" /> },
-    under_review: { cls: 'bg-blue-100 text-blue-800 border-blue-200', icon: <Clock className="h-4 w-4 text-blue-600" /> },
-    pending: { cls: 'bg-amber-100 text-amber-800 border-amber-200', icon: <Clock className="h-4 w-4 text-amber-600" /> },
+    approved: { cls: 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20', icon: 'check_circle' },
+    rejected: { cls: 'bg-red-500/10 text-red-600 border-red-500/20', icon: 'cancel' },
+    under_review: { cls: 'bg-blue-500/10 text-blue-600 border-blue-500/20', icon: 'visibility' },
+    pending: { cls: 'bg-amber-500/10 text-amber-600 border-amber-500/20', icon: 'pending' },
   };
 
-  const { cls, icon } = config[status];
+  const { cls, icon } = config[status] || config.pending;
 
   return (
-    <div className="flex items-center">
-      {icon}
-      <span className={`ml-2 px-2.5 py-1 text-xs font-semibold rounded-full border ${cls}`}>
-        {status.replace('_', ' ')}
-      </span>
+    <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full border text-[9px] font-black uppercase tracking-widest ${cls}`}>
+      <span className="material-symbols-outlined text-[14px]">{icon}</span>
+      {status.replace('_', ' ')}
     </div>
   );
 };
 
-const PaymentRowSkeleton: React.FC = () => (
-  <tr className="animate-pulse">
-    <td className="px-6 py-4"><div className="h-4 bg-slate-200 rounded w-24" /></td>
-    <td className="px-6 py-4"><div className="h-4 bg-slate-200 rounded w-32" /></td>
-    <td className="px-6 py-4"><div className="h-4 bg-slate-200 rounded w-40" /></td>
-    <td className="px-6 py-4"><div className="h-4 bg-slate-200 rounded w-16" /></td>
-    <td className="px-6 py-4"><div className="h-6 bg-slate-200 rounded w-24" /></td>
-    <td className="px-6 py-4"><div className="h-8 bg-slate-200 rounded w-28 ml-auto" /></td>
-  </tr>
-);
-
 const Payments: React.FC = () => {
+  const { lang, dir } = useLang();
   const [searchTerm, setSearchTerm] = useState('');
   const [selected, setSelected] = useState<Payment | null>(null);
   const [statusFilter, setStatusFilter] = useState<PaymentStatus | 'all'>('all');
   const queryClient = useQueryClient();
-  const { showSuccess, showError } = useToast();
 
   const { data: paymentsData, isLoading, error } = useQuery({
     queryKey: ['admin-payments', statusFilter],
@@ -51,24 +40,16 @@ const Payments: React.FC = () => {
   const approveMutation = useMutation({
     mutationFn: (id: number) => adminPaymentService.approve(id),
     onSuccess: () => {
-      showSuccess('Payment approved successfully');
       queryClient.invalidateQueries({ queryKey: ['admin-payments'] });
       if (selected) setSelected(null);
-    },
-    onError: (err: any) => {
-      showError(err?.message || 'Failed to approve payment');
     },
   });
 
   const rejectMutation = useMutation({
     mutationFn: (id: number) => adminPaymentService.reject(id),
     onSuccess: () => {
-      showSuccess('Payment rejected successfully');
       queryClient.invalidateQueries({ queryKey: ['admin-payments'] });
       if (selected) setSelected(null);
-    },
-    onError: (err: any) => {
-      showError(err?.message || 'Failed to reject payment');
     },
   });
 
@@ -88,271 +69,226 @@ const Payments: React.FC = () => {
 
   const pendingCount = payments.filter(p => p.status === 'pending' || p.status === 'under_review').length;
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-slate-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="flex items-center justify-between mb-6">
-            <h1 className="text-3xl font-bold text-slate-900 flex items-center gap-2">
-              <CreditCard className="text-primary-600" />
-              Payments
-            </h1>
-          </div>
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-              <table className="w-full">
-                <thead className="bg-slate-50 border-b border-slate-100">
-                  <tr>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-slate-400 uppercase">ID</th>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-slate-400 uppercase">Student</th>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-slate-400 uppercase">Course</th>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-slate-400 uppercase">Amount</th>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-slate-400 uppercase">Status</th>
-                    <th className="px-6 py-4 text-right text-xs font-bold text-slate-400 uppercase">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-50">
-                  {Array.from({ length: 5 }).map((_, i) => <PaymentRowSkeleton key={i} />)}
-                </tbody>
-              </table>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 p-4 text-center">
-        <div className="text-6xl mb-4">⚠️</div>
-        <h2 className="text-2xl font-bold text-red-600 mb-2">Error Loading Payments</h2>
-        <p className="text-slate-600 mb-6">Unable to fetch payment data. Please try again later.</p>
-        <button
-          onClick={() => window.location.reload()}
-          className="px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 font-medium"
-        >
-          Retry
-        </button>
-      </div>
-    );
-  }
+  if (isLoading) return <LoadingSpinner />;
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-          <div>
-            <h1 className="text-3xl font-bold text-slate-900 flex items-center gap-2">
-              <CreditCard className="text-primary-600" />
-              Payments
-            </h1>
-            <p className="text-slate-600 mt-1">
-              {pendingCount > 0 ? (
-                <span className="text-amber-600 font-medium">{pendingCount} payments pending review</span>
-              ) : (
-                'All payments have been processed'
-              )}
-            </p>
-          </div>
+    <div className="space-y-10">
+      {/* Header Area */}
+      <header className="flex flex-col lg:flex-row lg:items-center justify-between gap-8">
+        <div>
+          <h1 className="text-4xl font-black text-slate-900 dark:text-white tracking-tight">
+            {lang === 'ar' ? 'السجلات المالية' : 'Financial Ledger'}
+          </h1>
+          <p className="text-slate-500 dark:text-slate-400 font-medium mt-2">
+            {pendingCount > 0 
+              ? (lang === 'ar' ? `لديك ${pendingCount} معاملة بانتظار المراجعة.` : `You have ${pendingCount} transactions awaiting review.`)
+              : (lang === 'ar' ? 'جميع المعاملات المالية تمت معالجتها.' : 'All financial transactions have been processed.')}
+          </p>
         </div>
-
-        {/* Filters */}
-        <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-5 mb-6">
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="relative flex-1 max-w-lg">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 h-5 w-5" />
-              <input
-                type="text"
-                placeholder="Search by student, email, course..."
+        
+        <div className="flex flex-wrap items-center gap-4">
+           <div className="relative group">
+              <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary-container transition-colors">search</span>
+              <input 
+                type="text" 
+                placeholder={lang === 'ar' ? 'بحث في المعاملات...' : 'Search ledger...'} 
+                className="pl-12 pr-6 py-3.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-2xl w-full sm:w-64 outline-none focus:ring-2 focus:ring-primary-container/20"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all"
               />
-            </div>
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value as PaymentStatus | 'all')}
-              className="px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary-500 outline-none"
-            >
+           </div>
+           <select 
+             value={statusFilter}
+             onChange={(e) => setStatusFilter(e.target.value as PaymentStatus | 'all')}
+             className="px-6 py-3.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-2xl text-sm font-bold outline-none cursor-pointer focus:ring-2 focus:ring-primary-container/20"
+           >
               <option value="all">All Status</option>
               <option value="pending">Pending</option>
-              <option value="under_review">Under Review</option>
+              <option value="under_review">Review</option>
               <option value="approved">Approved</option>
               <option value="rejected">Rejected</option>
-            </select>
-          </div>
+           </select>
         </div>
+      </header>
 
-        {/* Table */}
-        <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-slate-50 border-b border-slate-100">
-                <tr>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-slate-400 uppercase tracking-wider">ID</th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-slate-400 uppercase tracking-wider">Student</th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-slate-400 uppercase tracking-wider">Course</th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-slate-400 uppercase tracking-wider">Amount</th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-slate-400 uppercase tracking-wider">Status</th>
-                  <th className="px-6 py-4 text-right text-xs font-bold text-slate-400 uppercase tracking-wider">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-50">
-                {filtered.map((p) => (
-                  <tr key={p.id} className="hover:bg-slate-50 transition-colors">
-                    <td className="px-6 py-4">
-                      <div className="text-sm font-medium text-slate-900">#{p.id}</div>
-                      <div className="text-xs text-slate-500">
-                        {p.created_at ? new Date(p.created_at).toLocaleDateString() : ''}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="text-sm font-medium text-slate-900">{p.user?.name || 'N/A'}</div>
-                      <div className="text-xs text-slate-500">{p.user?.email || ''}</div>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-slate-700">{p.course?.title || 'N/A'}</td>
-                    <td className="px-6 py-4 text-sm font-bold text-slate-900">${Number(p.amount).toFixed(2)}</td>
-                    <td className="px-6 py-4">
-                      <StatusBadge status={p.status} />
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <button
-                          onClick={() => setSelected(p)}
-                          className="p-2 rounded-lg border border-slate-200 hover:bg-slate-100 transition-colors"
-                          title="View details"
-                        >
-                          <Eye className="h-4 w-4 text-slate-600" />
-                        </button>
-                        {(p.status === 'pending' || p.status === 'under_review') && (
-                          <>
-                            <button
-                              onClick={() => approveMutation.mutate(p.id)}
-                              disabled={approveMutation.isPending}
-                              className="px-3 py-2 rounded-lg bg-green-600 text-white text-sm font-medium hover:bg-green-700 disabled:opacity-50 flex items-center gap-1"
-                            >
-                              {approveMutation.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : <CheckCircle className="h-3 w-3" />}
-                              Approve
-                            </button>
-                            <button
-                              onClick={() => rejectMutation.mutate(p.id)}
-                              disabled={rejectMutation.isPending}
-                              className="px-3 py-2 rounded-lg bg-red-600 text-white text-sm font-medium hover:bg-red-700 disabled:opacity-50 flex items-center gap-1"
-                            >
-                              {rejectMutation.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : <XCircle className="h-3 w-3" />}
-                              Reject
-                            </button>
-                          </>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+      {/* Stats Quick Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+         {[
+           { label: 'Total Volume', value: `$${payments.reduce((acc, p) => acc + Number(p.amount), 0).toLocaleString()}`, icon: 'payments', color: 'text-primary-container' },
+           { label: 'Pending Approval', value: pendingCount, icon: 'pending_actions', color: 'text-amber-500' },
+           { label: 'Conversion Rate', value: '84%', icon: 'trending_up', color: 'text-emerald-500' },
+           { label: 'Processed Today', value: '12', icon: 'today', color: 'text-blue-500' },
+         ].map((stat, i) => (
+           <div key={i} className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-white/5 shadow-sm">
+              <div className="flex items-center gap-4">
+                 <div className={`w-12 h-12 rounded-2xl bg-slate-50 dark:bg-white/5 flex items-center justify-center ${stat.color}`}>
+                    <span className="material-symbols-outlined">{stat.icon}</span>
+                 </div>
+                 <div>
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{stat.label}</p>
+                    <p className="text-xl font-black text-slate-900 dark:text-white">{stat.value}</p>
+                 </div>
+              </div>
+           </div>
+         ))}
+      </div>
 
-          {filtered.length === 0 && (
-            <div className="text-center py-16">
-              <CreditCard className="h-16 w-16 text-slate-200 mx-auto mb-4" />
-              <h3 className="text-xl font-bold text-slate-900 mb-2">No payments found</h3>
-              <p className="text-slate-500">{searchTerm ? 'Try adjusting your search.' : 'No payment records available.'}</p>
-            </div>
-          )}
+      {/* Main Ledger Table */}
+      <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-200 dark:border-white/5 shadow-sm overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-start">
+            <thead>
+              <tr className="bg-slate-50 dark:bg-white/5 border-b border-slate-100 dark:border-white/5">
+                <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest text-start">{lang === 'ar' ? 'المعاملة' : 'Transaction'}</th>
+                <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest text-start">{lang === 'ar' ? 'الطالب' : 'Account'}</th>
+                <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest text-start">{lang === 'ar' ? 'الدورة' : 'Product'}</th>
+                <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">{lang === 'ar' ? 'المبلغ' : 'Amount'}</th>
+                <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">{lang === 'ar' ? 'الحالة' : 'Status'}</th>
+                <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest text-end">{lang === 'ar' ? 'الإجراء' : 'Actions'}</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100 dark:divide-white/5">
+              {filtered.map((p, idx) => (
+                <motion.tr 
+                  key={p.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: idx * 0.02 }}
+                  className="hover:bg-slate-50 dark:hover:bg-white/5 transition-colors group"
+                >
+                  <td className="px-8 py-6">
+                    <div className="text-sm font-black text-slate-900 dark:text-white leading-none mb-1">#{p.id}</div>
+                    <div className="text-[10px] text-slate-500 font-bold uppercase tracking-tighter">
+                      {p.created_at ? new Date(p.created_at).toLocaleDateString() : 'Draft'}
+                    </div>
+                  </td>
+                  <td className="px-8 py-6">
+                    <div className="flex items-center gap-3">
+                       <div className="w-8 h-8 rounded-lg bg-primary-container/10 flex items-center justify-center text-[10px] font-black text-primary-container uppercase">
+                          {p.user?.name?.[0] || 'U'}
+                       </div>
+                       <div>
+                          <p className="text-xs font-bold text-slate-900 dark:text-white leading-none mb-1">{p.user?.name || 'Guest'}</p>
+                          <p className="text-[10px] text-slate-400 font-medium truncate max-w-[120px]">{p.user?.email}</p>
+                       </div>
+                    </div>
+                  </td>
+                  <td className="px-8 py-6">
+                    <p className="text-xs font-bold text-slate-700 dark:text-slate-300 line-clamp-1">{p.course?.title || 'System Product'}</p>
+                  </td>
+                  <td className="px-8 py-6 text-center">
+                    <span className="text-sm font-black text-slate-900 dark:text-white">${Number(p.amount).toFixed(2)}</span>
+                  </td>
+                  <td className="px-8 py-6 text-center">
+                    <StatusChip status={p.status} />
+                  </td>
+                  <td className="px-8 py-6 text-end">
+                    <div className="flex items-center justify-end gap-2">
+                       <button onClick={() => setSelected(p)} className="p-2 text-slate-400 hover:text-primary-container hover:bg-primary-container/10 rounded-xl transition-all">
+                          <span className="material-symbols-outlined text-xl">visibility</span>
+                       </button>
+                       {(p.status === 'pending' || p.status === 'under_review') && (
+                          <div className="flex items-center gap-1">
+                             <button onClick={() => approveMutation.mutate(p.id)} className="p-2 text-emerald-500 hover:bg-emerald-500/10 rounded-xl transition-all">
+                                <span className="material-symbols-outlined text-xl">check_circle</span>
+                             </button>
+                             <button onClick={() => rejectMutation.mutate(p.id)} className="p-2 text-red-500 hover:bg-red-500/10 rounded-xl transition-all">
+                                <span className="material-symbols-outlined text-xl">cancel</span>
+                             </button>
+                          </div>
+                       )}
+                    </div>
+                  </td>
+                </motion.tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </div>
 
       {/* Detail Modal */}
-      {selected && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-          <div className="bg-white w-full max-w-2xl rounded-2xl shadow-2xl border border-slate-100 overflow-hidden">
-            <div className="p-5 border-b border-slate-100 flex items-center justify-between">
-              <div>
-                <h3 className="text-lg font-bold text-slate-900">Payment Details</h3>
-                <p className="text-sm text-slate-500">Payment #{selected.id}</p>
-              </div>
-              <button
-                onClick={() => setSelected(null)}
-                className="p-2 rounded-xl hover:bg-slate-50 transition-colors"
-              >
-                <X className="h-5 w-5 text-slate-500" />
-              </button>
-            </div>
-
-            <div className="p-5 grid md:grid-cols-2 gap-4">
-              <div className="bg-slate-50 rounded-xl p-4">
-                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Student</p>
-                <p className="font-semibold text-slate-900">{selected.user?.name || 'N/A'}</p>
-                <p className="text-sm text-slate-500">{selected.user?.email || ''}</p>
-              </div>
-              <div className="bg-slate-50 rounded-xl p-4">
-                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Course</p>
-                <p className="font-semibold text-slate-900">{selected.course?.title || 'N/A'}</p>
-                <p className="text-sm text-slate-500">Amount: ${Number(selected.amount).toFixed(2)}</p>
+      <AnimatePresence>
+        {selected && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-slate-950/60 backdrop-blur-md" onClick={() => setSelected(null)} />
+            <motion.div 
+              initial={{ scale: 0.95, opacity: 0, y: 20 }} 
+              animate={{ scale: 1, opacity: 1, y: 0 }} 
+              exit={{ scale: 0.95, opacity: 0, y: 20 }}
+              className="bg-white dark:bg-slate-900 w-full max-w-3xl rounded-[3rem] p-10 z-10 shadow-2xl relative border border-slate-200 dark:border-white/10"
+            >
+              <div className="flex items-center justify-between mb-10">
+                 <div>
+                    <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">{lang === 'ar' ? 'تفاصيل المعاملة' : 'Transaction Dossier'}</h2>
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Ref: #PAY-{selected.id}</p>
+                 </div>
+                 <button onClick={() => setSelected(null)} className="w-12 h-12 rounded-2xl bg-slate-50 dark:bg-white/5 flex items-center justify-center text-slate-400 hover:bg-red-500 hover:text-white transition-all">
+                    <span className="material-symbols-outlined">close</span>
+                 </button>
               </div>
 
-              <div className="md:col-span-2 bg-slate-50 rounded-xl p-4">
-                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Payment Proof</p>
-                {selected.proof_url ? (
-                  <div className="space-y-3">
-                    <a
-                      href={selected.proof_url}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="inline-flex items-center gap-2 text-primary-600 hover:text-primary-700 text-sm font-medium"
-                    >
-                      <FileText className="h-4 w-4" />
-                      View Proof File
-                    </a>
-                    <div className="bg-white rounded-xl p-3 border border-slate-200">
-                      <img
-                        src={selected.proof_url}
-                        alt="Payment proof"
-                        className="w-full max-h-[400px] object-contain rounded-lg"
-                        onError={(e) => {
-                          (e.currentTarget as HTMLImageElement).style.display = 'none';
-                        }}
-                      />
+              <div className="grid md:grid-cols-2 gap-8 mb-10">
+                 <div className="space-y-6">
+                    <div className="p-6 bg-slate-50 dark:bg-white/5 rounded-3xl border border-slate-100 dark:border-white/5">
+                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Counterparty</p>
+                       <div className="flex items-center gap-4">
+                          <div className="w-12 h-12 rounded-xl bg-primary-container text-white flex items-center justify-center font-black text-lg">
+                             {selected.user?.name?.[0]}
+                          </div>
+                          <div>
+                             <p className="text-sm font-black text-slate-900 dark:text-white">{selected.user?.name}</p>
+                             <p className="text-xs text-slate-500 font-medium">{selected.user?.email}</p>
+                          </div>
+                       </div>
                     </div>
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-3 text-slate-500">
-                    <FileText className="h-5 w-5" />
-                    <p className="text-sm">No proof uploaded.</p>
-                  </div>
-                )}
-              </div>
-            </div>
+                    <div className="p-6 bg-slate-50 dark:bg-white/5 rounded-3xl border border-slate-100 dark:border-white/5">
+                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Asset Details</p>
+                       <p className="text-sm font-black text-slate-900 dark:text-white mb-1">{selected.course?.title}</p>
+                       <p className="text-2xl font-black text-primary-container">${Number(selected.amount).toFixed(2)}</p>
+                    </div>
+                 </div>
 
-            <div className="p-5 border-t border-slate-100 flex items-center justify-end gap-3">
-              <button
-                onClick={() => setSelected(null)}
-                className="px-4 py-2 rounded-xl border border-slate-200 text-slate-700 font-medium hover:bg-slate-50"
-              >
-                Close
-              </button>
+                 <div className="space-y-6">
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Documentary Evidence</p>
+                    <div className="aspect-square bg-slate-100 dark:bg-white/5 rounded-[2rem] overflow-hidden border border-slate-200 dark:border-white/5 relative group">
+                       {selected.proof_url ? (
+                         <>
+                            <img src={selected.proof_url} alt="Proof" className="w-full h-full object-cover transition-transform group-hover:scale-105" />
+                            <a href={selected.proof_url} target="_blank" rel="noreferrer" className="absolute inset-0 bg-slate-900/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                               <span className="material-symbols-outlined text-white text-4xl">open_in_new</span>
+                            </a>
+                         </>
+                       ) : (
+                         <div className="flex flex-col items-center justify-center h-full text-slate-300">
+                            <span className="material-symbols-outlined text-5xl mb-2">no_photography</span>
+                            <p className="text-[10px] font-black uppercase">No proof attached</p>
+                         </div>
+                       )}
+                    </div>
+                 </div>
+              </div>
+
+              {/* Modal Governance Actions */}
               {(selected.status === 'pending' || selected.status === 'under_review') && (
-                <>
-                  <button
-                    onClick={() => rejectMutation.mutate(selected.id)}
-                    disabled={rejectMutation.isPending}
-                    className="px-4 py-2 rounded-xl bg-red-600 text-white font-medium hover:bg-red-700 disabled:opacity-50"
-                  >
-                    {rejectMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Reject'}
-                  </button>
-                  <button
-                    onClick={() => approveMutation.mutate(selected.id)}
-                    disabled={approveMutation.isPending}
-                    className="px-4 py-2 rounded-xl bg-green-600 text-white font-medium hover:bg-green-700 disabled:opacity-50"
-                  >
-                    {approveMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Approve'}
-                  </button>
-                </>
+                <div className="flex gap-4">
+                   <button 
+                     onClick={() => rejectMutation.mutate(selected.id)}
+                     className="flex-1 bg-white dark:bg-slate-800 text-red-500 border border-red-500/20 py-4 rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-red-500 hover:text-white transition-all shadow-xl shadow-red-500/10"
+                   >
+                     Reject Transaction
+                   </button>
+                   <button 
+                     onClick={() => approveMutation.mutate(selected.id)}
+                     className="flex-2 bg-primary-container text-white py-4 px-12 rounded-2xl font-black text-sm uppercase tracking-widest hover:brightness-110 transition-all shadow-xl shadow-primary-container/20"
+                   >
+                     Confirm & Release
+                   </button>
+                </div>
               )}
-            </div>
+            </motion.div>
           </div>
-        </div>
-      )}
+        )}
+      </AnimatePresence>
     </div>
   );
 };

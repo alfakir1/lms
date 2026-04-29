@@ -1,10 +1,11 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { enrollmentsApi, Enrollment } from '../api/enrollments';
 
-export const useEnrollments = (courseId?: number) =>
+export const useEnrollments = (courseId?: number, enabled = true) =>
   useQuery<Enrollment[]>({
     queryKey: ['enrollments', courseId],
     queryFn: () => enrollmentsApi.getAll({ course_id: courseId }),
+    enabled: enabled && (courseId !== undefined),
   });
 
 

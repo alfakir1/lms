@@ -1,6 +1,7 @@
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 import Login from './pages/Login.tsx';
+import Register from './pages/Register.tsx';
 import NotFound from './pages/NotFound.tsx';
 import AdminDashboard from './pages/admin/AdminDashboard.tsx';
 import InstructorDashboard from './pages/instructor/InstructorDashboard.tsx';
@@ -10,7 +11,7 @@ import StudentRegistration from './pages/reception/StudentRegistration.tsx';
 import Users from './pages/admin/Users.tsx';
 import CoursesList from './pages/CoursesList.tsx';
 import CourseDetails from './pages/CourseDetails.tsx';
-import CoursePlayer from './pages/CoursePlayer.tsx';
+import CoursePlayer from './pages/student/CoursePlayer.tsx';
 import Assignments from './pages/Assignments.tsx';
 import SubmissionPage from './pages/SubmissionPage.tsx';
 import GradesPage from './pages/GradesPage.tsx';
@@ -21,17 +22,22 @@ import EnrollmentsPage from './pages/EnrollmentsPage.tsx';
 import ProfilePage from './pages/ProfilePage.tsx';
 import ProtectedRoute from './routes/ProtectedRoute';
 import DashboardLayout from './layouts/DashboardLayout';
+import ConditionalDashboardLayout from './layouts/ConditionalDashboardLayout';
 
 
 // No RootRedirect used anymore
 
 import HomePage from './pages/public/HomePage.tsx';
+import FeaturesPage from './pages/public/FeaturesPage.tsx';
+import AboutPage from './pages/public/AboutPage.tsx';
+import SupportPage from './pages/public/SupportPage.tsx';
+import LegalPage from './pages/public/LegalPage.tsx';
 
 // RBAC shorthand helpers
-const ADMIN        = ['admin'] as const;
-const ADMIN_REC    = ['admin', 'reception'] as const;
+const ADMIN        = ['admin', 'super_admin'] as const;
+const ADMIN_REC    = ['admin', 'reception', 'super_admin'] as const;
 const INST_STD     = ['instructor', 'student'] as const;
-const ADMIN_REC_STD = ['admin', 'reception', 'student'] as const;
+const ADMIN_REC_STD = ['admin', 'reception', 'student', 'super_admin'] as const;
 const ALL_ROLES    = ['admin', 'instructor', 'student', 'reception'] as const;
 const REC_ONLY     = ['reception'] as const;
 const STD_ONLY     = ['student'] as const;
@@ -46,7 +52,18 @@ function App() {
     <Routes>
       {/* ─── Public ─── */}
       <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
       <Route path="/" element={<HomePage />} />
+      <Route path="/features" element={<FeaturesPage />} />
+      <Route path="/about" element={<AboutPage />} />
+      <Route path="/support" element={<SupportPage />} />
+      <Route path="/legal" element={<LegalPage />} />
+      
+      {/* ─── Shared Layout (Public or Dashboard) ─── */}
+      <Route element={<ConditionalDashboardLayout />}>
+        <Route path="/courses"     element={<CoursesList />} />
+        <Route path="/courses/:id" element={<CourseDetails />} />
+      </Route>
 
       {/* ─── Protected — dashboard layout ─── */}
       <Route element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
@@ -57,9 +74,7 @@ function App() {
         <Route path="/student/dashboard"    element={guard(STD_ONLY,  <StudentDashboard />)} />
         <Route path="/reception/dashboard"  element={guard(REC_ONLY,  <ReceptionDashboard />)} />
 
-        {/* ── Courses — all roles can VIEW, only admin/instructor can manage (enforced in UI & backend) ── */}
-        <Route path="/courses"           element={guard(ALL_ROLES,  <CoursesList />)} />
-        <Route path="/courses/:id"       element={guard(ALL_ROLES,  <CourseDetails />)} />
+        {/* ── Courses — enrollments and player remain protected ── */}
         <Route path="/enrollments"       element={guard(['admin', 'instructor', 'reception'] as any, <EnrollmentsPage />)} />
         <Route path="/courses/:id/play"  element={guard(INST_STD,   <CoursePlayer />)} />
 

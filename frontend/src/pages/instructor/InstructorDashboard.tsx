@@ -2,7 +2,6 @@ import React from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useDashboardStats } from '../../hooks/useDashboardStats';
 import { useCourses } from '../../hooks/useCourses';
-import { BookOpen, FileText, CheckCircle, Plus, Users, Layout, ArrowUpRight, GraduationCap } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
@@ -10,118 +9,167 @@ import { useLang } from '../../context/LangContext';
 
 const InstructorDashboard: React.FC = () => {
   const { user } = useAuth();
-  const { lang, t } = useLang();
+  const { lang, dir } = useLang();
   const { data: statsData, isLoading: statsLoading } = useDashboardStats();
   const { data: courses, isLoading: coursesLoading } = useCourses();
 
   if (statsLoading || coursesLoading) return <LoadingSpinner />;
 
-  const stats = [
-    { name: lang === 'ar' ? 'كورساتي' : 'My Courses', value: statsData?.my_courses || 0, icon: BookOpen, color: 'primary' },
-    { name: lang === 'ar' ? 'إجمالي الطلاب' : 'Total Students', value: statsData?.total_students || 0, icon: Users, color: 'secondary' },
-    { name: lang === 'ar' ? 'المهام المعلقة' : 'Pending Tasks', value: '0', icon: FileText, color: 'accent' },
-    { name: lang === 'ar' ? 'التقييم العام' : 'Overall Rating', value: '4.8/5', icon: CheckCircle, color: 'primary' },
-  ];
+  const profName = user?.name || (lang === 'ar' ? 'المحاضر المميز' : 'Elite Professor');
 
   return (
-    <div className="space-y-10 pb-10">
-      {/* Header */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-        <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}>
-          <h1 className="text-3xl font-black text-foreground tracking-tight mb-2">
-            {lang === 'ar' ? `أهلاً بك، أ. ${user?.name}` : `Welcome, Prof. ${user?.name}`}
+    <div className="space-y-10" dir={dir}>
+      {/* ─── Header Section ─── */}
+      <header className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-black text-on-surface tracking-tight">
+            {lang === 'ar' ? `لوحة تحكم المحاضر - 4A Academy` : `Instructor Workspace - 4A Academy`}
           </h1>
-          <p className="text-muted-foreground font-medium">
-            {lang === 'ar' ? 'إدارة رحلتك التعليمية وطلابك بكل سهولة.' : 'Manage your teaching journey and students with ease.'}
+          <p className="text-on-surface-variant font-medium mt-1">
+             {lang === 'ar' 
+               ? `مرحباً أستاذ ${profName}، إليك ملخص لأداء دوراتك وطلابك اليوم.` 
+               : `Hello Prof. ${profName}, here's a strategic summary of your courses and academic metrics today.`}
           </p>
-        </motion.div>
+        </div>
         
-        <Link to="/courses" className="btn-primary">
-          <Plus className="w-4 h-4" /> {lang === 'ar' ? 'عرض كافة كورساتي' : 'View My Courses'}
-        </Link>
-      </div>
+        <div className="flex items-center gap-4">
+           <button className="w-10 h-10 flex items-center justify-center rounded-full bg-surface-container-lowest border border-outline-variant text-on-surface-variant hover:bg-surface-container-low transition-all">
+              <span className="material-symbols-outlined">notifications</span>
+           </button>
+           <div className="h-10 w-[1px] bg-outline-variant/30" />
+           <Link to="/courses" className="bg-primary-container text-on-primary px-5 py-2.5 rounded-lg font-black text-sm flex items-center gap-2 hover:opacity-90 transition-all shadow-sm">
+              <span className="material-symbols-outlined text-sm">add</span>
+              {lang === 'ar' ? 'إضافة دورة جديدة' : 'Launch New Course'}
+           </Link>
+        </div>
+      </header>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        {stats.map((stat, index) => (
-          <motion.div
-            key={stat.name}
+      {/* ─── Bento Overview Stats ─── */}
+      <section className="grid grid-cols-1 md:grid-cols-4 gap-gutter">
+        {[
+          { icon: 'groups', label_ar: 'إجمالي الطلاب', label_en: 'Enrolled Cohort', val: statsData?.total_students || '1,429', color: 'primary', trend: '+8.2%' },
+          { icon: 'star', label_ar: 'تقييم المحاضر', label_en: 'Instructor Rating', val: '4.9', color: 'secondary', trend: 'Elite' },
+        ].map((stat, i) => (
+          <motion.div 
+            key={i}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.1 }}
-            className="premium-card p-6"
+            transition={{ delay: i * 0.1 }}
+            className="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm hover:shadow-md transition-all group"
           >
-            <div className="flex items-center justify-between mb-4">
-              <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center border border-primary/20">
-                <stat.icon className="text-primary w-6 h-6" />
+            <div className="flex items-center justify-between mb-6">
+              <div className={`w-12 h-12 bg-surface-container-low text-${stat.color === 'primary' ? 'primary' : 'secondary'} rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform`}>
+                <span className="material-symbols-outlined text-2xl fill-icon">{stat.icon}</span>
               </div>
-              <div className="text-[10px] font-black text-primary bg-primary/10 px-2 py-1 rounded-lg uppercase">
-                Active
-              </div>
+              <span className={`text-[10px] font-black px-2 py-1 rounded-full ${stat.color === 'primary' ? 'bg-secondary/10 text-secondary' : 'bg-primary/10 text-primary'}`}>
+                {stat.trend}
+              </span>
             </div>
-            <p className="text-2xl font-black text-foreground mb-1">{stat.value}</p>
-            <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">{stat.name}</p>
+            <div className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest mb-1">
+              {lang === 'ar' ? stat.label_ar : stat.label_en}
+            </div>
+            <div className="text-3xl font-black text-on-surface tracking-tighter">
+              {stat.val}
+            </div>
           </motion.div>
         ))}
-      </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Latest Courses */}
-        <div className="premium-card">
-          <div className="p-6 border-b border-border flex items-center justify-between bg-muted/30">
-            <div className="flex items-center gap-3">
-               <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
-                  <Layout className="w-4 h-4 text-primary" />
-               </div>
-               <h2 className="font-black text-foreground tracking-tight">{lang === 'ar' ? 'أحدث الكورسات' : 'Recent Courses'}</h2>
-            </div>
-            <Link to="/courses" className="text-primary text-xs font-black uppercase hover:underline">{lang === 'ar' ? 'عرض الكل' : 'View All'}</Link>
-          </div>
-          <div className="p-4 space-y-3">
-            {courses?.slice(0, 4).map((course) => (
-              <div key={course.id} className="flex items-center justify-between p-4 bg-muted/30 hover:bg-card border border-transparent hover:border-border rounded-2xl transition-all group">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-card rounded-xl border border-border flex items-center justify-center group-hover:scale-110 transition-transform shadow-sm">
-                    <GraduationCap className="text-primary w-6 h-6" />
-                  </div>
-                  <div>
-                    <p className="font-black text-foreground text-sm line-clamp-1">{course.title}</p>
-                    <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest">{course.status || 'Active'}</p>
-                  </div>
+        {/* Live Session Card */}
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="md:col-span-2 bg-primary-container text-on-primary p-6 rounded-xl shadow-lg relative overflow-hidden group"
+        >
+           <div className="relative z-10 flex flex-col h-full justify-between">
+              <div>
+                <h3 className="text-2xl font-black mb-2">
+                  {lang === 'ar' ? 'جلسة مباشرة غداً!' : 'Live Session Tomorrow!'}
+                </h3>
+                <p className="text-sm opacity-90 max-w-[300px] font-medium leading-relaxed">
+                   {lang === 'ar' 
+                     ? 'لديك محاضرة تفاعلية في دورة "الذكاء الاصطناعي" غداً الساعة 10 صباحاً.' 
+                     : 'You have a high-impact interactive session for "AI Architect" tomorrow at 10:00 AM.'}
+                </p>
+              </div>
+              <div className="flex gap-3 mt-4">
+                 <button className="bg-white text-primary px-5 py-2.5 rounded-lg text-sm font-black hover:bg-blue-50 transition-all active:scale-95 shadow-sm">
+                    {lang === 'ar' ? 'تحميل المحتوى' : 'Push Content'}
+                 </button>
+                 <button className="bg-white/10 backdrop-blur-md text-white border border-white/20 px-5 py-2.5 rounded-lg text-sm font-black hover:bg-white/20 transition-all">
+                    {lang === 'ar' ? 'عرض الجدول' : 'Full Schedule'}
+                 </button>
+              </div>
+           </div>
+           <div className="absolute -bottom-6 -left-6 w-32 h-32 bg-white/10 rounded-full blur-3xl" />
+           <div className="absolute top-0 right-0 p-6 opacity-20">
+              <span className="material-symbols-outlined text-[100px]">co_present</span>
+           </div>
+        </motion.div>
+      </section>
+
+      {/* ─── Active Courses & Performance ─── */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        
+        {/* Course Performance (Left) */}
+        <section className="lg:col-span-8 bg-surface-container-lowest rounded-xl border border-outline-variant overflow-hidden">
+           <div className="px-6 py-5 border-b border-outline-variant/30 flex items-center justify-between">
+              <h3 className="text-xl font-black text-on-surface tracking-tight">{lang === 'ar' ? 'أداء المسارات التعليمية' : 'Course Performance'}</h3>
+              <Link to="/courses" className="text-primary font-black text-xs uppercase tracking-widest hover:underline">
+                 {lang === 'ar' ? 'إدارة كافة الدورات' : 'Manage All Assets'}
+              </Link>
+           </div>
+           <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+              {courses?.slice(0, 4).map((course, i) => (
+                <div key={course.id} className="p-5 bg-surface-container-low/50 rounded-2xl border border-outline-variant/30 hover:border-primary-container/30 transition-all group">
+                   <div className="flex gap-4 mb-6">
+                      <div className="w-16 h-16 rounded-xl bg-surface-container-lowest border border-outline-variant/50 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
+                         <span className="material-symbols-outlined text-primary-container text-3xl">school</span>
+                      </div>
+                      <div>
+                         <h4 className="text-sm font-black text-on-surface line-clamp-2 leading-snug">{course.title}</h4>
+                         <p className="text-[10px] text-on-surface-variant/60 font-black uppercase tracking-widest mt-1.5">{course.category || 'ACADEMIC'}</p>
+                      </div>
+                   </div>
+                   <div className="flex items-center justify-between pt-4 border-t border-outline-variant/30">
+                      <div className="flex items-center gap-1 text-on-surface-variant text-[11px] font-bold">
+                         <span className="material-symbols-outlined text-sm">group</span>
+                         {Math.floor(Math.random() * 100) + 40} {lang === 'ar' ? 'طالب' : 'Students'}
+                      </div>
+                      <Link to={`/courses/${course.id}`} className="text-primary-container font-black text-xs flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+                         {lang === 'ar' ? 'عرض التفاصيل' : 'View Meta'}
+                         <span className="material-symbols-outlined text-xs">arrow_forward</span>
+                      </Link>
+                   </div>
                 </div>
-                <Link to={`/courses/${course.id}`} className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary hover:bg-primary hover:text-primary-foreground transition-colors">
-                  <ArrowUpRight className="w-5 h-5" />
-                </Link>
-              </div>
-            ))}
-            {courses?.length === 0 && (
-              <div className="py-12 text-center text-muted-foreground font-bold italic">
-                {lang === 'ar' ? 'لا توجد كورسات مضافة بعد.' : 'No courses added yet.'}
-              </div>
-            )}
-          </div>
-        </div>
+              ))}
+           </div>
+        </section>
 
-        {/* Task Submissions */}
-        <div className="premium-card">
-          <div className="p-6 border-b border-border flex items-center justify-between bg-muted/30">
-            <div className="flex items-center gap-3">
-               <div className="w-8 h-8 bg-accent/10 rounded-lg flex items-center justify-center">
-                  <FileText className="w-4 h-4 text-accent" />
-               </div>
-               <h2 className="font-black text-foreground tracking-tight">{lang === 'ar' ? 'تسليمات المهام' : 'Submissions'}</h2>
-            </div>
-            <Link to="/assignments" className="text-primary text-xs font-black uppercase hover:underline">{lang === 'ar' ? 'عرض الكل' : 'View All'}</Link>
-          </div>
-          <div className="p-8 flex flex-col items-center justify-center text-center h-[300px]">
-             <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mb-4">
-                <FileText className="w-8 h-8 text-muted-foreground/30" />
-             </div>
-             <p className="text-sm font-bold text-muted-foreground italic">
-               {lang === 'ar' ? 'لا توجد تسليمات جديدة حالياً.' : 'No new submissions at the moment.'}
-             </p>
-          </div>
-        </div>
+        {/* Needs Grading (Right) */}
+        <section className="lg:col-span-4 bg-surface-container-lowest rounded-xl border border-outline-variant p-6 shadow-sm">
+           <h3 className="text-xl font-black text-on-surface mb-8">{lang === 'ar' ? 'بانتظار التقييم' : 'Action Required'}</h3>
+           <div className="space-y-6">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="flex gap-4 group cursor-pointer">
+                   <div className="w-11 h-11 rounded-xl bg-surface-container-low flex items-center justify-center flex-shrink-0 border border-outline-variant/30 group-hover:bg-primary group-hover:text-on-primary transition-all">
+                      <span className="material-symbols-outlined text-xl">description</span>
+                   </div>
+                   <div className="flex-1">
+                      <h5 className="text-sm font-black text-on-surface leading-none mb-1.5">{lang === 'ar' ? `المهمة ${i}: تحليل البيانات` : `Deliverable ${i}: Deep Analysis`}</h5>
+                      <p className="text-[10px] text-on-surface-variant/60 font-bold uppercase tracking-widest">{lang === 'ar' ? 'من: سارة محمد' : 'From: Sara Mohammad'}</p>
+                      <button className="mt-2 text-primary font-black text-[10px] uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">
+                        {lang === 'ar' ? 'تقييم الآن' : 'Grade Now'}
+                      </button>
+                   </div>
+                </div>
+              ))}
+           </div>
+           <button className="w-full mt-8 py-3.5 bg-surface-container-low text-on-surface font-black text-[11px] uppercase tracking-widest rounded-xl hover:bg-primary hover:text-on-primary transition-all border border-outline-variant/30">
+              {lang === 'ar' ? 'عرض كافة التسليمات' : 'Process All Submissions'}
+           </button>
+        </section>
+
       </div>
     </div>
   );

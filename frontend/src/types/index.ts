@@ -1,4 +1,4 @@
-export type UserRole = 'admin' | 'instructor' | 'student' | 'reception';
+export type UserRole = 'admin' | 'instructor' | 'student' | 'reception' | 'super_admin';
 
 export interface User {
   id: number;
@@ -39,11 +39,31 @@ export interface Lesson {
   order: number;
 }
 
+export interface Chapter {
+  id: number;
+  course_id: number;
+  title: string;
+  order: number;
+  lectures?: Lecture[];
+}
+
+export interface Lecture {
+  id: number;
+  chapter_id: number;
+  title: string;
+  content_type: 'video' | 'text' | 'quiz';
+  content_url?: string;
+  content_text?: string;
+  duration?: number;
+  order: number;
+}
+
 export interface Enrollment {
   id: number;
   student_id: number;
   course_id: number;
   status: 'pending' | 'active' | 'completed' | 'cancelled';
+  progress_percent?: number;
   course?: Course;
   student?: User;
 }

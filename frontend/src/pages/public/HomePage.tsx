@@ -2,34 +2,47 @@ import React, { useState } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
-import { 
-  BookOpen, Users, Star, Award, ChevronLeft, ArrowLeft, 
-  PlayCircle, Monitor, FileBadge, CheckCircle2, X, 
-  Globe, Moon, Sun, GraduationCap, ChevronRight, Zap
-} from 'lucide-react';
 import api from '../../api/client';
 import { useAuth } from '../../context/AuthContext';
 import { useLang } from '../../context/LangContext';
-import { useTheme } from '../../context/ThemeContext';
 import { Course } from '../../types';
+import PublicNav from '../../components/public/PublicNav';
 
-// ===================== Modals =====================
+// ===================== Components =====================
 
-const Modal = ({ isOpen, onClose, children, dir }: { isOpen: boolean; onClose: () => void; children: React.ReactNode; dir: string }) => {
-  if (!isOpen) return null;
+const SectionHeading = ({ badge, title, subtitle, centered = false }: any) => {
+  const { dir } = useLang();
   return (
-    <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center px-4" dir={dir}>
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-        <motion.div initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }} 
-          className="bg-card border border-border rounded-[2.5rem] shadow-2xl z-10 w-full max-w-lg overflow-hidden relative">
-          <button onClick={onClose} className="absolute top-6 left-6 p-2 bg-muted hover:bg-muted/80 rounded-full text-muted-foreground transition-colors z-10">
-            <X className="w-5 h-5" />
-          </button>
-          {children}
-        </motion.div>
-      </div>
-    </AnimatePresence>
+    <div className={`mb-16 ${centered ? 'text-center max-w-4xl mx-auto' : 'text-start'}`}>
+      <motion.span 
+        initial={{ opacity: 0, x: dir === 'rtl' ? 20 : -20 }}
+        whileInView={{ opacity: 1, x: 0 }}
+        viewport={{ once: true }}
+        className="inline-block px-4 py-1.5 rounded-full bg-primary/10 text-primary font-black text-[10px] uppercase tracking-[0.2em] mb-6 backdrop-blur-md border border-primary/20"
+      >
+        {badge}
+      </motion.span>
+      <motion.h2 
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        className="text-5xl lg:text-7xl font-black text-on-background leading-[1.1] mb-8 tracking-tighter"
+      >
+        {title}
+      </motion.h2>
+      {subtitle && (
+        <motion.p 
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ delay: 0.1 }}
+          className="text-on-surface-variant text-xl font-medium leading-relaxed max-w-2xl ml-auto"
+        >
+          {subtitle}
+        </motion.p>
+      )}
+      <div className={`h-1.5 w-32 bg-primary rounded-full mt-10 ${centered ? 'mx-auto' : 'ml-auto'}`}></div>
+    </div>
   );
 };
 
@@ -37,11 +50,9 @@ const Modal = ({ isOpen, onClose, children, dir }: { isOpen: boolean; onClose: (
 
 const HomePage: React.FC = () => {
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
-  const { lang, dir, toggle: toggleLang, t } = useLang();
-  const { theme, toggle: toggleTheme } = useTheme();
+  const { lang, dir } = useLang();
   
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
-  const [selectedFeature, setSelectedFeature] = useState<any | null>(null);
 
   const { data: courses = [], isLoading } = useQuery<Course[]>({
     queryKey: ['public-courses'],
@@ -53,194 +64,157 @@ const HomePage: React.FC = () => {
     return <Navigate to={`/${user.role}/dashboard`} replace />;
   }
 
-  const features = [
-    { key: 'feat1', icon: Users, color: 'text-cyan-500', bg: 'bg-cyan-500/10' },
-    { key: 'feat2', icon: BookOpen, color: 'text-indigo-500', bg: 'bg-indigo-500/10' },
-    { key: 'feat3', icon: Monitor, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
-    { key: 'feat4', icon: FileBadge, color: 'text-amber-500', bg: 'bg-amber-500/10' },
-  ];
-
   return (
-    <div className="min-h-screen bg-background transition-colors duration-500 selection:bg-primary/20 selection:text-primary" dir={dir}>
+    <div className="min-h-screen bg-background text-on-background selection:bg-primary/20" dir={dir}>
       
-      {/* ─── Navbar ─── */}
-      <nav className="fixed top-0 inset-x-0 z-50 bg-background/80 backdrop-blur-xl border-b border-border/50">
-        <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-lg shadow-primary/20">
-              <GraduationCap className="text-primary-foreground w-6 h-6" />
-            </div>
-            <span className="font-black text-xl text-foreground tracking-tight uppercase">4A Academy</span>
-          </div>
-          
-          <div className="hidden lg:flex items-center gap-8 text-sm font-bold text-muted-foreground">
-            <a href="#about" className="hover:text-primary transition-colors">{lang === 'ar' ? 'من نحن' : 'About'}</a>
-            <a href="#courses" className="hover:text-primary transition-colors">{lang === 'ar' ? 'الكورسات' : 'Courses'}</a>
-            <a href="#features" className="hover:text-primary transition-colors">{lang === 'ar' ? 'المميزات' : 'Features'}</a>
-          </div>
-
-          <div className="flex items-center gap-3">
-             <button onClick={toggleTheme} className="p-2.5 bg-muted rounded-xl hover:bg-muted/80 transition-colors">
-                {theme === 'light' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
-             </button>
-             <button onClick={toggleLang} className="px-3 py-1.5 bg-muted rounded-xl hover:bg-muted/80 transition-colors text-xs font-black">
-                {lang === 'ar' ? 'EN' : 'العربية'}
-             </button>
-             <div className="h-6 w-px bg-border mx-1" />
-             <Link to="/login" className="btn-primary text-xs font-black px-6 py-2.5 rounded-xl shadow-lg shadow-primary/20">
-                {lang === 'ar' ? 'دخول' : 'Sign In'}
-             </Link>
-          </div>
-        </div>
-      </nav>
+      {/* ─── TopNavBar ─── */}
+      <PublicNav />
 
       {/* ─── Hero Section ─── */}
-      <section className="relative pt-32 pb-20 lg:pt-56 lg:pb-40 overflow-hidden">
-        {/* Glow Effects */}
-        <div className="absolute top-[-10%] right-[-10%] w-[50%] h-[50%] bg-primary/10 rounded-full blur-[120px] -z-10" />
-        <div className="absolute bottom-[-10%] left-[-10%] w-[50%] h-[50%] bg-secondary/10 rounded-full blur-[120px] -z-10" />
-        
-        <div className="max-w-7xl mx-auto px-6 text-center relative">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-black uppercase tracking-widest mb-10 shadow-sm">
-            <Zap className="w-4 h-4 fill-primary" /> {lang === 'ar' ? 'مستقبل التعليم هنا' : 'The Future of Learning is Here'}
-          </motion.div>
-          
-          <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} 
-            className="text-5xl lg:text-8xl font-black text-foreground leading-[1.1] tracking-tighter mb-8">
-            {lang === 'ar' ? <>طوّر مهاراتك مع <br/><span className="text-primary">أكاديمية فور أيه</span></> : <>Master Your Skills <br/><span className="text-primary">At 4A Academy</span></>}
-          </motion.h1>
-          
-          <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} 
-            className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto mb-14 leading-relaxed font-medium">
-            {lang === 'ar' 
-              ? 'نحن نوفر لك أفضل الأدوات والمناهج لتصبح خبيراً في مجالك. انضم إلى الآلاف من الطلاب الذين بدأوا رحلتهم معنا.' 
-              : 'Empowering you with the best tools and curriculums to become an expert in your field. Join thousands of students already learning with us.'}
-          </motion.p>
-          
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} 
-            className="flex flex-col sm:flex-row items-center justify-center gap-5">
-            <a href="#courses" className="w-full sm:w-auto px-10 py-5 bg-primary text-primary-foreground rounded-2xl font-black text-lg shadow-2xl shadow-primary/30 hover:scale-105 hover:-translate-y-1 transition-all flex items-center justify-center gap-2">
-              {lang === 'ar' ? 'ابدأ التعلم الآن' : 'Start Learning Now'} {dir === 'rtl' ? <ChevronLeft className="w-6 h-6" /> : <ChevronRight className="w-6 h-6" />}
-            </a>
-            <a href="#about" className="w-full sm:w-auto px-10 py-5 bg-card text-foreground rounded-2xl font-black text-lg border border-border shadow-sm hover:bg-muted hover:-translate-y-1 transition-all flex items-center justify-center gap-2">
-              <PlayCircle className="w-6 h-6 text-primary" /> {lang === 'ar' ? 'من نحن' : 'Who We Are'}
-            </a>
-          </motion.div>
-        </div>
-      </section>
+      <section className="relative pt-48 pb-32 overflow-hidden">
+        {/* Background Decorative Blurs */}
+        <div className="absolute top-[-20%] left-[-10%] w-[800px] h-[800px] bg-primary/5 rounded-full blur-[140px] pointer-events-none"></div>
+        <div className="absolute bottom-[-10%] right-[-10%] w-[600px] h-[600px] bg-secondary/5 rounded-full blur-[120px] pointer-events-none"></div>
 
-      {/* ─── Stats / Trust ─── */}
-      <section className="py-12 border-y border-border/50 bg-muted/30">
-          <div className="max-w-7xl mx-auto px-6 grid grid-cols-2 lg:grid-cols-4 gap-8">
-              {[
-                  { label: lang === 'ar' ? 'طالب نشط' : 'Active Students', val: '5K+' },
-                  { label: lang === 'ar' ? 'دورة تدريبية' : 'Premium Courses', val: '120+' },
-                  { label: lang === 'ar' ? 'مدرب خبير' : 'Expert Trainers', val: '45+' },
-                  { label: lang === 'ar' ? 'نسبة النجاح' : 'Success Rate', val: '98%' },
-              ].map((s, i) => (
-                  <div key={i} className="text-center">
-                      <p className="text-3xl font-black text-foreground mb-1">{s.val}</p>
-                      <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">{s.label}</p>
-                  </div>
-              ))}
-          </div>
-      </section>
+        <div className="max-w-[1440px] mx-auto px-8 relative z-10">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 items-center">
+            <div className="lg:col-span-7 space-y-10">
+              <motion.div 
+                initial={{ opacity: 0, x: dir === 'rtl' ? 50 : -50 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="inline-flex items-center gap-3 px-4 py-2 bg-secondary/10 border border-secondary/20 rounded-full text-secondary"
+              >
+                <span className="material-symbols-outlined text-sm">verified</span>
+                <span className="text-[10px] font-black uppercase tracking-widest">{lang === 'ar' ? 'أكاديمية معتمدة دولياً' : 'Globally Accredited Academy'}</span>
+              </motion.div>
+              
+              <motion.h1 
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+                className="text-6xl lg:text-8xl font-black text-on-background leading-[1.05] tracking-tighter"
+              >
+                {lang === 'ar' ? <>اصنع مستقبلك مع <br/><span className="text-primary-container">4A Academy</span></> : <>Engineer Your Future with <br/><span className="text-primary-container">4A Academy</span></>}
+              </motion.h1>
 
-      {/* ─── About Section ─── */}
-      <section id="about" className="py-32 relative overflow-hidden">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="grid lg:grid-cols-2 gap-20 items-center">
-            <div className="space-y-8">
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary/10 text-primary text-xs font-black uppercase tracking-widest">
-                <Award className="w-4 h-4" /> {lang === 'ar' ? 'لماذا نحن؟' : 'Why Choose Us?'}
-              </div>
-              <h2 className="text-4xl lg:text-6xl font-black text-foreground leading-[1.1] tracking-tighter">
-                {lang === 'ar' ? 'نصنع الفرق في مسيرتك المهنية.' : 'We Make a Difference in Your Career.'}
-              </h2>
-              <p className="text-muted-foreground leading-relaxed text-lg font-medium">
+              <motion.p 
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+                className="text-xl lg:text-2xl text-on-surface-variant font-medium leading-relaxed max-w-2xl"
+              >
                 {lang === 'ar' 
-                  ? 'أكاديمية فور أيه هي بيئة تعليمية متكاملة تهدف إلى تمكين الشباب العربي بمهارات سوق العمل الحقيقية من خلال مشاريع عملية ومناهج تطبيقية مكثفة.' 
-                  : '4A Academy is an integrated learning environment aimed at empowering youth with real-world market skills through practical projects and intensive applied curricula.'}
-              </p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {[
-                  lang === 'ar' ? 'مدربين معتمدين دولياً' : 'Globally Certified Trainers',
-                  lang === 'ar' ? 'دعم فني وتوجيه مهني' : 'Technical & Career Support',
-                  lang === 'ar' ? 'شهادات موثقة' : 'Verified Certificates',
-                  lang === 'ar' ? 'مشاريع عملية حقيقية' : 'Real Practical Projects'
-                ].map((item, i) => (
-                  <div key={i} className="flex items-center gap-3 font-bold text-foreground bg-muted/50 p-4 rounded-2xl border border-border/50">
-                    <CheckCircle2 className="w-5 h-5 text-primary shrink-0" /> <span className="text-sm">{item}</span>
-                  </div>
-                ))}
-              </div>
+                  ? 'انضم إلى منصة التعليم الرائدة التي تجمع بين الخبرة الأكاديمية والتقنيات الحديثة لتمكين الجيل القادم من القادة.' 
+                  : 'Join the premier learning ecosystem where academic rigor meets modern tech to empower the next generation of global leaders.'}
+              </motion.p>
+
+              <motion.div 
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+                className="flex flex-wrap gap-6 pt-6"
+              >
+                <Link to="/register" className="px-10 py-5 bg-primary text-on-primary rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-2xl shadow-primary/30 hover:brightness-110 active:scale-95 transition-all">
+                  {lang === 'ar' ? 'ابدأ رحلتك الآن' : 'Initiate Your Journey'}
+                </Link>
+                <a href="#courses" className="px-10 py-5 bg-surface-container-low text-on-background border border-outline-variant rounded-2xl font-black text-xs uppercase tracking-[0.2em] hover:bg-surface-container-high transition-all">
+                  {lang === 'ar' ? 'تصفح الدورات' : 'Explore Courses'}
+                </a>
+              </motion.div>
             </div>
-            
-            <div className="relative group">
-              <div className="aspect-[4/5] rounded-[3rem] bg-gradient-to-tr from-primary/20 via-background to-secondary/10 border border-border relative overflow-hidden p-1">
-                 <div className="w-full h-full bg-card rounded-[2.8rem] flex flex-col p-8 relative overflow-hidden">
-                    <div className="flex items-center justify-between mb-8">
-                        <div className="flex gap-2">
-                            <div className="w-3 h-3 rounded-full bg-red-500/20" />
-                            <div className="w-3 h-3 rounded-full bg-amber-500/20" />
-                            <div className="w-3 h-3 rounded-full bg-emerald-500/20" />
-                        </div>
-                        <div className="px-3 py-1 bg-primary/10 rounded-lg text-[10px] font-black text-primary uppercase">Code Preview</div>
-                    </div>
-                    <div className="space-y-4 font-mono text-sm">
-                        <div className="w-[80%] h-4 bg-muted rounded animate-pulse" />
-                        <div className="w-[60%] h-4 bg-muted rounded animate-pulse delay-75" />
-                        <div className="w-[90%] h-4 bg-muted rounded animate-pulse delay-150" />
-                        <div className="w-[40%] h-4 bg-muted rounded animate-pulse delay-300" />
-                    </div>
-                    <div className="mt-auto bg-primary/5 border border-primary/20 rounded-2xl p-6">
-                         <div className="flex items-center gap-4">
-                             <div className="w-12 h-12 bg-primary rounded-xl" />
-                             <div>
-                                 <div className="h-4 w-24 bg-foreground/10 rounded mb-2" />
-                                 <div className="h-3 w-16 bg-foreground/5 rounded" />
-                             </div>
-                         </div>
-                    </div>
-                 </div>
-                 {/* Floating Badges */}
-                 <motion.div animate={{ y: [0, -10, 0] }} transition={{ duration: 4, repeat: Infinity }} className="absolute top-20 right-[-20px] bg-card border border-border p-4 rounded-2xl shadow-xl z-10 flex items-center gap-3">
-                    <div className="w-10 h-10 bg-emerald-500 rounded-xl flex items-center justify-center text-white"><CheckCircle2 /></div>
-                    <div>
-                        <p className="text-xs font-black text-foreground">Verified Student</p>
-                        <p className="text-[10px] text-muted-foreground font-bold">100% Secure</p>
-                    </div>
-                 </motion.div>
+
+            {/* Bento Grid Visual (Hero Image) */}
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.4 }}
+              className="lg:col-span-5 grid grid-cols-2 gap-6"
+            >
+              <div className="space-y-6 pt-12">
+                <div className="h-64 bg-surface-container-lowest rounded-[2.5rem] border border-outline-variant shadow-premium overflow-hidden group">
+                   <img src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&q=80&w=600" className="w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-700" alt="Students" />
+                </div>
+                <div className="h-48 bg-primary-container p-8 rounded-[2.5rem] text-on-primary flex flex-col justify-end">
+                   <span className="material-symbols-outlined text-4xl mb-4">military_tech</span>
+                   <div className="text-3xl font-black leading-none">+12k</div>
+                   <div className="text-[9px] font-black uppercase tracking-widest opacity-60">Global Graduates</div>
+                </div>
               </div>
-            </div>
+              <div className="space-y-6">
+                <div className="h-48 bg-secondary p-8 rounded-[2.5rem] text-on-secondary flex flex-col justify-end">
+                   <span className="material-symbols-outlined text-4xl mb-4">school</span>
+                   <div className="text-3xl font-black leading-none">98%</div>
+                   <div className="text-[9px] font-black uppercase tracking-widest opacity-60">Success Rate</div>
+                </div>
+                <div className="h-64 bg-surface-container-lowest rounded-[2.5rem] border border-outline-variant shadow-premium overflow-hidden group">
+                   <img src="https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&q=80&w=600" className="w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-700" alt="Study" />
+                </div>
+              </div>
+            </motion.div>
           </div>
         </div>
       </section>
 
-      {/* ─── Features Section ─── */}
-      <section id="features" className="py-32 bg-muted/30">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="text-center max-w-3xl mx-auto mb-20">
-            <div className="text-primary font-black uppercase tracking-widest text-xs mb-4">{lang === 'ar' ? 'المميزات' : 'Our Features'}</div>
-            <h2 className="text-4xl lg:text-6xl font-black text-foreground mb-6 tracking-tighter">{lang === 'ar' ? 'تجربة تعلم لا مثيل لها' : 'Unmatched Learning Experience'}</h2>
-            <p className="text-muted-foreground text-lg font-medium">{lang === 'ar' ? 'نحن لا نقدم مجرد دروس، بل نبني مستقبلاً.' : 'We don\'t just provide lessons; we build futures.'}</p>
-          </div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {features.map((f, i) => (
-              <motion.div key={i} whileHover={{ y: -10 }} 
-                className="bg-card p-10 rounded-[2.5rem] border border-border shadow-sm hover:shadow-2xl hover:shadow-primary/5 transition-all group relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 blur-3xl -z-10 rounded-full" />
-                <div className={`w-20 h-20 rounded-3xl ${f.bg} flex items-center justify-center mb-8 transition-all group-hover:scale-110 group-hover:rotate-6`}>
-                  <f.icon className={`w-10 h-10 ${f.color}`} />
+      {/* ─── Featured Courses Section ─── */}
+      <section id="courses" className="py-32 bg-surface-container-lowest relative">
+        <div className="max-w-[1440px] mx-auto px-8">
+          <SectionHeading 
+            badge={lang === 'ar' ? 'برامجنا المميزة' : 'Elite Programs'}
+            title={lang === 'ar' ? 'تعلم من الأفضل' : 'Master the Future'}
+            subtitle={lang === 'ar' ? 'اختر من بين مجموعة واسعة من الدورات المصممة لتزويدك بالمهارات الأكثر طلباً في السوق.' : 'Select from our curated portfolio of elite paths engineered for the high-velocity global market.'}
+          />
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+            {isLoading ? (
+              [...Array(6)].map((_, i) => (
+                <div key={i} className="h-[450px] bg-surface-container-low rounded-[2rem] animate-pulse"></div>
+              ))
+            ) : courses.slice(0, 6).map((course, i) => (
+              <motion.div 
+                key={course.id}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.1 }}
+                className="bg-surface border border-outline-variant rounded-[2.5rem] overflow-hidden group hover:shadow-premium transition-all"
+              >
+                <div className="relative h-64 bg-surface-container-low overflow-hidden">
+                   <div className="absolute inset-0 bg-primary/5 group-hover:opacity-10 transition-opacity" />
+                   <div className="absolute top-6 right-6 px-4 py-2 bg-white/90 dark:bg-black/50 backdrop-blur-md rounded-xl text-[10px] font-black text-primary uppercase tracking-widest border border-outline-variant/30">
+                      {lang === 'ar' ? 'دورة مميزة' : 'Elite Path'}
+                   </div>
+                   <div className="absolute inset-0 flex items-center justify-center p-10">
+                      <h4 className="text-2xl font-black text-on-surface text-center line-clamp-2">{course.title}</h4>
+                   </div>
                 </div>
-                <h3 className="text-2xl font-black text-foreground mb-4">{lang === 'ar' ? t(`feat_title_${i+1}`) || 'ميزة احترافية' : 'Premium Feature'}</h3>
-                <p className="text-muted-foreground text-sm leading-relaxed font-medium">
-                   {lang === 'ar' ? 'نوفر لك كافة الأدوات اللازمة للنجاح والتميز في مجالك المهني.' : 'We provide you with all the tools necessary for success and excellence.'}
-                </p>
-                <div className="mt-8 pt-6 border-t border-border/50">
-                    <button className="text-primary text-xs font-black uppercase tracking-widest flex items-center gap-2 group/btn">
-                        {lang === 'ar' ? 'اقرأ المزيد' : 'Learn More'} <ChevronRight className={`w-4 h-4 transition-transform ${dir === 'rtl' ? 'rotate-180 group-hover/btn:-translate-x-1' : 'group-hover/btn:translate-x-1'}`} />
-                    </button>
+                <div className="p-10 space-y-8">
+                   <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                         <div className="w-10 h-10 rounded-xl bg-primary/5 text-primary flex items-center justify-center">
+                            <span className="material-symbols-outlined">person</span>
+                         </div>
+                         <div>
+                            <p className="text-[10px] text-on-surface-variant font-black uppercase tracking-widest leading-none mb-1">Instructor</p>
+                            <p className="text-xs font-bold text-on-surface">Dr. Academic Expert</p>
+                         </div>
+                      </div>
+                      <div className="text-right">
+                         <p className="text-[10px] text-on-surface-variant font-black uppercase tracking-widest leading-none mb-1">Rating</p>
+                         <p className="text-xs font-bold text-secondary">★ 4.9</p>
+                      </div>
+                   </div>
+                   
+                   <p className="text-on-surface-variant text-sm font-medium leading-relaxed line-clamp-2">
+                      {course.description || 'Master advanced concepts and industry-standard workflows in this comprehensive elite program.'}
+                   </p>
+
+                   <div className="flex items-center justify-between pt-6 border-t border-outline-variant/30">
+                      <div className="text-2xl font-black text-on-background">$199</div>
+                      <Link to={`/login`} className="flex items-center gap-2 text-primary font-black text-xs uppercase tracking-widest group-hover:translate-x-1 transition-transform">
+                         {lang === 'ar' ? 'التسجيل الآن' : 'Enroll Now'}
+                         <span className="material-symbols-outlined text-sm">arrow_forward</span>
+                      </Link>
+                   </div>
                 </div>
               </motion.div>
             ))}
@@ -248,123 +222,152 @@ const HomePage: React.FC = () => {
         </div>
       </section>
 
-      {/* ─── Courses Section ─── */}
-      <section id="courses" className="py-32">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-20">
-            <div className="max-w-3xl">
-              <div className="text-primary font-black uppercase tracking-widest text-xs mb-4">{lang === 'ar' ? 'الدورات' : 'Course Catalog'}</div>
-              <h2 className="text-4xl lg:text-6xl font-black text-foreground mb-6 tracking-tighter">{lang === 'ar' ? 'استكشف مساراتك' : 'Explore Your Path'}</h2>
-              <p className="text-muted-foreground text-lg font-medium">{lang === 'ar' ? 'ابدأ رحلة التعلم مع أفضل المناهج التدريبية.' : 'Start your learning journey with the best training curricula.'}</p>
-            </div>
-            <Link to="/login" className="btn-primary px-10 py-5 rounded-2xl text-lg font-black shadow-2xl shadow-primary/20 flex items-center gap-3">
-              {lang === 'ar' ? 'عرض كافة الدورات' : 'View All Courses'} <ArrowLeft className={`w-6 h-6 ${dir === 'ltr' && 'rotate-180'}`} />
-            </Link>
-          </div>
-
-          {isLoading ? (
-            <div className="flex justify-center py-32">
-              <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-            </div>
-          ) : (
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-10">
-              {courses.slice(0, 6).map((course, i) => (
-                <motion.div key={course.id} initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1 }}
-                  className="bg-card rounded-[2.5rem] border border-border overflow-hidden shadow-sm hover:shadow-2xl transition-all group flex flex-col h-full relative">
-                  
-                  <div className="h-64 bg-muted relative overflow-hidden group-hover:scale-105 transition-transform duration-700">
-                     <div className="absolute inset-0 bg-gradient-to-br from-primary/40 to-secondary/40 mix-blend-overlay z-10" />
-                     <div className="absolute inset-0 flex items-center justify-center p-12 text-center z-20">
-                         <h3 className="text-3xl font-black text-white drop-shadow-lg">{course.title}</h3>
-                     </div>
-                     <div className="absolute top-6 left-6 z-30">
-                        <span className="bg-card/80 backdrop-blur-md px-4 py-2 rounded-xl text-[10px] font-black text-primary border border-white/20 shadow-xl flex items-center gap-2">
-                           <CheckCircle2 className="w-3.5 h-3.5" /> {lang === 'ar' ? 'متاح الآن' : 'ENROLLING NOW'}
-                        </span>
-                     </div>
-                  </div>
-
-                  <div className="p-10 flex flex-col flex-1 z-20 bg-card">
-                    <p className="text-muted-foreground text-sm leading-relaxed font-medium line-clamp-3 flex-1 mb-8">
-                      {course.description || (lang === 'ar' ? 'كورس شامل ومكثف يهدف إلى تزويدك بالمهارات المطلوبة في سوق العمل.' : 'A comprehensive and intensive course aimed at providing you with the skills required in the job market.')}
-                    </p>
-                    
-                    <div className="flex items-center justify-between border-t border-border pt-8 mt-auto">
-                      <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary font-black">
-                          {course.instructor?.user?.name?.[0] || 'A'}
-                        </div>
-                        <div>
-                           <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">{lang === 'ar' ? 'المدرب' : 'Instructor'}</p>
-                           <p className="text-sm font-black text-foreground">{course.instructor?.user?.name || (lang === 'ar' ? 'خبير معتمد' : 'Expert Trainer')}</p>
-                        </div>
-                      </div>
-                      <button onClick={() => setSelectedCourse(course)} className="w-12 h-12 rounded-2xl bg-muted hover:bg-primary hover:text-primary-foreground transition-all flex items-center justify-center text-foreground group/btn">
-                        <ChevronRight className={`w-6 h-6 transition-transform ${dir === 'rtl' && 'rotate-180'}`} />
-                      </button>
+      {/* ─── Features Section ─── */}
+      <section id="features" className="py-32 bg-background relative overflow-hidden">
+         <div className="max-w-[1440px] mx-auto px-8">
+            <SectionHeading 
+               centered
+               badge={lang === 'ar' ? 'لماذا 4A Academy؟' : 'Why Choose Us?'}
+               title={lang === 'ar' ? 'مميزات تجعلنا الخيار الأول' : 'Engineered for Excellence'}
+               subtitle={lang === 'ar' ? 'نحن نوفر لك كل ما تحتاجه للنجاح في رحلتك التعليمية، من المحتوى المتميز إلى الدعم الفني المستمر.' : 'We provide a comprehensive ecosystem engineered to accelerate your academic and professional trajectory.'}
+            />
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+               {[
+                 { icon: 'speed', title_ar: 'تعلم سريع', title_en: 'High Velocity', desc_ar: 'مناهج مكثفة مصممة لسوق العمل.', desc_en: 'Intensive curricula designed for rapid market entry.' },
+                 { icon: 'psychology', title_ar: 'ذكاء تعليمي', title_en: 'AI Enhanced', desc_ar: 'توصيات ذكية للمواد الدراسية.', desc_en: 'Smart content recommendations powered by AI.' },
+                 { icon: 'workspace_premium', title_ar: 'شهادات معتمدة', title_en: 'Global Credits', desc_ar: 'احصل على شهادة تثبت مهاراتك.', desc_en: 'Earn internationally recognized academic credentials.' },
+                 { icon: 'support_agent', title_ar: 'دعم مستمر', title_en: '24/7 Support', desc_ar: 'فريقنا معك في كل خطوة.', desc_en: 'Our elite support team is with you every step of the way.' }
+               ].map((feature, i) => (
+                 <motion.div 
+                   key={i}
+                   whileHover={{ y: -10 }}
+                   className="p-8 bg-surface-container-lowest border border-outline-variant rounded-[2rem] shadow-sm hover:shadow-premium transition-all text-center"
+                 >
+                    <div className="w-16 h-16 bg-primary/10 text-primary rounded-2xl flex items-center justify-center mx-auto mb-6">
+                       <span className="material-symbols-outlined text-3xl">{feature.icon}</span>
                     </div>
-                  </div>
-                </motion.div>
-              ))}
+                    <h4 className="text-xl font-black text-on-background mb-4 uppercase tracking-tight">{lang === 'ar' ? feature.title_ar : feature.title_en}</h4>
+                    <p className="text-on-surface-variant text-sm font-medium leading-relaxed">{lang === 'ar' ? feature.desc_ar : feature.desc_en}</p>
+                 </motion.div>
+               ))}
             </div>
-          )}
-        </div>
+         </div>
       </section>
 
-      {/* ─── Footer ─── */}
-      <footer className="bg-card text-muted-foreground py-24 border-t border-border">
-        <div className="max-w-7xl mx-auto px-6 text-center">
-          <div className="w-16 h-16 bg-primary rounded-[1.5rem] flex items-center justify-center mx-auto mb-10 shadow-2xl shadow-primary/30">
-            <GraduationCap className="text-primary-foreground w-8 h-8" />
+      {/* ─── About Section ─── */}
+      <section id="about" className="py-32 bg-surface-container-low relative">
+         <div className="max-w-[1440px] mx-auto px-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
+               <div className="relative">
+                  <div className="relative z-10 rounded-[3rem] overflow-hidden shadow-2xl border-8 border-white/50">
+                     <img src="https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&q=80&w=1000" alt="About" className="w-full h-full object-cover" />
+                  </div>
+                  <div className="absolute -bottom-10 -right-10 w-64 h-64 bg-secondary/10 rounded-full blur-[80px] -z-10"></div>
+                  <div className="absolute -top-10 -left-10 w-48 h-48 bg-primary/10 rounded-full blur-[80px] -z-10"></div>
+               </div>
+               
+               <div className="space-y-8">
+                  <SectionHeading 
+                     badge={lang === 'ar' ? 'من نحن' : 'Our Legacy'}
+                     title={lang === 'ar' ? 'أكثر من مجرد أكاديمية' : 'More Than Just an Academy'}
+                  />
+                  <p className="text-on-surface-variant text-xl font-medium leading-relaxed">
+                     {lang === 'ar' 
+                       ? 'نحن في 4A Academy نسعى جاهدين لإحداث ثورة في عالم التعليم الرقمي. نجمع بين أحدث التقنيات وأفضل الكوادر الأكاديمية لنقدم لك تجربة تعليمية لا تُنسى.' 
+                       : 'At 4A Academy, we are pioneering the revolution of digital education. We synchronize cutting-edge technology with elite academic personnel to deliver an unprecedented learning experience.'}
+                  </p>
+                  <ul className="space-y-4">
+                     {[
+                       { icon: 'check_circle', text_ar: 'خبرة تزيد عن 10 سنوات', text_en: '10+ Years of Academic Excellence' },
+                       { icon: 'check_circle', text_ar: 'مجتمع يضم أكثر من 50 ألف طالب', text_en: 'Global Community of 50k+ Students' },
+                       { icon: 'check_circle', text_ar: 'شراكات مع كبرى الشركات العالمية', text_en: 'Partnerships with Fortune 500 Leaders' }
+                     ].map((item, i) => (
+                       <li key={i} className="flex items-center gap-4 text-on-background font-bold">
+                          <span className="material-symbols-outlined text-secondary">{item.icon}</span>
+                          {lang === 'ar' ? item.text_ar : item.text_en}
+                       </li>
+                     ))}
+                  </ul>
+                  <button className="px-10 py-5 bg-on-background text-background rounded-2xl font-black text-xs uppercase tracking-[0.2em] hover:brightness-125 transition-all shadow-xl">
+                     {lang === 'ar' ? 'اقرأ قصتنا' : 'Read Our Story'}
+                  </button>
+               </div>
+            </div>
+         </div>
+      </section>
+
+      {/* ─── Footer Section ─── */}
+      <footer className="bg-surface-container-lowest pt-32 pb-16 border-t border-outline-variant/30">
+        <div className="max-w-[1440px] mx-auto px-8">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 mb-24">
+            <div className="lg:col-span-4 space-y-8">
+              <Link className="text-3xl font-black tracking-tighter text-on-background uppercase" to="/">4A Academy</Link>
+              <p className="text-on-surface-variant text-lg font-medium leading-relaxed">
+                {lang === 'ar' 
+                  ? 'نحن نؤمن بأن التعليم هو المفتاح لمستقبل أفضل. مهمتنا هي توفير بيئة تعليمية ملهمة ومبتكرة للجميع.' 
+                  : 'We believe that education is the key to a strategic future. Our mission is to provide an inspiring and innovative learning environment for the next generation.'}
+              </p>
+              <div className="flex gap-4">
+                 {['facebook', 'twitter', 'linkedin', 'instagram'].map(icon => (
+                   <div key={icon} className="w-12 h-12 rounded-2xl bg-surface-container-low border border-outline-variant/50 flex items-center justify-center hover:bg-primary hover:text-on-primary transition-all cursor-pointer group">
+                      <span className="material-symbols-outlined group-hover:scale-110 transition-transform">language</span>
+                   </div>
+                 ))}
+              </div>
+            </div>
+            
+            <div className="lg:col-span-8 grid grid-cols-2 md:grid-cols-3 gap-12">
+               {[
+                 { title_ar: 'المنصة', title_en: 'Platform', links: [
+                   { n: lang === 'ar' ? 'الرئيسية' : 'Home', l: '/' },
+                   { n: lang === 'ar' ? 'الدورات' : 'Courses', l: '#courses' },
+                   { n: lang === 'ar' ? 'المميزات' : 'Features', l: '/features' },
+                   { n: lang === 'ar' ? 'من نحن' : 'About Us', l: '/about' }
+                 ]},
+                 { title_ar: 'الدعم', title_en: 'Support', links: [
+                   { n: lang === 'ar' ? 'مركز المساعدة' : 'Help Center', l: '/support' },
+                   { n: lang === 'ar' ? 'تواصل معنا' : 'Contact Us', l: '/support' },
+                   { n: lang === 'ar' ? 'سياسة الخصوصية' : 'Privacy Policy', l: '/legal?tab=privacy' },
+                   { n: lang === 'ar' ? 'شروط الاستخدام' : 'Terms of Service', l: '/legal?tab=terms' }
+                 ]},
+                 { title_ar: 'الحساب', title_en: 'Account', links: [
+                   { n: lang === 'ar' ? 'تسجيل الدخول' : 'Login', l: '/login' },
+                   { n: lang === 'ar' ? 'إنشاء حساب' : 'Register', l: '/register' },
+                   { n: lang === 'ar' ? 'لوحة التحكم' : 'Dashboard', l: '/login' }
+                 ]}
+               ].map((group, i) => (
+                 <div key={i} className="space-y-8">
+                    <h5 className="text-sm font-black uppercase tracking-[0.2em] text-on-background">
+                       {lang === 'ar' ? group.title_ar : group.title_en}
+                    </h5>
+                    <ul className="space-y-4">
+                       {group.links.map(link => (
+                         <li key={link.n}>
+                           {link.l.startsWith('/') ? (
+                             <Link to={link.l} className="text-on-surface-variant font-medium hover:text-primary transition-all">{link.n}</Link>
+                           ) : (
+                             <a href={link.l} className="text-on-surface-variant font-medium hover:text-primary transition-all">{link.n}</a>
+                           )}
+                         </li>
+                       ))}
+                    </ul>
+                 </div>
+               ))}
+            </div>
           </div>
-          <p className="text-3xl font-black text-foreground mb-4 uppercase tracking-tighter">4A ACADEMY</p>
-          <p className="text-lg font-medium max-w-2xl mx-auto mb-12">
-            {lang === 'ar' ? 'خطوتك الأولى نحو الاحتراف والتميز في سوق العمل العالمي.' : 'Your first step towards professionalism and excellence in the global job market.'}
-          </p>
-          <div className="flex flex-wrap items-center justify-center gap-8 text-sm font-black uppercase tracking-widest mb-16">
-            <a href="#" className="hover:text-primary transition-colors">{lang === 'ar' ? 'الشروط' : 'Terms'}</a>
-            <a href="#" className="hover:text-primary transition-colors">{lang === 'ar' ? 'الخصوصية' : 'Privacy'}</a>
-            <a href="#" className="hover:text-primary transition-colors">{lang === 'ar' ? 'تواصل' : 'Contact'}</a>
-            <a href="#" className="hover:text-primary transition-colors">{lang === 'ar' ? 'من نحن' : 'About'}</a>
-          </div>
-          <div className="pt-12 border-t border-border text-[10px] font-black tracking-[0.2em] uppercase">
-            © {new Date().getFullYear()} 4A Academy Smart Systems. All Rights Reserved.
+          
+          <div className="pt-12 border-t border-outline-variant/30 flex flex-col md:flex-row justify-between items-center gap-8">
+            <p className="text-on-surface-variant text-xs font-black uppercase tracking-widest opacity-60">
+              © 2024 4A Academy. All Rights Reserved. Engineered by Elite Teams.
+            </p>
+            <div className="flex gap-10">
+               <Link to="/legal?tab=privacy" className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant hover:text-primary transition-all">{lang === 'ar' ? 'سياسة الخصوصية' : 'Privacy Policy'}</Link>
+               <Link to="/legal?tab=terms" className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant hover:text-primary transition-all">{lang === 'ar' ? 'شروط الاستخدام' : 'Terms of Service'}</Link>
+            </div>
           </div>
         </div>
       </footer>
-
-      {/* ─── Details Modal ─── */}
-      <Modal isOpen={!!selectedCourse} onClose={() => setSelectedCourse(null)} dir={dir}>
-        {selectedCourse && (
-          <div className="p-10">
-            <div className="w-20 h-20 bg-primary/10 rounded-[2rem] flex items-center justify-center mb-8">
-              <BookOpen className="w-10 h-10 text-primary" />
-            </div>
-            <h3 className="text-3xl font-black text-foreground mb-2 leading-tight">{selectedCourse.title}</h3>
-            <p className="text-primary font-black text-4xl mb-10">{selectedCourse.price}$</p>
-            
-            <div className="space-y-6 mb-12 text-muted-foreground font-medium leading-relaxed">
-              <p>
-                {selectedCourse.description || (lang === 'ar' ? 'هذا البرنامج التدريبي صمم خصيصاً ليجعلك تتقن المهارات المطلوبة بأعلى معايير الجودة العالمية.' : 'This training program is specifically designed to make you master the required skills at the highest global quality standards.')}
-              </p>
-              <div className="grid grid-cols-2 gap-4">
-                  <div className="bg-muted/50 p-5 rounded-[1.5rem] border border-border/50">
-                      <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">{lang === 'ar' ? 'المدرب' : 'Trainer'}</p>
-                      <p className="text-sm font-black text-foreground truncate">{selectedCourse.instructor?.user?.name || 'Academy Expert'}</p>
-                  </div>
-                  <div className="bg-muted/50 p-5 rounded-[1.5rem] border border-border/50">
-                      <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">{lang === 'ar' ? 'المستوى' : 'Level'}</p>
-                      <p className="text-sm font-black text-foreground">{lang === 'ar' ? 'مبتدئ - متقدم' : 'Beginner - Adv'}</p>
-                  </div>
-              </div>
-            </div>
-
-            <Link to="/login" className="w-full bg-primary text-primary-foreground py-5 rounded-2xl font-black text-lg shadow-2xl shadow-primary/30 flex items-center justify-center gap-3 hover:scale-[1.02] transition-all">
-               {lang === 'ar' ? 'اشترك الآن' : 'Enroll Now'} <ArrowLeft className={`w-6 h-6 ${dir === 'ltr' && 'rotate-180'}`} />
-            </Link>
-          </div>
-        )}
-      </Modal>
     </div>
   );
 };

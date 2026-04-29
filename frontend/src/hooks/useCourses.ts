@@ -49,11 +49,12 @@ export const useEnroll = () => {
   });
 };
 
-export const useInstructors = () =>
+export const useInstructors = (enabled = true) =>
   useQuery<any[]>({
     queryKey: ['instructors'],
     queryFn: async () => {
       const users = await usersApi.getAll();
       return users.filter((u: any) => u.role === 'instructor');
     },
+    enabled: enabled,
   });
