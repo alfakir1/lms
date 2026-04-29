@@ -31,9 +31,7 @@ const SubmissionPage: React.FC = () => {
       if (selectedFile) formData.append('file', selectedFile);
       formData.append('assignment_id', id!);
       formData.append('notes', notes);
-      return api.post('/submissions', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
+      return api.post('/submissions', formData);
     },
     onSuccess: () => {
       setSubmitStatus('success');

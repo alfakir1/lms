@@ -6,6 +6,7 @@ import { useEnrollments } from '../hooks/useEnrollments';
 import { useAuth } from '../context/AuthContext';
 import Button from '../components/ui/Button';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
+import ManageLessonsModal from '../components/ManageLessonsModal';
 
 const CourseDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -15,14 +16,17 @@ const CourseDetails: React.FC = () => {
   const { data: course, isLoading } = useCourse(Number(id));
   const { data: enrollments } = useEnrollments(Number(id));
   const enrollMutation = useEnroll();
+  const [selectedInstanceId, setSelectedInstanceId] = React.useState<number | null>(null);
+  const [showManageLessons, setShowManageLessons] = React.useState(false);
 
   if (isLoading) return <LoadingSpinner />;
   if (!course) return <div className="text-center py-20">لم يتم العثور على الكورس</div>;
 
   const handleEnroll = async () => {
+    const targetId = selectedInstanceId || course.id;
     try {
-      await enrollMutation.mutateAsync(course.id);
-      navigate(`/courses/${course.id}/play`);
+      await enrollMutation.mutateAsync(targetId);
+      navigate(`/courses/${targetId}/play`);
     } catch (e) {
       alert('حدث خطأ أثناء التسجيل. قد تكون مسجلاً بالفعل.');
     }
@@ -59,8 +63,48 @@ const CourseDetails: React.FC = () => {
 
       <div className="max-w-5xl mx-auto px-6 grid grid-cols-1 md:grid-cols-3 gap-8">
         <div className="md:col-span-2 space-y-8">
+          {/* Teaching Groups Selection */}
+          {user?.role === 'student' && course.instances && course.instances.length > 0 && (
+            <div className="bg-white p-8 rounded-3xl border-2 border-primary/20 shadow-sm">
+              <h2 className="text-xl font-bold text-slate-900 mb-4 flex items-center gap-2">
+                <Users className="text-primary w-6 h-6" /> اختر المجموعة التعليمية والمحاضر
+              </h2>
+              <p className="text-slate-500 text-sm mb-6">يرجى اختيار المحاضر الذي تود الانضمام لمجموعته:</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {course.instances.map((instance) => (
+                  <div 
+                    key={instance.id}
+                    onClick={() => setSelectedInstanceId(instance.id)}
+                    className={`p-4 rounded-2xl border-2 cursor-pointer transition-all ${
+                      selectedInstanceId === instance.id 
+                        ? 'border-primary bg-primary/5 shadow-md' 
+                        : 'border-slate-100 hover:border-slate-200'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 rounded-full bg-slate-100 overflow-hidden shrink-0 border border-slate-200">
+                        <img src={`https://i.pravatar.cc/150?u=${instance.instructor?.id}`} alt="instructor" />
+                      </div>
+                      <div>
+                        <p className="font-bold text-slate-900">م. {instance.instructor?.user?.name}</p>
+                        <p className="text-xs text-slate-500">{instance.group_name || 'مجموعة دراسية'}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           <div className="bg-white p-8 rounded-3xl border border-slate-100 shadow-sm">
-            <h2 className="text-xl font-bold text-slate-900 mb-6">محتوى الكورس</h2>
+            <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-bold text-slate-900">محتوى الكورس</h2>
+                {isInstructorOrAdmin && (
+                    <Button variant="secondary" onClick={() => setShowManageLessons(true)} className="text-xs py-2">
+                        إدارة المحتوى
+                    </Button>
+                )}
+            </div>
             <div className="space-y-3">
               {course.lessons?.map((lesson, idx) => (
                 <div key={lesson.id} className="flex items-center gap-4 p-4 rounded-xl border border-slate-100 hover:border-primary/20 hover:bg-slate-50 transition-colors">
@@ -69,7 +113,7 @@ const CourseDetails: React.FC = () => {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="font-bold text-slate-900 truncate">{lesson.title}</p>
-                    <p className="text-xs text-slate-500 mt-0.5">15:00 دقيقة</p>
+                    <p className="text-xs text-slate-500 mt-0.5">{lesson.duration ? `${Math.floor(lesson.duration / 60)} دقيقة` : 'فيديو'}</p>
                   </div>
                   <PlayCircle className="w-6 h-6 text-slate-300 shrink-0" />
                 </div>
@@ -145,8 +189,13 @@ const CourseDetails: React.FC = () => {
             </div>
 
             {user?.role === 'student' ? (
-              <Button onClick={handleEnroll} loading={enrollMutation.isPending} className="w-full py-4 text-lg">
-                سجل الآن
+              <Button 
+                onClick={handleEnroll} 
+                loading={enrollMutation.isPending} 
+                disabled={course.instances && course.instances.length > 0 && !selectedInstanceId}
+                className="w-full py-4 text-lg"
+              >
+                {course.instances && course.instances.length > 0 && !selectedInstanceId ? 'اختر مجموعة للتسجيل' : 'سجل الآن'}
               </Button>
             ) : (
               <Button variant="secondary" className="w-full py-4" onClick={() => navigate(`/courses/${course.id}/play`)}>
@@ -162,6 +211,14 @@ const CourseDetails: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {showManageLessons && (
+          <ManageLessonsModal 
+            courseId={course.id} 
+            lessons={course.lessons || []} 
+            onClose={() => setShowManageLessons(false)} 
+          />
+      )}
     </div>
   );
 };

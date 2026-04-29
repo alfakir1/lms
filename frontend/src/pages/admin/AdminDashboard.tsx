@@ -48,10 +48,10 @@ const AdminDashboard: React.FC = () => {
             <UserPlus className="w-4 h-4 group-hover:rotate-12 transition-transform" /> 
             {lang === 'ar' ? 'إضافة مستخدم' : 'Add User'}
           </Link>
-          <button className="bg-card hover:bg-muted text-foreground border border-border px-6 py-2.5 rounded-xl font-bold transition-all flex items-center gap-2 shadow-sm">
+          <Link to="/reports" className="bg-card hover:bg-muted text-foreground border border-border px-6 py-2.5 rounded-xl font-bold transition-all flex items-center gap-2 shadow-sm">
             <FileText className="w-4 h-4 text-primary" /> 
             {lang === 'ar' ? 'التقارير المالية' : 'Financial Reports'}
-          </button>
+          </Link>
         </motion.div>
       </div>
 

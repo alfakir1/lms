@@ -47,4 +47,9 @@ class Student extends Model
     {
         return $this->hasMany(Certificate::class);
     }
+
+    public function assessmentSubmissions()
+    {
+        return $this->hasMany(AssessmentSubmission::class);
+    }
 }

@@ -19,8 +19,13 @@ import AttendancePage from './pages/Attendance.tsx';
 import CertificatesPage from './pages/CertificatesPage.tsx';
 import EnrollmentsPage from './pages/EnrollmentsPage.tsx';
 import ProfilePage from './pages/ProfilePage.tsx';
+import SettingsPage from './pages/SettingsPage.tsx';
+import Reports from './pages/admin/Reports.tsx';
 import ProtectedRoute from './routes/ProtectedRoute';
 import DashboardLayout from './layouts/DashboardLayout';
+import AssessmentsPage from './pages/AssessmentsPage.tsx';
+import QuizAttempt from './pages/QuizAttempt.tsx';
+import AssessmentSubmissionsPage from './pages/AssessmentSubmissionsPage.tsx';
 
 
 // No RootRedirect used anymore
@@ -68,6 +73,11 @@ function App() {
         <Route path="/assignments"            element={guard(INST_STD,  <Assignments />)} />
         <Route path="/assignments/:id/submit" element={guard(STD_ONLY,  <SubmissionPage />)} />
 
+        {/* ── Assessments (Quizzes) ── */}
+        <Route path="/assessments" element={guard(INST_STD, <AssessmentsPage />)} />
+        <Route path="/assessments/:id/attempt" element={guard(STD_ONLY, <QuizAttempt />)} />
+        <Route path="/assessments/:id/submissions" element={guard(INST_ONLY, <AssessmentSubmissionsPage />)} />
+
         {/* ── Grades — instructor & student only ── */}
         <Route path="/grades" element={guard(INST_STD, <GradesPage />)} />
 
@@ -79,11 +89,13 @@ function App() {
 
         {/* ── User Management — admin full, reception (students only, enforced in backend) ── */}
         <Route path="/users" element={guard(ADMIN_REC, <Users />)} />
+        <Route path="/reports" element={guard(ADMIN, <Reports />)} />
 
         {/* ── Reception-specific: full student registration + receipt workflow ── */}
         <Route path="/register-student" element={guard(ADMIN_REC, <StudentRegistration />)} />
         <Route path="/certificates" element={guard(['admin', 'instructor', 'reception'] as any, <CertificatesPage />)} />
         <Route path="/profile" element={guard(ALL_ROLES, <ProfilePage />)} />
+        <Route path="/settings" element={guard(ALL_ROLES, <SettingsPage />)} />
       </Route>
 
       {/* ─── 404 ─── */}

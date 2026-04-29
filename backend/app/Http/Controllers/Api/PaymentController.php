@@ -94,6 +94,16 @@ class PaymentController extends Controller
             ]);
         }
 
+        // Notify student
+        if ($payment->student && $payment->student->user) {
+            \App\Models\Notification::create([
+                'user_id' => $payment->student->user->id,
+                'type' => 'payment_received',
+                'title' => 'تم استلام الدفعة',
+                'message' => 'تم تسجيل دفعة بقيمة ' . $payment->amount . '$ لكورس ' . ($payment->course->title ?? ''),
+            ]);
+        }
+
         $payment->load(['student.user', 'course']);
 
         return response()->json([

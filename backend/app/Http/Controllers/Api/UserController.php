@@ -43,6 +43,7 @@ class UserController extends Controller
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:6',
             'role' => ['required', Rule::in($allowedRoles)],
+            'is_active' => 'sometimes|boolean',
         ]);
 
         if ($user->role === 'reception' && $validated['role'] !== 'student') {
@@ -55,6 +56,17 @@ class UserController extends Controller
 
         if ($newUser->role === 'student') {
             Student::create(['user_id' => $newUser->id, 'enrollment_year' => date('Y')]);
+            
+            // Notify Admins
+            $admins = User::where('role', 'admin')->get();
+            foreach ($admins as $admin) {
+                \App\Models\Notification::create([
+                    'user_id' => $admin->id,
+                    'type' => 'student_registered',
+                    'title' => 'طالب جديد مسجل',
+                    'message' => 'تم تسجيل طالب جديد: ' . $newUser->name,
+                ]);
+            }
         } elseif ($newUser->role === 'instructor') {
             Instructor::create(['user_id' => $newUser->id, 'specialization' => 'General']);
         }
@@ -70,7 +82,7 @@ class UserController extends Controller
         if ($request->user()->role === 'reception' && $user->role !== 'student') {
             abort(403, 'Unauthorized.');
         }
-        return response()->json($user);
+        return response()->json($user->load(['student', 'instructor']));
     }
 
     public function update(Request $request, User $user)
@@ -86,7 +98,8 @@ class UserController extends Controller
             'email' => ['sometimes', 'string', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
             'login_id' => ['sometimes', 'string', 'max:255', Rule::unique('users')->ignore($user->id)],
             'password' => 'sometimes|string|min:6',
-            'role' => 'sometimes|string', // Only admin can change role realistically, but ignoring that complex logic for now and just protecting reception.
+            'role' => 'sometimes|string',
+            'is_active' => 'sometimes|boolean',
         ]);
 
         if ($authUser->role === 'reception' && isset($validated['role']) && $validated['role'] !== 'student') {
@@ -99,7 +112,7 @@ class UserController extends Controller
 
         $user->update($validated);
 
-        return response()->json($user);
+        return response()->json($user->load(['student', 'instructor']));
     }
 
     public function destroy(Request $request, User $user)
@@ -110,5 +123,85 @@ class UserController extends Controller
         }
         $user->delete();
         return response()->json(null, 204);
+    }
+
+    public function financialStatement(Request $request, User $user)
+    {
+        if ($user->role !== 'student') {
+            abort(422, 'User is not a student.');
+        }
+
+        $student = $user->student;
+        if (!$student) {
+            abort(404, 'Student profile not found.');
+        }
+
+        $enrollments = \App\Models\Enrollment::with(['course'])
+            ->where('student_id', $student->id)
+            ->get();
+
+        $payments = \App\Models\Payment::with(['course'])
+            ->where('student_id', $student->id)
+            ->get();
+
+        $totalDue = $enrollments->sum(fn($e) => $e->course->price ?? 0);
+        $totalPaid = $payments->where('status', 'completed')->sum('amount');
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'user' => $user,
+                'student' => $student,
+                'enrollments' => $enrollments,
+                'payments' => $payments,
+                'summary' => [
+                    'total_due' => $totalDue,
+                    'total_paid' => $totalPaid,
+                    'balance' => $totalDue - $totalPaid,
+                ]
+            ]
+        ]);
+    }
+
+    public function academicReport(Request $request, User $user)
+    {
+        if ($user->role !== 'student') {
+            abort(422, 'User is not a student.');
+        }
+
+        $student = $user->student;
+        if (!$student) {
+            abort(404, 'Student profile not found.');
+        }
+
+        $enrollments = \App\Models\Enrollment::with(['course'])
+            ->where('student_id', $student->id)
+            ->get();
+
+        $grades = \App\Models\Grade::with(['assignment', 'course'])
+            ->where('student_id', $student->id)
+            ->get();
+
+        $attendance = \App\Models\Attendance::where('student_id', $student->id)->get();
+        
+        $certificates = \App\Models\Certificate::with(['course'])
+            ->where('student_id', $student->id)
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'user' => $user,
+                'student' => $student,
+                'enrollments' => $enrollments,
+                'grades' => $grades,
+                'attendance' => [
+                    'total' => $attendance->count(),
+                    'present' => $attendance->where('status', 'present')->count(),
+                    'absent' => $attendance->where('status', 'absent')->count(),
+                ],
+                'certificates' => $certificates
+            ]
+        ]);
     }
 }

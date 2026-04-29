@@ -53,6 +53,23 @@ class EnrollmentController extends Controller
             }
         }
 
+        // Ensure enrolling in an instance, not a master course
+        $course = \App\Models\Course::findOrFail($validated['course_id']);
+        if ($course->parent_id === null && \App\Models\Course::where('parent_id', $course->id)->exists()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Please select a specific teaching group or instructor for this course.'
+            ], 422);
+        }
+
+        // Check Capacity
+        if ($course->max_students && Enrollment::where('course_id', $course->id)->count() >= $course->max_students) {
+            return response()->json([
+                'success' => false,
+                'message' => 'هذا الكورس اكتملت سعته الاستيعابية.'
+            ], 422);
+        }
+
         // Check if already enrolled
         if (Enrollment::where('course_id', $validated['course_id'])->where('student_id', $validated['student_id'])->exists()) {
             return response()->json([

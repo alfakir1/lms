@@ -6,7 +6,17 @@ use Illuminate\Database\Eloquent\Model;
 
 class Course extends Model
 {
-    protected $fillable = ['title', 'description', 'price', 'start_date', 'end_date', 'instructor_id', 'status'];
+    protected $fillable = ['title', 'description', 'price', 'start_date', 'end_date', 'duration_days', 'min_students', 'max_students', 'instructor_id', 'status', 'parent_id', 'group_name'];
+    
+    public function parent()
+    {
+        return $this->belongsTo(Course::class, 'parent_id');
+    }
+
+    public function instances()
+    {
+        return $this->hasMany(Course::class, 'parent_id');
+    }
 
     public function instructor()
     {
@@ -42,5 +52,15 @@ class Course extends Model
     public function grades()
     {
         return $this->hasMany(Grade::class);
+    }
+
+    public function assessments()
+    {
+        return $this->hasMany(Assessment::class);
+    }
+
+    public function payments()
+    {
+        return $this->hasMany(Payment::class);
     }
 }

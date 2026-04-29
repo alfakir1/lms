@@ -9,4 +9,8 @@ export const coursesApi = {
   delete: (id: number) => api.delete(`/courses/${id}`),
   enroll: (courseId: number) => api.post('/enrollments', { course_id: courseId }).then(r => (r.data as any).data || r.data),
   myEnrollments: () => api.get('/enrollments/my').then(r => (r.data as any).data || r.data),
+  updateProgress: (lessonId: number, lastPosition: number, percentWatched: number) => 
+    api.post('/lesson-progress', { lesson_id: lessonId, last_position: lastPosition, percent_watched: percentWatched }).then(r => r.data),
+  getCourseProgress: (courseId: number) => 
+    api.get(`/lesson-progress/course/${courseId}`).then(r => (r.data as any).data || r.data),
 };

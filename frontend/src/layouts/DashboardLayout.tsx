@@ -23,8 +23,20 @@ import {
   Moon,
   Sun,
   X,
+  ShieldCheck,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useQuery, useMutation } from '@tanstack/react-query';
+import api from '../api/client';
+
+interface Notification {
+  id: number;
+  type: string;
+  title: string;
+  message: string;
+  read_at: string | null;
+  created_at: string;
+}
 
 const DashboardLayout: React.FC = () => {
   const { user, logout } = useAuth();
@@ -34,6 +46,28 @@ const DashboardLayout: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const isRtl = dir === 'rtl';
+  const [showNotifications, setShowNotifications] = useState(false);
+
+  const { data: notifications = [], refetch: refetchNotifications } = useQuery<Notification[]>({
+    queryKey: ['notifications'],
+    queryFn: async () => {
+      const res = await api.get('/notifications');
+      return res.data;
+    },
+    refetchInterval: 30000, // Refetch every 30 seconds
+  });
+
+  const unreadCount = notifications.filter((n: Notification) => !n.read_at).length;
+
+  const markAllReadMutation = useMutation({
+    mutationFn: () => api.put('/notifications/read-all'),
+    onSuccess: () => refetchNotifications(),
+  });
+
+  const markReadMutation = useMutation({
+    mutationFn: (id: number) => api.put(`/notifications/${id}/read`),
+    onSuccess: () => refetchNotifications(),
+  });
 
   const handleLogout = async () => {
     await logout();
@@ -48,10 +82,12 @@ const DashboardLayout: React.FC = () => {
     { key: 'students',   icon: Users,             path: '/users',          roles: ['reception'] },
     { key: 'register',   icon: UserPlus,          path: '/register-student', roles: ['admin', 'reception'] },
     { key: 'assignments', icon: FileText,         path: '/assignments',    roles: ['instructor', 'student'] },
+    { key: 'assessments', icon: FileText,         path: '/assessments',    roles: ['instructor', 'student'] },
     { key: 'grades',      icon: GraduationCap,   path: '/grades',         roles: ['instructor', 'student'] },
     { key: 'attendance',  icon: CheckCircle2,     path: '/attendance',     roles: ['instructor', 'reception'] },
     { key: 'payments',   icon: CreditCard,        path: '/payments',       roles: ['admin', 'reception', 'student'] },
     { key: 'certificates', icon: Award,           path: '/certificates',   roles: ['admin', 'instructor', 'reception'] },
+    { key: 'settings',   icon: ShieldCheck,       path: '/settings',       roles: ['admin', 'instructor', 'student', 'reception'] },
   ].filter(item => item.roles.includes(user?.role ?? ''))
    .filter((item, idx, arr) => arr.findIndex(a => a.path === item.path) === idx);
 
@@ -128,7 +164,7 @@ const DashboardLayout: React.FC = () => {
               </div>
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-bold text-foreground truncate">{user?.name}</p>
-                <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-tighter">{user?.role}</p>
+                <p className="text-[11px] text-muted-foreground font-bold uppercase tracking-tighter">{user?.role}</p>
               </div>
             </div>
             <button
@@ -189,15 +225,67 @@ const DashboardLayout: React.FC = () => {
             </button>
 
             {/* Notifications */}
-            <button className="p-2.5 bg-muted hover:bg-muted/80 rounded-xl relative transition-all border border-border text-foreground group">
-              <Bell className="w-5 h-5 group-hover:shake transition-transform" />
-              <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-primary rounded-full border-2 border-card animate-pulse" />
-            </button>
+            <div className="relative">
+              <button 
+                onClick={() => setShowNotifications(!showNotifications)}
+                className="p-2.5 bg-muted hover:bg-muted/80 rounded-xl relative transition-all border border-border text-foreground group"
+              >
+                <Bell className="w-5 h-5 group-hover:shake transition-transform" />
+                {unreadCount > 0 && (
+                  <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-primary rounded-full border-2 border-card animate-pulse" />
+                )}
+              </button>
+
+              <AnimatePresence>
+                {showNotifications && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                    className={`absolute top-full mt-3 w-80 bg-card border border-border rounded-2xl shadow-2xl overflow-hidden z-50 ${isRtl ? 'left-0' : 'right-0'}`}
+                  >
+                    <div className="p-4 border-b border-border flex items-center justify-between">
+                      <h3 className="font-black text-sm text-foreground">الإشعارات</h3>
+                      {unreadCount > 0 && (
+                        <button 
+                          onClick={() => markAllReadMutation.mutate()}
+                          className="text-[10px] font-bold text-primary hover:underline"
+                        >
+                          تحديد الكل كمقروء
+                        </button>
+                      )}
+                    </div>
+                    <div className="max-h-96 overflow-y-auto custom-scrollbar">
+                      {notifications.length === 0 ? (
+                        <div className="p-8 text-center text-muted-foreground">
+                          <Bell className="w-8 h-8 mx-auto mb-2 opacity-20" />
+                          <p className="text-xs font-bold">لا توجد إشعارات حالياً</p>
+                        </div>
+                      ) : (
+                        notifications.map((n: Notification) => (
+                          <div 
+                            key={n.id} 
+                            onClick={() => !n.read_at && markReadMutation.mutate(n.id)}
+                            className={`p-4 border-b border-border/50 last:border-0 cursor-pointer transition-colors hover:bg-muted/30 ${!n.read_at ? 'bg-primary/5' : ''}`}
+                          >
+                            <p className="text-xs font-black text-foreground mb-1">{n.title}</p>
+                            <p className="text-[11px] text-muted-foreground leading-relaxed">{n.message}</p>
+                            <p className="text-[9px] text-muted-foreground/60 mt-2 font-bold uppercase tracking-tighter">
+                              {new Date(n.created_at).toLocaleTimeString(lang === 'ar' ? 'ar-EG' : 'en-US', { hour: '2-digit', minute: '2-digit' })}
+                            </p>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
 
             <div className="h-10 w-px bg-border mx-1 hidden sm:block" />
 
             {/* User Avatar */}
-            <Link to="/profile" className="flex items-center gap-3 pl-2 group cursor-pointer">
+            <Link to="/settings" className="flex items-center gap-3 pl-2 group cursor-pointer">
               <div className="hidden sm:block text-right">
                 <p className="text-xs font-black text-foreground leading-none">{user?.name}</p>
                 <p className="text-[10px] text-muted-foreground font-bold uppercase mt-1 tracking-tighter">{user?.role}</p>

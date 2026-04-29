@@ -57,3 +57,23 @@ export const useInstructors = () =>
       return users.filter((u: any) => u.role === 'instructor');
     },
   });
+
+export const useCourseProgress = (courseId: number) =>
+  useQuery({
+    queryKey: ['course-progress', courseId],
+    queryFn: () => coursesApi.getCourseProgress(courseId),
+    enabled: !!courseId,
+  });
+
+export const useUpdateProgress = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ lessonId, lastPosition, percentWatched }: { lessonId: number, lastPosition: number, percentWatched: number }) =>
+      coursesApi.updateProgress(lessonId, lastPosition, percentWatched),
+    onSuccess: (_, variables) => {
+      // Invalidate the specific course progress cache if we had a way to know courseId here,
+      // but usually we can just invalidate all course-progress to be safe, or let the player handle local state
+      qc.invalidateQueries({ queryKey: ['course-progress'] });
+    },
+  });
+};

@@ -5,6 +5,9 @@ import { useCourses } from '../../hooks/useCourses';
 import { BookOpen, FileText, CheckCircle, Plus, Users, Layout, ArrowUpRight, GraduationCap } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import api from '../../api/client';
+import { Submission } from '../../types';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import { useLang } from '../../context/LangContext';
 
@@ -13,13 +16,22 @@ const InstructorDashboard: React.FC = () => {
   const { lang, t } = useLang();
   const { data: statsData, isLoading: statsLoading } = useDashboardStats();
   const { data: courses, isLoading: coursesLoading } = useCourses();
+  
+  const { data: submissionsRes, isLoading: submissionsLoading } = useQuery<{ success: boolean, data: Submission[] }>({
+    queryKey: ['recent-submissions'],
+    queryFn: async () => {
+        const res = await api.get('/submissions');
+        return res.data;
+    }
+  });
+  const submissions = submissionsRes?.data || [];
 
   if (statsLoading || coursesLoading) return <LoadingSpinner />;
 
   const stats = [
     { name: lang === 'ar' ? 'كورساتي' : 'My Courses', value: statsData?.my_courses || 0, icon: BookOpen, color: 'primary' },
     { name: lang === 'ar' ? 'إجمالي الطلاب' : 'Total Students', value: statsData?.total_students || 0, icon: Users, color: 'secondary' },
-    { name: lang === 'ar' ? 'المهام المعلقة' : 'Pending Tasks', value: '0', icon: FileText, color: 'accent' },
+    { name: lang === 'ar' ? 'المهام المعلقة' : 'Pending Tasks', value: statsData?.pending_submissions || 0, icon: FileText, color: 'accent' },
     { name: lang === 'ar' ? 'التقييم العام' : 'Overall Rating', value: '4.8/5', icon: CheckCircle, color: 'primary' },
   ];
 
@@ -103,23 +115,47 @@ const InstructorDashboard: React.FC = () => {
         </div>
 
         {/* Task Submissions */}
-        <div className="premium-card">
+        <div className="premium-card flex flex-col">
           <div className="p-6 border-b border-border flex items-center justify-between bg-muted/30">
             <div className="flex items-center gap-3">
                <div className="w-8 h-8 bg-accent/10 rounded-lg flex items-center justify-center">
                   <FileText className="w-4 h-4 text-accent" />
                </div>
-               <h2 className="font-black text-foreground tracking-tight">{lang === 'ar' ? 'تسليمات المهام' : 'Submissions'}</h2>
+               <h2 className="font-black text-foreground tracking-tight">{lang === 'ar' ? 'أحدث التسليمات' : 'Recent Submissions'}</h2>
             </div>
             <Link to="/assignments" className="text-primary text-xs font-black uppercase hover:underline">{lang === 'ar' ? 'عرض الكل' : 'View All'}</Link>
           </div>
-          <div className="p-8 flex flex-col items-center justify-center text-center h-[300px]">
-             <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mb-4">
-                <FileText className="w-8 h-8 text-muted-foreground/30" />
-             </div>
-             <p className="text-sm font-bold text-muted-foreground italic">
-               {lang === 'ar' ? 'لا توجد تسليمات جديدة حالياً.' : 'No new submissions at the moment.'}
-             </p>
+          <div className="flex-1 p-4 space-y-3 overflow-y-auto max-h-[400px]">
+            {submissionsLoading ? (
+                <div className="flex justify-center py-12"><div className="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full" /></div>
+            ) : submissions?.length === 0 ? (
+                <div className="py-12 flex flex-col items-center justify-center text-center opacity-40">
+                   <FileText className="w-12 h-12 mb-4" />
+                   <p className="text-sm font-bold">{lang === 'ar' ? 'لا توجد تسليمات جديدة.' : 'No new submissions.'}</p>
+                </div>
+            ) : (
+                submissions?.slice(0, 5).map(sub => (
+                    <div key={sub.id} className="p-4 bg-muted/20 border border-transparent hover:border-border rounded-2xl transition-all group flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-full bg-card border border-border flex items-center justify-center font-bold text-slate-400 text-xs">
+                                {sub.student?.user?.name?.[0]}
+                            </div>
+                            <div>
+                                <p className="font-bold text-foreground text-sm line-clamp-1">{sub.student?.user?.name}</p>
+                                <p className="text-[10px] text-muted-foreground font-medium">{sub.assignment?.title}</p>
+                            </div>
+                        </div>
+                        <div className="flex flex-col items-end gap-1">
+                            {sub.status === 'graded' ? (
+                                <span className="bg-emerald-500/10 text-emerald-500 text-[10px] font-black px-2 py-0.5 rounded uppercase tracking-tighter">Graded</span>
+                            ) : (
+                                <span className="bg-amber-500/10 text-amber-500 text-[10px] font-black px-2 py-0.5 rounded uppercase tracking-tighter">Pending</span>
+                            )}
+                            <span className="text-[9px] text-muted-foreground">{new Date(sub.submitted_at).toLocaleDateString('ar-EG')}</span>
+                        </div>
+                    </div>
+                ))
+            )}
           </div>
         </div>
       </div>

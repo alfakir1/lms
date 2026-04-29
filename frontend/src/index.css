@@ -62,9 +62,7 @@
 }
 
 @layer base {
-  * {
-    /* Borders are handled via explicit classes to avoid circular dependency issues in some environments */
-  }
+
   body {
     @apply bg-background text-foreground antialiased selection:bg-primary/20 selection:text-primary transition-colors duration-500;
     font-feature-settings: "rlig" 1, "calt" 1;
@@ -131,4 +129,22 @@
 [dir="ltr"] .sidebar-icon {
   @apply mr-3 ml-0;
 }
-@media print { .print-hide { display: none !important; } body { background: white !important; margin: 0; padding: 0; } }
+@media print {
+  body {
+    background: white !important;
+    margin: 0;
+    padding: 0;
+    overflow: visible !important;
+  }
+  .print-hide, .no-print {
+    display: none !important;
+  }
+  .question {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+  .page-break {
+    page-break-before: always;
+    break-before: page;
+  }
+}
