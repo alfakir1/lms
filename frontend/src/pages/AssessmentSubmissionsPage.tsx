@@ -46,6 +46,17 @@ const AssessmentSubmissionsPage: React.FC = () => {
         }, 300);
     };
 
+    const safeParse = (data: any) => {
+        if (typeof data === 'string') {
+            try {
+                return JSON.parse(data);
+            } catch (e) {
+                return {};
+            }
+        }
+        return data || {};
+    };
+
     if (isLoading) return <LoadingSpinner />;
 
     const assessment = data?.assessment;
@@ -83,13 +94,13 @@ const AssessmentSubmissionsPage: React.FC = () => {
                                     </tr>
                                 )}
                                 {submissions.map((sub: any) => {
-                                    const parsedAnswers = sub.answers ? JSON.parse(sub.answers) : {};
+                                    const parsedAnswers = safeParse(sub.answers);
                                     return (
                                         <tr key={sub.id} className="border-b hover:bg-slate-50">
                                             <td className="p-4">{parsedAnswers.student_name || sub.student?.user?.name || 'غير معروف'}</td>
                                             <td className="p-4 text-sm text-slate-500">{new Date(sub.submitted_at).toLocaleString('ar-EG')}</td>
                                             <td className="p-4">
-                                                {parsedAnswers.auto_mcq_score} / {parsedAnswers.max_mcq_score}
+                                                {parsedAnswers.auto_mcq_score ?? 0} / {parsedAnswers.max_mcq_score ?? 0}
                                             </td>
                                             <td className="p-4 font-bold">
                                                 {sub.grade !== null ? <span className="text-emerald-600">{sub.grade}</span> : <span className="text-amber-600">غير مقيم</span>}
@@ -157,20 +168,22 @@ const AssessmentSubmissionsPage: React.FC = () => {
 
                         <div className="grid grid-cols-2 gap-6 mb-10 text-sm font-bold border-b border-slate-300 pb-6">
                             <div className="space-y-2">
-                                <div className="flex gap-2"><span className="text-slate-500 w-24">Student:</span> <span className="uppercase">{JSON.parse(selectedSubmission.answers)?.student_name || selectedSubmission.student?.user?.name}</span></div>
+                                <div className="flex gap-2"><span className="text-slate-500 w-24">Student:</span> <span className="uppercase">{safeParse(selectedSubmission.answers)?.student_name || selectedSubmission.student?.user?.name}</span></div>
                                 <div className="flex gap-2"><span className="text-slate-500 w-24">Exam:</span> <span className="uppercase">{assessment.title}</span></div>
                             </div>
                             <div className="space-y-2 text-right">
-                                <div className="flex justify-end gap-2"><span className="text-slate-500 w-32 text-left">Auto MCQ Score:</span> <span>{JSON.parse(selectedSubmission.answers)?.auto_mcq_score} / {JSON.parse(selectedSubmission.answers)?.max_mcq_score}</span></div>
+                                <div className="flex justify-end gap-2"><span className="text-slate-500 w-32 text-left">Auto MCQ Score:</span> <span>{safeParse(selectedSubmission.answers)?.auto_mcq_score ?? 0} / {safeParse(selectedSubmission.answers)?.max_mcq_score ?? 0}</span></div>
                                 <div className="flex justify-end gap-2"><span className="text-slate-500 w-32 text-left">Final Grade:</span> <span className="text-lg text-emerald-700">{selectedSubmission.grade !== null ? selectedSubmission.grade : 'Not Graded'}</span></div>
                             </div>
                         </div>
 
                         <div className="space-y-8">
                             {assessment.questions?.map((q: any, idx: number) => {
-                                const studentResponses = JSON.parse(selectedSubmission.answers)?.responses || {};
+                                const submissionAnswers = safeParse(selectedSubmission.answers);
+                                const studentResponses = submissionAnswers?.responses || {};
                                 const studentAnswer = studentResponses[q.id];
                                 const isCorrect = q.question_type === 'mcq' && studentAnswer?.toLowerCase() === q.correct_answer?.toLowerCase();
+                                const options = safeParse(q.options);
 
                                 return (
                                     <React.Fragment key={q.id}>
@@ -190,9 +203,9 @@ const AssessmentSubmissionsPage: React.FC = () => {
                                             )}
                                         </div>
                                         
-                                        {q.question_type === 'mcq' && q.options ? (
+                                        {q.question_type === 'mcq' && Array.isArray(options) ? (
                                             <div className="pl-8 space-y-3">
-                                                {JSON.parse(q.options).map((opt: string, i: number) => {
+                                                {options.map((opt: string, i: number) => {
                                                     const isStudentPick = studentAnswer === opt;
                                                     const isActualCorrect = q.correct_answer === opt;
                                                     

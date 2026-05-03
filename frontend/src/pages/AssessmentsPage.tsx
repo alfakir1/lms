@@ -82,6 +82,17 @@ const AssessmentsPage: React.FC = () => {
         }
     }, [printAssessment]);
 
+    const safeParseOptions = (options: any) => {
+        if (typeof options === 'string') {
+            try {
+                return JSON.parse(options);
+            } catch (e) {
+                return [];
+            }
+        }
+        return Array.isArray(options) ? options : [];
+    };
+
     return (
         <div className="relative">
             {/* Normal UI */}
@@ -125,7 +136,7 @@ const AssessmentsPage: React.FC = () => {
                                     {assessment.status === 'draft' && <span className="text-xs bg-slate-100 px-2 py-1 rounded">مسودة</span>}
                                     {assessment.auto_generated && <span title="مولد بالذكاء الاصطناعي"><Brain className="w-4 h-4 text-purple-500" /></span>}
                                 </h3>
-                                <p className="text-sm text-slate-500 mt-1">المدة: {assessment.duration_minutes} دقيقة | النوع: {assessment.type}</p>
+                                <p className="text-sm text-slate-500 mt-1">المدة: {assessment.duration_minutes} دقيقة | النوع: {assessment.type} | الأسئلة: {assessment.questions?.length || 0}</p>
                                 
                                 {isStudent && assessment.is_locked && (
                                     <div className="mt-2 flex items-center gap-1 text-xs text-amber-600 bg-amber-50 p-2 rounded">
@@ -275,33 +286,36 @@ const AssessmentsPage: React.FC = () => {
                     </div>
 
                     <div className="space-y-8">
-                        {printAssessment.questions?.map((q: any, idx: number) => (
-                            <React.Fragment key={q.id}>
-                                <div className="question mb-6">
-                                    <h3 className="font-bold text-lg mb-4 flex items-start gap-2">
-                                        <span className="text-slate-400">Q{idx + 1}.</span> {q.question_text}
-                                    </h3>
-                                    
-                                    {q.question_type === 'mcq' && q.options ? (
-                                        <div className="pl-8 space-y-3">
-                                            {JSON.parse(q.options).map((opt: string, i: number) => (
-                                                <div key={i} className="flex items-center gap-3">
-                                                    <div className="w-5 h-5 border-2 border-slate-400 rounded-full"></div>
-                                                    <span className="font-medium text-slate-700">{opt}</span>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    ) : (
-                                        <div className="pl-8 mt-4">
-                                            <div className="w-full h-32 border-2 border-dashed border-slate-300 rounded-xl"></div>
-                                        </div>
+                        {printAssessment.questions?.map((q: any, idx: number) => {
+                            const options = safeParseOptions(q.options);
+                            return (
+                                <React.Fragment key={q.id}>
+                                    <div className="question mb-6">
+                                        <h3 className="font-bold text-lg mb-4 flex items-start gap-2">
+                                            <span className="text-slate-400">Q{idx + 1}.</span> {q.question_text}
+                                        </h3>
+                                        
+                                        {q.question_type === 'mcq' && options.length > 0 ? (
+                                            <div className="pl-8 space-y-3">
+                                                {options.map((opt: string, i: number) => (
+                                                    <div key={i} className="flex items-center gap-3">
+                                                        <div className="w-5 h-5 border-2 border-slate-400 rounded-full"></div>
+                                                        <span className="font-medium text-slate-700">{opt}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <div className="pl-8 mt-4">
+                                                <div className="w-full h-32 border-2 border-dashed border-slate-300 rounded-xl"></div>
+                                            </div>
+                                        )}
+                                    </div>
+                                    {idx > 0 && idx % 3 === 0 && (
+                                        <div className="page-break"></div>
                                     )}
-                                </div>
-                                {idx > 0 && idx % 3 === 0 && (
-                                    <div className="page-break"></div>
-                                )}
-                            </React.Fragment>
-                        ))}
+                                </React.Fragment>
+                            );
+                        })}
                     </div>
                 </div>
             )}

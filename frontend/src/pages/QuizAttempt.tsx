@@ -137,6 +137,17 @@ const QuizAttempt: React.FC = () => {
         return `${m}:${s < 10 ? '0' : ''}${s}`;
     };
 
+    const safeParseOptions = (options: any) => {
+        if (typeof options === 'string') {
+            try {
+                return JSON.parse(options);
+            } catch (e) {
+                return [];
+            }
+        }
+        return Array.isArray(options) ? options : [];
+    };
+
     return (
         <div 
             className={`max-w-4xl mx-auto space-y-8 py-8 px-4 ${!isSubmitted ? 'select-none' : ''}`}
@@ -228,55 +239,58 @@ const QuizAttempt: React.FC = () => {
 
             {/* Questions Section */}
             <div className="space-y-8">
-                {questions.map((q: any, idx: number) => (
-                    <React.Fragment key={q.id}>
-                        <div className="question bg-white p-8 rounded-xl border border-slate-200 shadow-sm relative overflow-hidden group">
-                            <div className="absolute left-0 top-0 bottom-0 w-1 bg-slate-200 group-hover:bg-slate-800 transition-colors" />
+                {questions.map((q: any, idx: number) => {
+                    const options = safeParseOptions(q.options);
+                    return (
+                        <React.Fragment key={q.id}>
+                            <div className="question bg-white p-8 rounded-xl border border-slate-200 shadow-sm relative overflow-hidden group">
+                                <div className="absolute left-0 top-0 bottom-0 w-1 bg-slate-200 group-hover:bg-slate-800 transition-colors" />
+                                
+                                <div className="flex items-start gap-4 mb-6">
+                                <span className="font-black text-xl text-slate-300">Q{idx + 1}</span>
+                                <h3 className="font-bold text-lg leading-relaxed text-slate-800 mt-0.5">
+                                    {q.question_text}
+                                </h3>
+                            </div>
                             
-                            <div className="flex items-start gap-4 mb-6">
-                            <span className="font-black text-xl text-slate-300">Q{idx + 1}</span>
-                            <h3 className="font-bold text-lg leading-relaxed text-slate-800 mt-0.5">
-                                {q.question_text}
-                            </h3>
-                        </div>
-                        
-                        {q.question_type === 'mcq' && q.options ? (
-                            <div className="space-y-3 pl-10">
-                                {q.options.map((opt: string, i: number) => (
-                                    <label key={i} className={`flex items-center gap-4 p-4 border-2 rounded-xl cursor-pointer transition-all ${answers[q.id] === opt ? 'border-slate-800 bg-slate-50' : 'border-slate-100 hover:border-slate-300'}`}>
-                                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${answers[q.id] === opt ? 'border-slate-800' : 'border-slate-300'}`}>
-                                            {answers[q.id] === opt && <div className="w-2.5 h-2.5 bg-slate-800 rounded-full" />}
-                                        </div>
-                                        <input 
-                                            type="radio" 
-                                            name={`q_${q.id}`} 
-                                            value={opt}
-                                            checked={answers[q.id] === opt}
-                                            onChange={(e) => setAnswers(prev => ({ ...prev, [q.id]: e.target.value }))}
-                                            className="hidden"
-                                            disabled={isSubmitted}
-                                        />
-                                        <span className="font-medium text-slate-700 text-lg">{opt}</span>
-                                    </label>
-                                ))}
+                            {q.question_type === 'mcq' && options.length > 0 ? (
+                                <div className="space-y-3 pl-10">
+                                    {options.map((opt: string, i: number) => (
+                                        <label key={i} className={`flex items-center gap-4 p-4 border-2 rounded-xl cursor-pointer transition-all ${answers[q.id] === opt ? 'border-slate-800 bg-slate-50' : 'border-slate-100 hover:border-slate-300'}`}>
+                                            <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${answers[q.id] === opt ? 'border-slate-800' : 'border-slate-300'}`}>
+                                                {answers[q.id] === opt && <div className="w-2.5 h-2.5 bg-slate-800 rounded-full" />}
+                                            </div>
+                                            <input 
+                                                type="radio" 
+                                                name={`q_${q.id}`} 
+                                                value={opt}
+                                                checked={answers[q.id] === opt}
+                                                onChange={(e) => setAnswers(prev => ({ ...prev, [q.id]: e.target.value }))}
+                                                className="hidden"
+                                                disabled={isSubmitted}
+                                            />
+                                            <span className="font-medium text-slate-700 text-lg">{opt}</span>
+                                        </label>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="pl-10">
+                                    <textarea 
+                                        className="w-full border-2 border-slate-200 rounded-xl p-4 min-h-[150px] focus:border-slate-800 outline-none resize-y text-lg text-slate-700 bg-slate-50 focus:bg-white transition-colors disabled:opacity-80"
+                                        placeholder="Type your answer here..."
+                                        value={answers[q.id] || ''}
+                                        onChange={(e) => setAnswers(prev => ({ ...prev, [q.id]: e.target.value }))}
+                                        disabled={isSubmitted}
+                                    />
+                                </div>
+                            )}
                             </div>
-                        ) : (
-                            <div className="pl-10">
-                                <textarea 
-                                    className="w-full border-2 border-slate-200 rounded-xl p-4 min-h-[150px] focus:border-slate-800 outline-none resize-y text-lg text-slate-700 bg-slate-50 focus:bg-white transition-colors disabled:opacity-80"
-                                    placeholder="Type your answer here..."
-                                    value={answers[q.id] || ''}
-                                    onChange={(e) => setAnswers(prev => ({ ...prev, [q.id]: e.target.value }))}
-                                    disabled={isSubmitted}
-                                />
-                            </div>
-                        )}
-                        </div>
-                        {idx > 0 && idx % 3 === 0 && (
-                            <div className="page-break"></div>
-                        )}
-                    </React.Fragment>
-                ))}
+                            {idx > 0 && idx % 3 === 0 && (
+                                <div className="page-break"></div>
+                            )}
+                        </React.Fragment>
+                    );
+                })}
             </div>
 
             {!isSubmitted && (
