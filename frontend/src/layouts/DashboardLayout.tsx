@@ -24,6 +24,8 @@ import {
   Sun,
   X,
   ShieldCheck,
+  MessageSquare,
+  Sparkles,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useQuery, useMutation } from '@tanstack/react-query';
@@ -83,11 +85,13 @@ const DashboardLayout: React.FC = () => {
     { key: 'register',   icon: UserPlus,          path: '/register-student', roles: ['admin', 'reception'] },
     { key: 'assignments', icon: FileText,         path: '/assignments',    roles: ['instructor', 'student'] },
     { key: 'assessments', icon: FileText,         path: '/assessments',    roles: ['instructor', 'student'] },
+    { key: 'ai_assessment', icon: Sparkles,       path: '/ai/generate-assessment', roles: ['instructor'] },
     { key: 'grades',      icon: GraduationCap,   path: '/grades',         roles: ['instructor', 'student'] },
     { key: 'attendance',  icon: CheckCircle2,     path: '/attendance',     roles: ['instructor', 'reception'] },
     { key: 'payments',   icon: CreditCard,        path: '/payments',       roles: ['admin', 'reception', 'student'] },
     { key: 'certificates', icon: Award,           path: '/certificates',   roles: ['admin', 'instructor', 'reception'] },
-    { key: 'settings',   icon: ShieldCheck,       path: '/settings',       roles: ['admin', 'instructor', 'student', 'reception'] },
+    { key: 'messages',     icon: MessageSquare,    path: '/chat',           roles: ['admin', 'instructor', 'student', 'reception'] },
+    { key: 'settings',     icon: ShieldCheck,       path: '/settings',       roles: ['admin', 'instructor', 'student', 'reception'] },
   ].filter(item => item.roles.includes(user?.role ?? ''))
    .filter((item, idx, arr) => arr.findIndex(a => a.path === item.path) === idx);
 

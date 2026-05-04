@@ -49,6 +49,8 @@ class AuthController extends Controller
                 'login_id' => $user->login_id,
                 'email' => $user->email,
                 'role' => $user->role,
+                'theme' => $user->theme,
+                'language' => $user->language,
                 'instructor' => $user->instructor ? ['id' => $user->instructor->id] : null,
                 'student' => $user->student ? ['id' => $user->student->id] : null,
             ],
@@ -77,8 +79,13 @@ class AuthController extends Controller
         $user = $request->user();
 
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users,email,' . $user->id,
+            'name' => 'sometimes|required|string|max:255',
+            'email' => 'sometimes|required|string|email|max:255|unique:users,email,' . $user->id,
+            'profile_image' => 'nullable|string',
+            'linkedin_url' => 'nullable|string',
+            'theme' => 'nullable|string|in:light,dark',
+            'language' => 'nullable|string|in:ar,en',
+            'notifications_enabled' => 'nullable|boolean',
         ]);
 
         $user->update($validated);

@@ -10,6 +10,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 
+use App\Http\Resources\Api\UserResource;
+
 class UserController extends Controller
 {
     public function index(Request $request)
@@ -26,8 +28,9 @@ class UserController extends Controller
             $query->where('role', $request->role);
         }
 
-        return response()->json($query->with(['instructor', 'student'])->get());
+        return UserResource::collection($query->with(['instructor', 'student'])->paginate(15));
     }
+
 
     public function store(Request $request)
     {
@@ -74,16 +77,18 @@ class UserController extends Controller
         // Load relationships so frontend can access student.id / instructor.id
         $newUser->load(['student', 'instructor']);
 
-        return response()->json($newUser, 201);
+        return (new UserResource($newUser))->additional(['message' => 'User created successfully']);
     }
+
 
     public function show(Request $request, User $user)
     {
         if ($request->user()->role === 'reception' && $user->role !== 'student') {
             abort(403, 'Unauthorized.');
         }
-        return response()->json($user->load(['student', 'instructor']));
+        return new UserResource($user->load(['student', 'instructor']));
     }
+
 
     public function update(Request $request, User $user)
     {
@@ -112,8 +117,9 @@ class UserController extends Controller
 
         $user->update($validated);
 
-        return response()->json($user->load(['student', 'instructor']));
+        return new UserResource($user->load(['student', 'instructor']));
     }
+
 
     public function destroy(Request $request, User $user)
     {

@@ -8,7 +8,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
 import api from '../api/client';
 import { Course, Lesson } from '../types';
-import { useCourseProgress, useUpdateProgress } from '../hooks/useCourses';
+import { useCourse, useCourseProgress, useUpdateProgress } from '../hooks/useCourses';
 import VideoPlayer from '../components/VideoPlayer';
 
 const CoursePlayer: React.FC = () => {
@@ -18,16 +18,7 @@ const CoursePlayer: React.FC = () => {
   const [currentLessonIndex, setCurrentLessonIndex] = useState(0);
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
-  const { data: course, isLoading: isCourseLoading } = useQuery<Course>({
-    queryKey: ['course-player', id],
-    queryFn: async () => {
-      console.log('Fetching course data for ID:', id);
-      const res = await api.get(`/courses/${id}`);
-      console.log('Course API Response:', res.data);
-      return res.data.data;
-    },
-    enabled: !!id,
-  });
+  const { data: course, isLoading: isCourseLoading } = useCourse(Number(id));
 
   const { data: progressData } = useCourseProgress(Number(id));
   const updateProgress = useUpdateProgress();

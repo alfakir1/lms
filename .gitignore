@@ -1,0 +1,34 @@
+# Dependencies
+node_modules/
+backend/vendor/
+frontend/node_modules/
+
+# Environment files
+.env
+backend/.env
+frontend/.env
+
+# Build outputs
+dist/
+backend/public/build/
+backend/public/storage/
+backend/storage/*.key
+backend/storage/pail/
+
+# IDEs
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+backend/storage/logs/
+
+# Misc
+backend/.phpunit.result.cache
+backend/Homestead.json
+backend/Homestead.yaml
+rustup-init.exe
+test.txt
+ttitute2

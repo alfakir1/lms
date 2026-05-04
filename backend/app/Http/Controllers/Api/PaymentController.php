@@ -49,7 +49,7 @@ class PaymentController extends Controller
         });
 
         return response()->json([
-            'success' => true,
+            'status' => 'success',
             'data'    => $payments,
         ]);
     }
@@ -107,7 +107,7 @@ class PaymentController extends Controller
         $payment->load(['student.user', 'course']);
 
         return response()->json([
-            'success' => true,
+            'status' => 'success',
             'data'    => [
                 'id'             => $payment->id,
                 'student_id'     => $payment->student_id,
@@ -124,6 +124,7 @@ class PaymentController extends Controller
                 ] : null,
                 'course'         => $payment->course,
             ],
+            'message' => 'Payment recorded successfully'
         ], 201);
     }
 
@@ -153,8 +154,9 @@ class PaymentController extends Controller
         });
 
         return response()->json([
-            'success' => true,
+            'status' => 'success',
             'data'    => $payment,
+            'message' => 'Payment approved successfully'
         ]);
     }
 }

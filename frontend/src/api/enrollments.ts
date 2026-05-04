@@ -1,4 +1,4 @@
-import api from './client';
+import api, { unwrapPaginatedData } from './client';
 
 export interface Enrollment {
   id: number;
@@ -9,6 +9,7 @@ export interface Enrollment {
   course?: {
     id: number;
     title: string;
+    progress?: number;
   };
   student?: {
     id: number;
@@ -21,7 +22,7 @@ export interface Enrollment {
 }
 
 export const enrollmentsApi = {
-  getAll: (params?: { course_id?: number }) => api.get('/enrollments', { params }).then(r => (r.data as any).data || r.data),
+  getAll: (params?: { course_id?: number }) => api.get('/enrollments', { params }).then(r => unwrapPaginatedData<Enrollment>(r.data)),
   updateStatus: (id: number, status: string) => api.put(`/enrollments/${id}`, { status }),
 };
 

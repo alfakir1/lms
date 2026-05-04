@@ -10,7 +10,7 @@ interface Lesson {
     title: string;
     content?: string;
     video_url?: string;
-    video_type: 'html5' | 'youtube' | 'vimeo' | 'file';
+    video_type?: 'html5' | 'youtube' | 'vimeo' | 'file';
     duration?: number;
     order: number;
     video_file?: File; // Added for uploads

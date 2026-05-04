@@ -301,33 +301,33 @@ const Assignments: React.FC = () => {
                     <form onSubmit={(e) => { e.preventDefault(); saveAssignmentMutation.mutate(editingAssignment); }} className="space-y-4">
                         <div className="space-y-1">
                             <label className="text-sm font-bold text-slate-700">عنوان المهمة</label>
-                            <input required className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm" value={editingAssignment?.title || ''} onChange={e => setEditingAssignment(p => ({...p!, title: e.target.value}))} />
+                            <input required className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm" value={editingAssignment?.title || ''} onChange={e => setEditingAssignment((p: any) => ({...p!, title: e.target.value}))} />
                         </div>
                         <div className="space-y-1">
                             <label className="text-sm font-bold text-slate-700">وصف المهمة</label>
-                            <textarea required className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm resize-none" rows={3} value={editingAssignment?.description || ''} onChange={e => setEditingAssignment(p => ({...p!, description: e.target.value}))} />
+                            <textarea required className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm resize-none" rows={3} value={editingAssignment?.description || ''} onChange={e => setEditingAssignment((p: any) => ({...p!, description: e.target.value}))} />
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-1">
                                 <label className="text-sm font-bold text-slate-700">موعد التسليم</label>
-                                <input required type="date" className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm" value={editingAssignment?.deadline?.split(' ')[0] || editingAssignment?.due_date?.split(' ')[0] || ''} onChange={e => setEditingAssignment(p => ({...p!, deadline: e.target.value}))} />
+                                <input required type="date" className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm" value={editingAssignment?.deadline?.split(' ')[0] || editingAssignment?.due_date?.split(' ')[0] || ''} onChange={e => setEditingAssignment((p: any) => ({...p!, deadline: e.target.value}))} />
                             </div>
                             <div className="space-y-1">
                                 <label className="text-sm font-bold text-slate-700">الدرجة القصوى</label>
-                                <input required type="number" className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm" value={editingAssignment?.max_grade || 100} onChange={e => setEditingAssignment(p => ({...p!, max_grade: Number(e.target.value)}))} />
+                                <input required type="number" className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm" value={editingAssignment?.max_grade || 100} onChange={e => setEditingAssignment((p: any) => ({...p!, max_grade: Number(e.target.value)}))} />
                             </div>
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-1">
                                 <label className="text-sm font-bold text-slate-700">الكورس</label>
-                                <select required className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm" value={editingAssignment?.course_id || ''} onChange={e => setEditingAssignment(p => ({...p!, course_id: Number(e.target.value), lesson_id: null}))}>
+                                <select required className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm" value={editingAssignment?.course_id || ''} onChange={e => setEditingAssignment((p: any) => ({...p!, course_id: Number(e.target.value), lesson_id: null}))}>
                                     <option value="">اختر الكورس...</option>
                                     {instructorCourses.map(c => <option key={c.id} value={c.id}>{c.title}</option>)}
                                 </select>
                             </div>
                             <div className="space-y-1">
                                 <label className="text-sm font-bold text-slate-700">الدرس (اختياري)</label>
-                                <select className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm" value={editingAssignment?.lesson_id || ''} onChange={e => setEditingAssignment(p => ({...p!, lesson_id: e.target.value ? Number(e.target.value) : null}))}>
+                                <select className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm" value={editingAssignment?.lesson_id || ''} onChange={e => setEditingAssignment((p: any) => ({...p!, lesson_id: e.target.value ? Number(e.target.value) : null}))}>
                                     <option value="">عام (لا يوجد درس محدد)</option>
                                     {instructorCourses.find(c => c.id === Number(editingAssignment?.course_id))?.lessons?.map((l: any) => (
                                         <option key={l.id} value={l.id}>{l.title}</option>
@@ -338,7 +338,7 @@ const Assignments: React.FC = () => {
                         <div className="space-y-1">
                             <label className="text-sm font-bold text-slate-700">ملف المهمة (اختياري)</label>
                             <input type="file" className="w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20" 
-                                onChange={e => setEditingAssignment(p => ({...p!, assignment_file: e.target.files?.[0]}))} 
+                                onChange={e => setEditingAssignment((p: any) => ({...p!, assignment_file: e.target.files?.[0]}))} 
                             />
                         </div>
                         <Button type="submit" className="w-full py-4 rounded-2xl" loading={saveAssignmentMutation.isPending}>حفظ المهمة</Button>

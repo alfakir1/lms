@@ -8,6 +8,8 @@ import { Link } from 'react-router-dom';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import { useLang } from '../../context/LangContext';
 
+import { DashboardSkeleton } from '../../components/ui/Skeleton';
+
 const AdminDashboard: React.FC = () => {
   const { user } = useAuth();
   const { lang, t, dir } = useLang();
@@ -16,8 +18,9 @@ const AdminDashboard: React.FC = () => {
   const { data: users, isLoading: usersLoading } = useUsers();
   const { data: allPayments, isLoading: paymentsLoading } = usePayments();
   const approveMutation = useApprovePayment();
+  const { dir: langDir } = useLang();
 
-  if (statsLoading || usersLoading || paymentsLoading) return <LoadingSpinner />;
+  if (statsLoading || usersLoading || paymentsLoading) return <DashboardSkeleton />;
 
   const stats = [
     { name: t('total_users') || (lang === 'ar' ? 'إجمالي المستخدمين' : 'Total Users'), value: statsData?.total_users || 0, icon: Users, color: 'primary', trend: '+12%' },
@@ -26,8 +29,8 @@ const AdminDashboard: React.FC = () => {
     { name: t('total_enrollments') || (lang === 'ar' ? 'عمليات التسجيل' : 'Enrollments'), value: statsData?.total_enrollments || 0, icon: TrendingUp, color: 'primary', trend: 'Growing' },
   ];
 
-  const pendingPayments = allPayments?.filter((p: any) => p.status === 'pending') || [];
-  const recentUsers = users?.slice(-5).reverse();
+  const pendingPayments = Array.isArray(allPayments) ? allPayments.filter((p: any) => p.status === 'pending') : [];
+  const recentUsers = Array.isArray(users) ? users.slice(-5).reverse() : [];
 
   return (
     <div className="space-y-10 pb-10">

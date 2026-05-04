@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Star, Clock, Filter, Search, Plus, Calendar, Users, Edit2, Archive, BookOpen } from 'lucide-react';
 import { useCourses, useCreateCourse, useInstructors, useUpdateCourse } from '../hooks/useCourses';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 import { Link } from 'react-router-dom';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
 import Button from '../components/ui/Button';
@@ -10,12 +11,16 @@ import Modal from '../components/ui/Modal';
 import Input from '../components/ui/Input';
 import api from '../api/client';
 
+import { CourseListSkeleton, Skeleton } from '../components/ui/Skeleton';
+import { EmptyState } from '../components/ui/EmptyState';
+
 const CoursesList: React.FC = () => {
   const { user } = useAuth();
-  const { data: courses, isLoading } = useCourses();
-  const { data: instructors } = useInstructors();
+  const { data: courses, isLoading, error } = useCourses();
+  const { data: instructors } = useInstructors(user?.role === 'admin');
   const createMutation = useCreateCourse();
   const updateMutation = useUpdateCourse();
+  const { success: showSuccess } = useToast();
   
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
@@ -39,7 +44,10 @@ const CoursesList: React.FC = () => {
 
   const [activeFilter, setActiveFilter] = useState<'all' | 'active' | 'upcoming' | 'completed' | 'archived'>('all');
 
-  if (isLoading) return <LoadingSpinner />;
+  if (isLoading) return <CourseListSkeleton />;
+  if (error) {
+    return <div className="p-6 bg-white rounded-2xl border border-red-100 text-red-600">تعذر تحميل الكورسات. يرجى المحاولة مرة أخرى.</div>;
+  }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -58,6 +66,7 @@ const CoursesList: React.FC = () => {
     if (isEditMode && selectedCourseId) {
         updateMutation.mutate({ id: selectedCourseId, data: payload }, {
             onSuccess: () => {
+                showSuccess('تم تحديث الكورس بنجاح');
                 setIsModalOpen(false);
                 resetForm();
             }
@@ -65,6 +74,7 @@ const CoursesList: React.FC = () => {
     } else {
         createMutation.mutate(payload, { 
             onSuccess: () => {
+                showSuccess('تم إنشاء الكورس بنجاح');
                 setIsModalOpen(false);
                 resetForm();
             }
@@ -101,13 +111,13 @@ const CoursesList: React.FC = () => {
       setIsModalOpen(true);
   };
 
-  const filteredCourses = courses?.filter(c => {
+  const filteredCourses = (courses || []).filter(c => {
       if (activeFilter === 'all') return c.status !== 'archived' || user?.role === 'admin';
       return c.status === activeFilter;
   });
 
   const canAddCourse = user?.role === 'admin';
-  const masterCourses = courses?.filter(c => !c.parent_id);
+  const masterCourses = (courses || []).filter(c => !c.parent_id);
 
   const statusOptions = [
       { value: 'all', label: 'الكل' },
@@ -200,9 +210,15 @@ const CoursesList: React.FC = () => {
           </motion.div>
         ))}
         {filteredCourses?.length === 0 && (
-          <div className="col-span-full py-20 text-center bg-slate-50 rounded-3xl border-2 border-dashed border-slate-200">
-              <BookOpen className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-              <p className="text-slate-500 font-bold">لا توجد كورسات في هذا التصنيف.</p>
+          <div className="col-span-full py-10">
+            <EmptyState 
+              icon={BookOpen} 
+              title="لا توجد كورسات" 
+              description="لم نتمكن من العثور على أي كورسات تطابق التصنيف المختار حالياً."
+              action={canAddCourse && (
+                <Button variant="ghost" onClick={() => setIsModalOpen(true)}>إضافة أول كورس</Button>
+              )}
+            />
           </div>
         )}
       </div>

@@ -23,6 +23,7 @@ Route::post('/login', [AuthController::class, 'login'])->name('login');
 // Courses — public read
 Route::get('/courses',          [CourseController::class, 'index']);
 Route::get('/courses/{course}', [CourseController::class, 'show']);
+Route::get('/courses/{course}/reviews', [\App\Http\Controllers\Api\ReviewController::class, 'index']);
 
 /* ══════════════════════════════════════════
    ALL AUTHENTICATED USERS
@@ -41,6 +42,11 @@ Route::middleware('auth:sanctum')->group(function () {
     // Certificates
     Route::get('/certificates', [\App\Http\Controllers\Api\CertificateController::class, 'index']);
     Route::get('/certificates/{certificate}', [\App\Http\Controllers\Api\CertificateController::class, 'show']);
+
+    // Chat
+    Route::get('/chat/conversations', [\App\Http\Controllers\Api\ChatController::class, 'index']);
+    Route::get('/chat/conversations/{conversation}', [\App\Http\Controllers\Api\ChatController::class, 'show']);
+    Route::post('/chat/messages', [\App\Http\Controllers\Api\ChatController::class, 'store']);
 
     // User profile view
     Route::get('/users/{user}', [UserController::class, 'show']);
@@ -63,7 +69,6 @@ Route::middleware('auth:sanctum')->group(function () {
 
     /* ── Admin only ── */
     Route::middleware('role:admin')->group(function () {
-        Route::get('/users',              [UserController::class, 'index']);
         Route::delete('/users/{user}',    [UserController::class, 'destroy']);
         Route::post('/payments/{id}/approve', [PaymentController::class, 'approve']);
         Route::get('/reports', [DashboardController::class, 'reports']);
@@ -108,13 +113,13 @@ Route::middleware('auth:sanctum')->group(function () {
 
     /* ── Admin + Instructor + Reception ── */
     Route::middleware('role:admin,instructor,reception')->group(function () {
-        Route::get('/enrollments', [EnrollmentController::class, 'index']);
         Route::get('/attendance',  [\App\Http\Controllers\Api\AttendanceController::class, 'index']);
         Route::post('/attendance', [\App\Http\Controllers\Api\AttendanceController::class, 'store']);
     });
 
-    /* ── Instructor + Student ── */
-    Route::middleware('role:admin,instructor,student')->group(function () {
+    /* ── Admin + Instructor + Student + Reception ── */
+    Route::middleware('role:admin,instructor,student,reception')->group(function () {
+        Route::get('/enrollments',                              [EnrollmentController::class, 'index']);
         Route::get('/assignments',                              [AssignmentController::class, 'index']);
         Route::get('/assignments/{assignment}',                 [AssignmentController::class, 'show']);
         Route::get('/assignments/{assignment}/submissions',     [SubmissionController::class, 'index']);
@@ -136,10 +141,22 @@ Route::middleware('auth:sanctum')->group(function () {
         // Student Assessments
         Route::get('/assessments/{assessment}',     [AssessmentController::class, 'showStudent']);
         Route::post('/assessments/{assessment}/submit', [AssessmentController::class, 'submit']);
+
+        // Student Reviews
+        Route::post('/courses/{course}/reviews', [\App\Http\Controllers\Api\ReviewController::class, 'store']);
     });
 
-    /* ── Instructor/Admin Grading ── */
     Route::middleware('role:admin,instructor')->group(function () {
         Route::put('/submissions/{submission}/grade',           [SubmissionController::class, 'grade']);
+    });
+
+    /* ══════════════════════════════════════════
+       AI SERVICES
+    ══════════════════════════════════════════ */
+    Route::prefix('ai')->middleware('throttle:10,1')->group(function () {
+        Route::post('/generate-assessment/{course_id}', [\App\Interfaces\HTTP\Controllers\AIController::class, 'generateAssessment']);
+        Route::post('/save-assessment', [\App\Interfaces\HTTP\Controllers\AIController::class, 'saveAssessment']);
+        Route::post('/chat', [\App\Interfaces\HTTP\Controllers\AIController::class, 'chat']);
+        Route::get('/test', [\App\Interfaces\HTTP\Controllers\AIController::class, 'test']);
     });
 });

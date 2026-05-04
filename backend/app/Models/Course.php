@@ -8,6 +8,13 @@ class Course extends Model
 {
     protected $fillable = ['title', 'description', 'price', 'start_date', 'end_date', 'duration_days', 'min_students', 'max_students', 'instructor_id', 'status', 'parent_id', 'group_name'];
     
+    protected $appends = ['average_rating'];
+
+    public function getAverageRatingAttribute()
+    {
+        return $this->reviews()->avg('rating') ?: 0;
+    }
+    
     public function parent()
     {
         return $this->belongsTo(Course::class, 'parent_id');
@@ -62,5 +69,10 @@ class Course extends Model
     public function payments()
     {
         return $this->hasMany(Payment::class);
+    }
+
+    public function reviews()
+    {
+        return $this->hasMany(Review::class);
     }
 }

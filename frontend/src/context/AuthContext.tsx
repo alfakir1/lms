@@ -59,12 +59,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const login = async (login: string, password: string) => {
     await getCsrfCookie();
     const response = await api.post('/login', { login, password });
-    const { user, access_token } = response.data;
+    const responseData = response.data.data || response.data;
+    const { user, access_token } = responseData;
 
     setUser(user);
     setToken(access_token);
     localStorage.setItem('user', JSON.stringify(user));
     localStorage.setItem('token', access_token);
+    if (user.language) localStorage.setItem('lang', user.language);
+    if (user.theme) localStorage.setItem('theme', user.theme);
   };
 
   const logout = async () => {
@@ -81,6 +84,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const updateUser = (updatedUser: User) => {
     setUser(updatedUser);
     localStorage.setItem('user', JSON.stringify(updatedUser));
+    if (updatedUser.language) localStorage.setItem('lang', updatedUser.language);
+    if (updatedUser.theme) localStorage.setItem('theme', updatedUser.theme);
   };
 
   return (

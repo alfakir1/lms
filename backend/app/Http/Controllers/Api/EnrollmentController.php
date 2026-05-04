@@ -11,7 +11,10 @@ class EnrollmentController extends Controller
     public function index(Request $request)
     {
         $user = $request->user();
-        $query = Enrollment::with(['course', 'student.user']);
+        $query = Enrollment::with([
+            'course:id,title,price,instructor_id,parent_id',
+            'student.user:id,name,email',
+        ]);
 
         if ($user->role === 'student') {
             $query->where('student_id', $user->student->id ?? 0);
@@ -28,8 +31,8 @@ class EnrollmentController extends Controller
 
 
         return response()->json([
-            'success' => true,
-            'data' => $query->get()
+            'status' => 'success',
+            'data' => $query->paginate(15)
         ]);
     }
 
@@ -57,7 +60,7 @@ class EnrollmentController extends Controller
         $course = \App\Models\Course::findOrFail($validated['course_id']);
         if ($course->parent_id === null && \App\Models\Course::where('parent_id', $course->id)->exists()) {
             return response()->json([
-                'success' => false,
+                'status' => 'error',
                 'message' => 'Please select a specific teaching group or instructor for this course.'
             ], 422);
         }
@@ -65,7 +68,7 @@ class EnrollmentController extends Controller
         // Check Capacity
         if ($course->max_students && Enrollment::where('course_id', $course->id)->count() >= $course->max_students) {
             return response()->json([
-                'success' => false,
+                'status' => 'error',
                 'message' => 'هذا الكورس اكتملت سعته الاستيعابية.'
             ], 422);
         }
@@ -73,7 +76,7 @@ class EnrollmentController extends Controller
         // Check if already enrolled
         if (Enrollment::where('course_id', $validated['course_id'])->where('student_id', $validated['student_id'])->exists()) {
             return response()->json([
-                'success' => false,
+                'status' => 'error',
                 'message' => 'Already enrolled'
             ], 422);
         }
@@ -86,8 +89,9 @@ class EnrollmentController extends Controller
         ]);
 
         return response()->json([
-            'success' => true,
-            'data' => $enrollment
+            'status' => 'success',
+            'data' => $enrollment,
+            'message' => 'Enrolled successfully'
         ], 201);
     }
 }

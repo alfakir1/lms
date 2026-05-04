@@ -49,13 +49,14 @@ export const useEnroll = () => {
   });
 };
 
-export const useInstructors = () =>
+export const useInstructors = (enabled = true) =>
   useQuery<any[]>({
     queryKey: ['instructors'],
     queryFn: async () => {
-      const users = await usersApi.getAll();
+      const users = await usersApi.getByRole('instructor');
       return users.filter((u: any) => u.role === 'instructor');
     },
+    enabled,
   });
 
 export const useCourseProgress = (courseId: number) =>
@@ -74,6 +75,25 @@ export const useUpdateProgress = () => {
       // Invalidate the specific course progress cache if we had a way to know courseId here,
       // but usually we can just invalidate all course-progress to be safe, or let the player handle local state
       qc.invalidateQueries({ queryKey: ['course-progress'] });
+    },
+  });
+};
+
+export const useCourseReviews = (courseId: number) =>
+  useQuery({
+    queryKey: ['course-reviews', courseId],
+    queryFn: () => coursesApi.getReviews(courseId),
+    enabled: !!courseId,
+  });
+
+export const useAddReview = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ courseId, rating, comment }: { courseId: number; rating: number; comment: string }) =>
+      coursesApi.addReview(courseId, rating, comment),
+    onSuccess: (_, variables) => {
+      qc.invalidateQueries({ queryKey: ['course-reviews', variables.courseId] });
+      qc.invalidateQueries({ queryKey: ['courses', variables.courseId] });
     },
   });
 };

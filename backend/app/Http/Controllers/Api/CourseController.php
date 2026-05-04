@@ -6,41 +6,45 @@ use App\Http\Controllers\Controller;
 use App\Models\Course;
 use Illuminate\Http\Request;
 
+use App\Http\Resources\Api\CourseResource;
+
 class CourseController extends Controller
 {
     public function index(Request $request)
     {
         $user = auth('sanctum')->user();
-        $query = Course::with(['instructor.user', 'parent']);
+        $query = Course::query()
+            ->with([
+                'instructor:id,user_id',
+                'instructor.user:id,name,email',
+                'parent:id,title',
+            ])
+            ->withCount(['lessons', 'enrollments']);
 
         if ($user) {
             if ($user->role === 'instructor') {
-                // Instructors see only their assigned teaching groups (Instances)
                 $query->where('instructor_id', $user->instructor->id ?? 0);
             } elseif ($user->role === 'student' && $request->has('my_courses')) {
-                // Student dashboard - see their enrolled instances
                 $query->whereHas('enrollments', function($q) use ($user) {
                     $q->where('student_id', $user->student->id ?? 0);
                 });
             } elseif ($user->role === 'admin' || $user->role === 'reception') {
-                // Admins/Reception see all, but can filter by master
                 if ($request->has('master_only')) {
                     $query->whereNull('parent_id');
                 }
             } else {
-                // Browsing/Public - show Master Courses only
                 $query->whereNull('parent_id');
             }
         } else {
-            // Public - Master Courses only
             $query->whereNull('parent_id');
         }
 
         return response()->json([
-            'success' => true,
-            'data' => $query->get()
+            'status' => 'success',
+            'data' => CourseResource::collection($query->paginate(15))->response()->getData(true)
         ]);
     }
+
 
     public function store(Request $request)
     {
@@ -75,9 +79,10 @@ class CourseController extends Controller
 
         $course = Course::create($validated);
         return response()->json([
-            'success' => true,
-            'data' => $course
-        ], 201);
+            'status' => 'success',
+            'data' => new CourseResource($course),
+            'message' => 'Course created successfully'
+        ]);
     }
 
     public function show(Course $course)
@@ -91,6 +96,14 @@ class CourseController extends Controller
             'assignments'
         ]);
 
+        // If this is an instance and has no lessons, inherit from master
+        if ($course->parent_id && $course->lessons->isEmpty()) {
+            $masterLessons = \App\Models\Lesson::where('course_id', $course->parent_id)
+                ->orderBy('order')
+                ->get();
+            $course->setRelation('lessons', $masterLessons);
+        }
+
         // If this is an instance, also load assignments from the master course
         if ($course->parent_id) {
             $masterAssignments = \App\Models\Assignment::where('course_id', $course->parent_id)->get();
@@ -98,8 +111,8 @@ class CourseController extends Controller
         }
         
         return response()->json([
-            'success' => true,
-            'data' => $course
+            'status' => 'success',
+            'data' => new CourseResource($course)
         ]);
     }
 
@@ -125,10 +138,11 @@ class CourseController extends Controller
 
         $course->update($validated);
         return response()->json([
-            'success' => true,
-            'data' => $course
+            'status' => 'success',
+            'data' => new CourseResource($course)
         ]);
     }
+
 
     public function destroy(Request $request, Course $course)
     {

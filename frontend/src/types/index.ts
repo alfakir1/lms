@@ -14,6 +14,9 @@ export interface User {
   login_id: string;
   role: UserRole;
   is_active?: boolean;
+  language?: string;
+  theme?: string;
+  notifications_enabled?: boolean;
   instructor?: { id: number };
   student?: { id: number };
   created_at: string;
@@ -55,6 +58,7 @@ export interface Lesson {
   content?: string;
   video_url?: string;
   video_type?: 'html5' | 'youtube' | 'vimeo' | 'file';
+  duration?: number;
   order: number;
 }
 

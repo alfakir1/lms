@@ -1,7 +1,8 @@
 import React from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useDashboardStats } from '../../hooks/useDashboardStats';
-import { useCourses } from '../../hooks/useCourses';
+import { useEnrollments } from '../../hooks/useEnrollments';
+import { useAssignments } from '../../hooks/useApiHooks';
 import { BookOpen, Award, Clock, Activity, PlayCircle, ChevronLeft, ArrowUpRight, GraduationCap, FileText } from 'lucide-react';
 
 import { motion } from 'framer-motion';
@@ -9,19 +10,22 @@ import { Link } from 'react-router-dom';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import { useLang } from '../../context/LangContext';
 
+import { DashboardSkeleton } from '../../components/ui/Skeleton';
+
 const StudentDashboard: React.FC = () => {
   const { user } = useAuth();
   const { lang, t, dir } = useLang();
   const { data: statsData, isLoading: statsLoading } = useDashboardStats();
-  const { data: courses, isLoading: coursesLoading } = useCourses();
+  const { data: enrollments, isLoading: enrollmentsLoading } = useEnrollments();
+  const { data: assignments, isLoading: assignmentsLoading } = useAssignments();
 
-  if (statsLoading || coursesLoading) return <LoadingSpinner />;
+  if (statsLoading || enrollmentsLoading || assignmentsLoading) return <DashboardSkeleton />;
 
   const stats = [
     { name: lang === 'ar' ? 'كورساتي' : 'My Courses', value: statsData?.enrolled_courses || 0, icon: BookOpen, color: 'primary' },
-    { name: lang === 'ar' ? 'الشهادات' : 'Certificates', value: '0', icon: Award, color: 'accent' },
-    { name: lang === 'ar' ? 'ساعات التعلم' : 'Learning Hours', value: '12h', icon: Clock, color: 'secondary' },
-    { name: lang === 'ar' ? 'معدل الحضور' : 'Attendance', value: '95%', icon: Activity, color: 'primary' },
+    { name: lang === 'ar' ? 'الشهادات' : 'Certificates', value: statsData?.certificates_count || 0, icon: Award, color: 'accent' },
+    { name: lang === 'ar' ? 'دروس مكتملة' : 'Completed Lessons', value: statsData?.completed_lessons || 0, icon: Clock, color: 'secondary' },
+    { name: lang === 'ar' ? 'معدل الحضور' : 'Attendance', value: statsData?.attendance_rate || '0%', icon: Activity, color: 'primary' },
   ];
 
   return (
@@ -72,8 +76,11 @@ const StudentDashboard: React.FC = () => {
           </div>
           
           <div className="space-y-4">
-            {courses?.slice(0, 3).map((course) => (
-              <div key={course.id} className="premium-card p-5 flex flex-col md:flex-row md:items-center gap-6 group hover:border-primary/50 transition-colors">
+            {enrollments?.slice(0, 3).map((enrollment) => {
+              const course = enrollment.course;
+              if (!course) return null;
+              return (
+              <div key={enrollment.id} className="premium-card p-5 flex flex-col md:flex-row md:items-center gap-6 group hover:border-primary/50 transition-colors">
                 <div className="w-full md:w-56 h-36 bg-muted rounded-2xl overflow-hidden relative shrink-0 border border-border/50">
                   <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-secondary/20 z-10" />
                   <div className="absolute inset-0 flex items-center justify-center p-4 text-center z-20">
@@ -87,18 +94,18 @@ const StudentDashboard: React.FC = () => {
                 <div className="flex-1 space-y-4">
                   <div>
                     <h3 className="font-black text-foreground text-lg mb-1">{course.title}</h3>
-                    <p className="text-xs text-muted-foreground font-medium">{lang === 'ar' ? 'الدرس القادم: مقدمة في المساق' : 'Next Lesson: Introduction'}</p>
+                    <p className="text-xs text-muted-foreground font-medium">{lang === 'ar' ? 'الدرس القادم: متابعة التعلم' : 'Next Lesson: Resume Learning'}</p>
                   </div>
                   
                   <div className="space-y-2">
                     <div className="flex justify-between text-[10px] font-black text-muted-foreground uppercase tracking-widest">
                       <span>{lang === 'ar' ? 'التقدم' : 'Progress'}</span>
-                      <span>15%</span>
+                      <span>{course.progress || 0}%</span>
                     </div>
                     <div className="w-full h-2.5 bg-muted rounded-full overflow-hidden border border-border/50">
                       <motion.div 
                         initial={{ width: 0 }} 
-                        animate={{ width: '15%' }} 
+                        animate={{ width: `${course.progress || 0}%` }} 
                         className="h-full bg-primary rounded-full" 
                       />
                     </div>
@@ -109,8 +116,8 @@ const StudentDashboard: React.FC = () => {
                   </Link>
                 </div>
               </div>
-            ))}
-            {courses?.length === 0 && (
+            )})}
+            {(!enrollments || enrollments.length === 0) && (
               <div className="py-20 text-center premium-card">
                  <BookOpen className="w-16 h-16 text-muted/30 mx-auto mb-4" />
                  <p className="text-sm font-bold text-muted-foreground italic">
@@ -127,12 +134,24 @@ const StudentDashboard: React.FC = () => {
             <div className="p-6 border-b border-border bg-muted/30">
                <h2 className="font-black text-foreground tracking-tight">{lang === 'ar' ? 'المهام القادمة' : 'Upcoming Tasks'}</h2>
             </div>
-            <div className="p-8 text-center h-[300px] flex flex-col items-center justify-center">
-                 <FileText className="w-12 h-12 text-muted/30 mb-4" />
-                 <p className="text-sm font-bold text-muted-foreground italic">
-                   {lang === 'ar' ? 'لا توجد مهام مستحقة حالياً.' : 'No tasks due at the moment.'}
-                 </p>
-            </div>
+             <div className="p-6 h-[300px] overflow-y-auto space-y-4">
+                 {assignments?.length ? assignments.slice(0, 5).map((a: any) => (
+                    <div key={a.id} className="p-4 border border-border/50 rounded-xl hover:border-primary/50 transition-colors bg-background">
+                       <h4 className="font-bold text-sm mb-1">{a.title}</h4>
+                       <p className="text-xs text-muted-foreground mb-2 line-clamp-2">{a.description}</p>
+                       <span className="text-[10px] uppercase font-bold text-primary bg-primary/10 px-2 py-1 rounded">
+                         {lang === 'ar' ? 'تاريخ الاستحقاق:' : 'Due:'} {new Date(a.due_date).toLocaleDateString()}
+                       </span>
+                    </div>
+                 )) : (
+                    <div className="flex flex-col items-center justify-center h-full">
+                       <FileText className="w-12 h-12 text-muted/30 mb-4" />
+                       <p className="text-sm font-bold text-muted-foreground italic">
+                         {lang === 'ar' ? 'لا توجد مهام مستحقة حالياً.' : 'No tasks due at the moment.'}
+                       </p>
+                    </div>
+                 )}
+             </div>
           </div>
           
           <div className="premium-card p-6 bg-primary text-primary-foreground relative overflow-hidden">

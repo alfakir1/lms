@@ -16,6 +16,9 @@ const SettingsPage: React.FC = () => {
 
   const [name, setName] = useState(user?.name || '');
   const [email, setEmail] = useState(user?.email || '');
+  const [theme, setTheme] = useState(user?.theme || 'light');
+  const [language, setLanguage] = useState(user?.language || 'ar');
+  const [notifications, setNotifications] = useState(user?.notifications_enabled ?? true);
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -31,7 +34,9 @@ const SettingsPage: React.FC = () => {
     setIsUpdatingProfile(true);
 
     try {
-      const response = await api.put('/profile', { name, email });
+      const response = await api.put('/profile', { 
+         name, email, theme, language, notifications_enabled: notifications 
+      });
       updateUser(response.data.user);
       setProfileStatus({
         type: 'success',
@@ -162,6 +167,36 @@ const SettingsPage: React.FC = () => {
                     placeholder="john@example.com"
                   />
                 </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4 border-t border-border mt-6">
+              <div className="space-y-2">
+                <label className="text-sm font-bold text-foreground/70 px-1">
+                  {lang === 'ar' ? 'لغة الواجهة' : 'Interface Language'}
+                </label>
+                <select value={language} onChange={e => setLanguage(e.target.value)} className="input-field cursor-pointer">
+                   <option value="ar">العربية</option>
+                   <option value="en">English</option>
+                </select>
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-bold text-foreground/70 px-1">
+                  {lang === 'ar' ? 'المظهر' : 'Theme'}
+                </label>
+                <select value={theme} onChange={e => setTheme(e.target.value)} className="input-field cursor-pointer">
+                   <option value="light">{lang === 'ar' ? 'فاتح' : 'Light'}</option>
+                   <option value="dark">{lang === 'ar' ? 'داكن' : 'Dark'}</option>
+                </select>
+              </div>
+              <div className="space-y-2 flex flex-col justify-center">
+                <label className="text-sm font-bold text-foreground/70 px-1 mb-2">
+                  {lang === 'ar' ? 'الإشعارات' : 'Notifications'}
+                </label>
+                <label className="flex items-center gap-3 cursor-pointer">
+                   <input type="checkbox" checked={notifications} onChange={e => setNotifications(e.target.checked)} className="w-5 h-5 rounded text-primary focus:ring-primary accent-primary" />
+                   <span className="font-medium text-sm">{lang === 'ar' ? 'تفعيل الإشعارات' : 'Enable Notifications'}</span>
+                </label>
               </div>
             </div>
 

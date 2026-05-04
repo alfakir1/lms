@@ -9,13 +9,15 @@ import { Link } from 'react-router-dom';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import { useLang } from '../../context/LangContext';
 
+import { DashboardSkeleton } from '../../components/ui/Skeleton';
+
 const ReceptionDashboard: React.FC = () => {
   const { user } = useAuth();
   const { lang, t } = useLang();
   const { data: statsData, isLoading: statsLoading } = useDashboardStats();
   const { data: payments, isLoading: paymentsLoading } = usePayments();
 
-  if (statsLoading || paymentsLoading) return <LoadingSpinner />;
+  if (statsLoading || paymentsLoading) return <DashboardSkeleton />;
 
   const actions = [
     { name: lang === 'ar' ? 'إدارة الطلاب' : 'Manage Students', icon: UserPlus, color: 'primary', link: '/users' },

@@ -26,6 +26,11 @@ class User extends Authenticatable
         'password',
         'role',
         'is_active',
+        'profile_image',
+        'linkedin_url',
+        'theme',
+        'language',
+        'notifications_enabled',
     ];
 
     public function isAdmin() { return $this->role === 'admin'; }
@@ -46,6 +51,17 @@ class User extends Authenticatable
     public function auditLogs()
     {
         return $this->hasMany(AuditLog::class);
+    }
+
+    public function conversations()
+    {
+        return $this->hasMany(Conversation::class, 'user_one_id')
+                    ->orWhere('user_two_id', $this->id);
+    }
+
+    public function reviews()
+    {
+        return $this->hasMany(Review::class);
     }
 
     /**

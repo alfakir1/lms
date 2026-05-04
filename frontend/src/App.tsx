@@ -1,36 +1,38 @@
-import React from 'react';
+import React, { Suspense, lazy } from 'react';
 import { Routes, Route } from 'react-router-dom';
-import Login from './pages/Login.tsx';
-import NotFound from './pages/NotFound.tsx';
-import AdminDashboard from './pages/admin/AdminDashboard.tsx';
-import InstructorDashboard from './pages/instructor/InstructorDashboard.tsx';
-import StudentDashboard from './pages/student/StudentDashboard.tsx';
-import ReceptionDashboard from './pages/reception/ReceptionDashboard.tsx';
-import StudentRegistration from './pages/reception/StudentRegistration.tsx';
-import Users from './pages/admin/Users.tsx';
-import CoursesList from './pages/CoursesList.tsx';
-import CourseDetails from './pages/CourseDetails.tsx';
-import CoursePlayer from './pages/CoursePlayer.tsx';
-import Assignments from './pages/Assignments.tsx';
-import SubmissionPage from './pages/SubmissionPage.tsx';
-import GradesPage from './pages/GradesPage.tsx';
-import PaymentsPage from './pages/PaymentsPage.tsx';
-import AttendancePage from './pages/Attendance.tsx';
-import CertificatesPage from './pages/CertificatesPage.tsx';
-import EnrollmentsPage from './pages/EnrollmentsPage.tsx';
-import ProfilePage from './pages/ProfilePage.tsx';
-import SettingsPage from './pages/SettingsPage.tsx';
-import Reports from './pages/admin/Reports.tsx';
 import ProtectedRoute from './routes/ProtectedRoute';
 import DashboardLayout from './layouts/DashboardLayout';
-import AssessmentsPage from './pages/AssessmentsPage.tsx';
-import QuizAttempt from './pages/QuizAttempt.tsx';
-import AssessmentSubmissionsPage from './pages/AssessmentSubmissionsPage.tsx';
+import LoadingSpinner from './components/ui/LoadingSpinner';
 
+// Lazy load pages
+const Login = lazy(() => import('./pages/Login.tsx'));
+const NotFound = lazy(() => import('./pages/NotFound.tsx'));
+const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard.tsx'));
+const InstructorDashboard = lazy(() => import('./pages/instructor/InstructorDashboard.tsx'));
+const AIAssessmentGenerator = lazy(() => import('./pages/instructor/AIAssessmentGenerator.tsx'));
+const StudentDashboard = lazy(() => import('./pages/student/StudentDashboard.tsx'));
+const ReceptionDashboard = lazy(() => import('./pages/reception/ReceptionDashboard.tsx'));
+const StudentRegistration = lazy(() => import('./pages/reception/StudentRegistration.tsx'));
+const Users = lazy(() => import('./pages/admin/Users.tsx'));
+const CoursesList = lazy(() => import('./pages/CoursesList.tsx'));
+const CourseDetails = lazy(() => import('./pages/CourseDetails.tsx'));
+const CoursePlayer = lazy(() => import('./pages/CoursePlayer.tsx'));
+const Assignments = lazy(() => import('./pages/Assignments.tsx'));
+const SubmissionPage = lazy(() => import('./pages/SubmissionPage.tsx'));
+const GradesPage = lazy(() => import('./pages/GradesPage.tsx'));
+const PaymentsPage = lazy(() => import('./pages/PaymentsPage.tsx'));
+const AttendancePage = lazy(() => import('./pages/Attendance.tsx'));
+const CertificatesPage = lazy(() => import('./pages/CertificatesPage.tsx'));
+const EnrollmentsPage = lazy(() => import('./pages/EnrollmentsPage.tsx'));
+const ProfilePage = lazy(() => import('./pages/ProfilePage.tsx'));
+const SettingsPage = lazy(() => import('./pages/SettingsPage.tsx'));
+const ChatPage = lazy(() => import('./pages/ChatPage.tsx'));
+const Reports = lazy(() => import('./pages/admin/Reports.tsx'));
+const AssessmentsPage = lazy(() => import('./pages/AssessmentsPage.tsx'));
+const QuizAttempt = lazy(() => import('./pages/QuizAttempt.tsx'));
+const AssessmentSubmissionsPage = lazy(() => import('./pages/AssessmentSubmissionsPage.tsx'));
+const HomePage = lazy(() => import('./pages/public/HomePage.tsx'));
 
-// No RootRedirect used anymore
-
-import HomePage from './pages/public/HomePage.tsx';
 
 // RBAC shorthand helpers
 const ADMIN        = ['admin'] as const;
@@ -48,60 +50,67 @@ const guard = (roles: readonly string[], el: React.ReactNode) => (
 
 function App() {
   return (
-    <Routes>
-      {/* ─── Public ─── */}
-      <Route path="/login" element={<Login />} />
-      <Route path="/" element={<HomePage />} />
+    <Suspense fallback={<div className="h-screen w-full flex items-center justify-center bg-slate-50"><LoadingSpinner size="lg" /></div>}>
+      <Routes>
+        {/* ─── Public ─── */}
+        <Route path="/login" element={<Login />} />
+        <Route path="/" element={<HomePage />} />
 
-      {/* ─── Protected — dashboard layout ─── */}
-      <Route element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
+        {/* ─── Protected — dashboard layout ─── */}
+        <Route element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
 
-        {/* ── Role-specific dashboards ── */}
-        <Route path="/admin/dashboard"      element={guard(ADMIN,     <AdminDashboard />)} />
-        <Route path="/instructor/dashboard" element={guard(INST_ONLY, <InstructorDashboard />)} />
-        <Route path="/student/dashboard"    element={guard(STD_ONLY,  <StudentDashboard />)} />
-        <Route path="/reception/dashboard"  element={guard(REC_ONLY,  <ReceptionDashboard />)} />
+          {/* ── Role-specific dashboards ── */}
+          <Route path="/admin/dashboard"      element={guard(ADMIN,     <AdminDashboard />)} />
+          <Route path="/instructor/dashboard" element={guard(INST_ONLY, <InstructorDashboard />)} />
+          <Route path="/student/dashboard"    element={guard(STD_ONLY,  <StudentDashboard />)} />
+          <Route path="/reception/dashboard"  element={guard(REC_ONLY,  <ReceptionDashboard />)} />
 
-        {/* ── Courses — all roles can VIEW, only admin/instructor can manage (enforced in UI & backend) ── */}
-        <Route path="/courses"           element={guard(ALL_ROLES,  <CoursesList />)} />
-        <Route path="/courses/:id"       element={guard(ALL_ROLES,  <CourseDetails />)} />
-        <Route path="/enrollments"       element={guard(['admin', 'instructor', 'reception'] as any, <EnrollmentsPage />)} />
-        <Route path="/courses/:id/play"  element={guard(INST_STD,   <CoursePlayer />)} />
+          {/* ── Courses — all roles can VIEW, only admin/instructor can manage (enforced in UI & backend) ── */}
+          <Route path="/courses"           element={guard(ALL_ROLES,  <CoursesList />)} />
+          <Route path="/courses/:id"       element={guard(ALL_ROLES,  <CourseDetails />)} />
+          <Route path="/enrollments"       element={guard(['admin', 'instructor', 'reception'] as any, <EnrollmentsPage />)} />
+          <Route path="/courses/:id/play"  element={guard(INST_STD,   <CoursePlayer />)} />
 
 
-        {/* ── Assignments — instructor creates, student submits ── */}
-        <Route path="/assignments"            element={guard(INST_STD,  <Assignments />)} />
-        <Route path="/assignments/:id/submit" element={guard(STD_ONLY,  <SubmissionPage />)} />
+          {/* ── Assignments — instructor creates, student submits ── */}
+          <Route path="/assignments"            element={guard(INST_STD,  <Assignments />)} />
+          <Route path="/assignments/:id/submit" element={guard(STD_ONLY,  <SubmissionPage />)} />
 
-        {/* ── Assessments (Quizzes) ── */}
-        <Route path="/assessments" element={guard(INST_STD, <AssessmentsPage />)} />
-        <Route path="/assessments/:id/attempt" element={guard(STD_ONLY, <QuizAttempt />)} />
-        <Route path="/assessments/:id/submissions" element={guard(INST_ONLY, <AssessmentSubmissionsPage />)} />
+          {/* ── Assessments (Quizzes) ── */}
+          <Route path="/assessments" element={guard(INST_STD, <AssessmentsPage />)} />
+          <Route path="/assessments/:id/attempt" element={guard(STD_ONLY, <QuizAttempt />)} />
+          <Route path="/assessments/:id/submissions" element={guard(INST_ONLY, <AssessmentSubmissionsPage />)} />
 
-        {/* ── Grades — instructor & student only ── */}
-        <Route path="/grades" element={guard(INST_STD, <GradesPage />)} />
+          {/* ── AI Tools — instructor only ── */}
+          <Route path="/ai/generate-assessment" element={guard(INST_ONLY, <AIAssessmentGenerator />)} />
 
-        {/* ── Payments — admin, reception, student (student sees own payments only) ── */}
-        <Route path="/payments" element={guard(ADMIN_REC_STD, <PaymentsPage />)} />
+          {/* ── Grades — instructor & student only ── */}
+          <Route path="/grades" element={guard(INST_STD, <GradesPage />)} />
 
-        {/* ── Attendance — instructor manages, reception views ── */}
-        <Route path="/attendance" element={guard(['instructor', 'reception'] as any, <AttendancePage />)} />
+          {/* ── Payments — admin, reception, student (student sees own payments only) ── */}
+          <Route path="/payments" element={guard(ADMIN_REC_STD, <PaymentsPage />)} />
 
-        {/* ── User Management — admin full, reception (students only, enforced in backend) ── */}
-        <Route path="/users" element={guard(ADMIN_REC, <Users />)} />
-        <Route path="/reports" element={guard(ADMIN, <Reports />)} />
+          {/* ── Attendance — instructor manages, reception views ── */}
+          <Route path="/attendance" element={guard(['instructor', 'reception'] as any, <AttendancePage />)} />
 
-        {/* ── Reception-specific: full student registration + receipt workflow ── */}
-        <Route path="/register-student" element={guard(ADMIN_REC, <StudentRegistration />)} />
-        <Route path="/certificates" element={guard(['admin', 'instructor', 'reception'] as any, <CertificatesPage />)} />
-        <Route path="/profile" element={guard(ALL_ROLES, <ProfilePage />)} />
-        <Route path="/settings" element={guard(ALL_ROLES, <SettingsPage />)} />
-      </Route>
+          {/* ── User Management — admin full, reception (students only, enforced in backend) ── */}
+          <Route path="/users" element={guard(ADMIN_REC, <Users />)} />
+          <Route path="/reports" element={guard(ADMIN, <Reports />)} />
 
-      {/* ─── 404 ─── */}
-      <Route path="*" element={<NotFound />} />
-    </Routes>
+          {/* ── Reception-specific: full student registration + receipt workflow ── */}
+          <Route path="/register-student" element={guard(ADMIN_REC, <StudentRegistration />)} />
+          <Route path="/certificates" element={guard(['admin', 'instructor', 'reception'] as any, <CertificatesPage />)} />
+          <Route path="/profile" element={guard(ALL_ROLES, <ProfilePage />)} />
+          <Route path="/settings" element={guard(ALL_ROLES, <SettingsPage />)} />
+          <Route path="/chat" element={guard(ALL_ROLES, <ChatPage />)} />
+        </Route>
+
+        {/* ─── 404 ─── */}
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </Suspense>
   );
+
 }
 
 export default App;

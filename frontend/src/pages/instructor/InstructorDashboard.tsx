@@ -2,7 +2,7 @@ import React from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useDashboardStats } from '../../hooks/useDashboardStats';
 import { useCourses } from '../../hooks/useCourses';
-import { BookOpen, FileText, CheckCircle, Plus, Users, Layout, ArrowUpRight, GraduationCap } from 'lucide-react';
+import { BookOpen, FileText, CheckCircle, Plus, Users, Layout, ArrowUpRight, GraduationCap, Sparkles, Zap } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -10,6 +10,8 @@ import api from '../../api/client';
 import { Submission } from '../../types';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import { useLang } from '../../context/LangContext';
+
+import { DashboardSkeleton } from '../../components/ui/Skeleton';
 
 const InstructorDashboard: React.FC = () => {
   const { user } = useAuth();
@@ -26,7 +28,7 @@ const InstructorDashboard: React.FC = () => {
   });
   const submissions = submissionsRes?.data || [];
 
-  if (statsLoading || coursesLoading) return <LoadingSpinner />;
+  if (statsLoading || coursesLoading || submissionsLoading) return <DashboardSkeleton />;
 
   const stats = [
     { name: lang === 'ar' ? 'كورساتي' : 'My Courses', value: statsData?.my_courses || 0, icon: BookOpen, color: 'primary' },
@@ -52,6 +54,48 @@ const InstructorDashboard: React.FC = () => {
           <Plus className="w-4 h-4" /> {lang === 'ar' ? 'عرض كافة كورساتي' : 'View My Courses'}
         </Link>
       </div>
+
+      {/* AI Banner */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.05 }}
+      >
+        <Link
+          to="/ai/generate-assessment"
+          className="group block relative overflow-hidden rounded-3xl bg-gradient-to-r from-primary via-primary/90 to-primary/70 p-6 shadow-2xl shadow-primary/20 hover:shadow-primary/40 transition-all duration-300"
+        >
+          {/* Decorative blobs */}
+          <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/4 pointer-events-none" />
+          <div className="absolute bottom-0 left-1/3 w-32 h-32 bg-white/5 rounded-full translate-y-1/2 pointer-events-none" />
+
+          <div className="relative flex items-center justify-between gap-6">
+            <div className="flex items-center gap-5">
+              <div className="w-14 h-14 bg-white/15 rounded-2xl flex items-center justify-center border border-white/20 group-hover:scale-110 transition-transform">
+                <Sparkles className="w-7 h-7 text-white" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-[10px] font-black text-white/70 uppercase tracking-widest">Powered by Gemini AI</span>
+                  <span className="bg-white/20 text-white text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider">New</span>
+                </div>
+                <h2 className="text-xl font-black text-white tracking-tight">
+                  {lang === 'ar' ? 'أنشئ اختباراً ذكياً من كورسك' : 'Generate AI Assessment from Your Course'}
+                </h2>
+                <p className="text-white/70 text-sm font-medium mt-1">
+                  {lang === 'ar'
+                    ? 'يحلل الذكاء الاصطناعي دروسك ويولد أسئلة اختيار متعدد تلقائياً.'
+                    : 'AI analyzes your lessons and auto-generates multiple-choice questions.'}
+                </p>
+              </div>
+            </div>
+            <div className="shrink-0 hidden sm:flex items-center gap-2 bg-white/10 hover:bg-white/20 border border-white/20 text-white px-5 py-3 rounded-2xl font-black text-sm transition-all group-hover:translate-x-1">
+              <Zap className="w-4 h-4" />
+              {lang === 'ar' ? 'جرّبه الآن' : 'Try Now'}
+            </div>
+          </div>
+        </Link>
+      </motion.div>
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">

@@ -5,6 +5,7 @@ import { HashRouter } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext.tsx'
 import { LangProvider } from './context/LangContext.tsx'
 import { ThemeProvider } from './context/ThemeContext.tsx'
+import { ToastProvider } from './context/ToastContext.tsx'
 import App from './App.tsx'
 import './index.css'
 
@@ -24,7 +25,9 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
         <ThemeProvider>
           <LangProvider>
             <AuthProvider>
-              <App />
+              <ToastProvider>
+                <App />
+              </ToastProvider>
             </AuthProvider>
           </LangProvider>
         </ThemeProvider>
